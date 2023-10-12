@@ -1,0 +1,7 @@
+/bin
+/obj
+*.vsidx
+*.png
+!\bin\Debug\net6.0-windows\data.json
+!\bin\Debug\net6.0-windows\sts_map_oracle.exe
+/.vs

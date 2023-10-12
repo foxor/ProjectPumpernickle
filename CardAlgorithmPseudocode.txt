@@ -1,0 +1,500 @@
+___ Global power adjustments: ___
+
+Attacks are much more valuable in the first 6 floors.
+Block cards are bad if we're afraid of Nob
+If we're worried about damage in a boss fight, damage scaling is much more valuable
+If we're worried about an AoE fight, AoE cards are move valuable
+If our boss is slime or hexxa, slight synnergy to status consumers
+Setup tags have anti-synnergy with each other
+Cards have anti-synergy with other copies of themselves
+Orb generators have synergy with focus
+
+
+
+___ Relic algorithms: ___
+
+Self-forming clay:
+ - minor positive bias
+ - Major synnergy with self-damage
+
+Strike dummy:
+ - 0 bias
+ - Significant synnergy with strike cards
+
+Sundial:
+ - huge bias
+ -- energy provider
+ - check for infinite
+ - huge synnergy with shuffle
+ - major synnergy with exhaust providers
+ - slight anti-synnergy with every card
+ - significant synnergy with card draw
+ - huge synnergy with multi-card draw
+
+Ink bottle:
+ - Significant positive bias
+ -- card draw
+ -- setup
+
+Calipers:
+ - 0 bias
+ - significant synnergy with entrench
+ - significant synnergy with infinite block
+
+Regal pillow:
+ - 0 bias
+ - hand written
+
+Sozu
+ - Major negative bias
+ -- energy provider
+ - major negative synnergy with potion providers
+
+Black blood
+ - significant positive bias
+ -- sustain
+
+Pyramid
+ - massive positive bias
+ -- draw order consistency
+ - synnergy with setup
+ - anti-synnergy with overdraw risk
+ - significant synergy with 0 cost cards
+
+Ice cream
+ - 0 bias
+ - synergy with energy providers
+ - fight planning implications
+
+pen nib
+ - moderatly positive bias
+ -- setup
+ -- damage card
+
+hand drill
+ - 0 bias
+
+blue candle
+ - 0 bias
+ -- self damage provider
+ - minor synergy with necronomicon
+ - check for infinite
+
+Data disk
+ - major positive bias
+ -- focus provider
+
+Lee's Waffle
+ - evaluation based on current health value
+
+___ Individual card algorithms: ___
+
+Pummel
+ - Small negative bias
+ - Big bonus with strength scaling
+ - Minor exhaust synergy
+ -- Non permanent
+ -- Damage card
+
+Armaments
+ - Huge positive bias
+ - Slight negative synnergy with upgraded cards
+ - Major negative synnergy with Armaments and Apotheosis
+
+Infernal Blade
+ - Slight negative bias
+ -- Damage card
+
+Clothesline
+ - Significant negative bias
+ -- Damage card
+ -- Non-dex block card
+ - Slight necronomicon synnergy
+
+Wild Strike
+ - Major negative bias
+ - Major synnergy with evolve
+ - minor synnergy with firebreathing
+ - minor synnergy with status exhausters
+ -- Curse provider
+ - check for infinite
+ -- strike card
+
+True Grit
+ - Minor positive bias
+ -- Exhaust provider
+ - Block card
+ -- status consumer
+
+Havoc
+ - Significant negative bias
+ - Huge anti-synnergy with planning
+ -- Exhaust provider
+ -- Energy provider
+ - significant synnergy with headbutt
+
+Inflame
+ - Significant positive bias
+ -- Strength provider
+ -- Damage scaling
+
+Finesse
+ - Significant positive bias
+ - check for infinite
+
+Shockwave
+ - Massive positive bias
+ -- Non-dex block
+ -- Damage multiplier
+ -- Non-permanent
+ -- AoE
+ -- Exhaust provider
+
+Sword boomerang
+ - Slight negative bias
+ - Big strength synnergy
+ -- damage card
+
+Hemokinesis
+ - small positive bias
+ -- self damage provider
+
+Rampage
+ - major negative bias
+ -- damage card
+ -- self-damage scaling
+
+Clash
+ - major negative bias
+ -- damage card
+ -- exhaust synnergy
+
+Combust
+ - significant negative bias
+ -- self damage provider
+ -- AoE
+
+Warcry
+ - significant negative synnergy
+ -- Card draw
+ -- exhaust provider
+
+Perfected Strike
+ - Major negative synnergy
+ - significant synnergy with strike cards
+ -- strike card
+
+Cleave
+ - minor negative bias
+ -- damage card
+ -- AoE card
+
+Second wind
+ - major positive bias
+ -- status consumer
+ -- block card
+ -- exhaust provider
+
+Headbutt
+ - neutral bias
+ -- damage card
+ -- draw consistency
+
+Spot weakness
+ - slight positive bias
+ -- strength provider
+
+Barricade
+ - significant negative bias
+ - huge synnergy with entrench
+ - huge anti-synnergy with calipers
+
+Feed
+ - massive positive bias
+ -- setup
+ -- damage card
+ - minor synnergy with draw order consistency
+ -- sustain
+ - metascaling evaluation
+
+Exhume
+ - minor positive bias
+ -- exhaust provider
+ -- non-permanent
+
+Reaper
+ - major positive bias
+ -- damage card
+ -- sustain
+ -- non-permanent
+ -- AoE
+
+Anger
+ - Slight positive bias
+ -- damage card
+
+Dual wield
+ - Significant negative bias
+ - check for infinite
+ - major synergy with feed
+ - significant synnergy with ritual dagger
+ - minor synergy with perfected strike
+ - synnergy bonuses increased by draw order consistency
+
+Sever soul:
+ - major negative bias
+ -- damage card
+ - major anti-synergy with second wind
+ -- exhaust provider
+
+Sentinel
+ - slight positive bias
+ - huge synnergy with exaust providers (specific ones)
+ -- block card
+
+Flame barrier
+ - major negative bias
+ - Huge bonus if major threat is multiattack, and lacking damage
+ -- block card
+
+Iron wave
+ - slight positive bias
+ -- damage card
+ -- block card
+
+Shrug it off
+ - minor positive bias
+ -- block card
+ -- card draw
+ - major synergy with corruption
+
+Flex
+ - major negative bias
+ - huge synnergy with artifact
+ - synergy with card draw
+ - synergy with 0 cost attacks
+
+Dark Embrace
+ - minor positive bias
+ - huge synergy with exhaust providers
+ -- card draw
+
+Discovery
+ - major positive bias
+ -- exhaust provider
+ -- energy provider
+
+Hand of Greed
+ - major positive bias
+ -- damage card
+ - metascaling
+ - synergy with bloody idol
+ - synergy with courier + membership card
+
+Body slam
+ - significant negative bias
+ -- damage card
+ - major synergy with barricade
+ - minor synergy with calipers
+ - significant synergy with impervious
+ - minor synergy with entrench
+
+Intimidate +/-
+ - significant negative bias
+ -- exhaust provider
+ -- non-dex block card
+ -- non-permanent
+
+Carnage
+ - significant positive bias
+ -- damage card
+ -- exhaust provider
+ -- non-permanent
+
+Evolve
+ - moderate negative bias
+ -- card draw
+ -- status consumer
+ - minor conditional synergy with exhaust providers
+
+Sweeping beam
+ - minor positive bias
+ -- AoE
+ -- card draw
+ -- damage card
+
+Barrage
+ - huge negative bias
+ - major synergy with orb slot providers
+ - minor synergy with orb creators
+ - huge synergy with strength
+ -- damage card
+
+Boot Sequence
+ - minor positive bias
+ -- block card
+
+Blizzard
+ - major negative bias
+ -- damage card
+ - minor synergy with frost orb generators
+
+Glacier
+ - major positive bias
+ -- block card
+ -- frost orb generator
+
+Recycle
+ - major positive bias
+ - major synergy with card draw
+ -- energy provider
+ - check for infinite
+
+Auto-Shields
+ - significant positive bias
+ - significant anti-synergy with hologram
+ - major anti-synergy with loop
+ -- block card
+
+Reprogram
+ - huge negative bias
+ -- strength provider
+ -- dex provider
+ -- anti-focus provider
+ + double value
+
+Charge Battery
+ - moderate positive bias
+ -- block card
+ - energy provider
+
+Coolheaded
+ -- block card
+ -- card draw
+ -- frost orb provider
+ - major positive bias
+
+Hologram
+ - minor positive bias
+ -- draw consistency
+ -- block card
+ -- card draw
+
+Streamline
+ - significant positive bias
+ -- damage card
+ - evaluated as having 0 cost
+ - significant synergy with draw consistency
+
+Sunder
+ - major positive bias
+ -- damage card
+ -- AoE
+ -- energy provider
+ - huge synergy with snecko eye
+
+Leap
+ - major negative bias
+ -- block card
+
+Capacitor
+ - slight negative bias
+ - orb slot provider
+ - minor synergy with orb providers
+
+Dark Shackles
+ - Major positive bias
+ - significant anti-synergy with piercing wail
+ -- block card
+
+Chrysalis
+ - gigantic negative bias
+ - check for infinite
+ -- 0 cost provider
+
+Scrape
+ - major negative bias
+ -- damage card
+ - major synergy with 0-cost cards / providers
+ - evaluate percentage of deck drawable
+
+Beam cell
+ - slight positive bias
+ - moderate anti-synergy with damage orbs
+ - moderate synergy with physical damage cards
+ -- damage card
+
+Melter
+ - large negative bias
+ -- damage card
+
+Ball lightning
+ - significant negative bias
+ -- damage card
+ -- lightning orb provider
+
+Rebound
+ - slight positive bias
+ -- damage card
+ -- draw consistency
+
+Creative AI
+ - slight positive bias
+ - major power synergy
+ - huge bonus if threat tracking says a boss is the problem
+
+Recursion
+ - major negative bias
+ - large synergy with premium orb
+ -- damage card
+ -- block card if you have frost
+ -- energy provider if you have plasma
+
+Compile Driver
+ - minor positive bias
+ -- card draw
+ -- damage card
+ - moderate synergy with non-lightning orb
+
+Claw
+ - major negative bias
+ -- damage card
+ -- self-scaling
+
+Rainbow
+ - moderate negative bias
+ -- frost provider
+ -- ligtning provider
+ -- dark provider
+ -- block card
+ -- damage card
+
+Hyperbeam
+- huge positive bias
+-- damage card
+-- AoE
+- negative focus
+
+Seek
+ - massive positive bias
+ -- draw consistency
+ -- card draw
+
+Genetic algorithm
+ - huge positive bias
+ - bonus based on expected fights left
+ -- setup
+
+Turbo
+ - slight positive bias
+ -- energy provider
+ - check for infinite
+
+Skim
+ - Huge positive bias
+ -- card draw
+
+Cold snap
+ - minor negative bias
+ -- damage card
+ -- frost orb

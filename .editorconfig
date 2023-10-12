@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# IDE2001: Embedded statements must be on their own line
+dotnet_diagnostic.IDE2001.severity = none
