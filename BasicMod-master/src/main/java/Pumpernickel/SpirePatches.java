@@ -54,6 +54,10 @@ public class SpirePatches {
                         outToServer.write((rewardItem.potion.ID + "\n").getBytes(StandardCharsets.UTF_8));
                         break;
                     }
+                    case RELIC: {
+                        outToServer.write("Relic\n".getBytes(StandardCharsets.UTF_8));
+                        outToServer.write((rewardItem.relic.relicId + "\n").getBytes(StandardCharsets.UTF_8));
+                    }
                 }
             }
             outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
@@ -80,7 +84,6 @@ public class SpirePatches {
             outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
             outToServer.flush();
             clientSocket.close();
-            EventHelper
         }
         catch (Exception e) {
         }

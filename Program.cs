@@ -50,53 +50,53 @@ namespace ProjectPumpernickle {
             ParseFile(e.FullPath);
         }
         private static void ParseFile(string filename) {
-            if (filename.EndsWith(".vdf")) {
+            if (filename.EndsWith(".vdf") || filename.EndsWith("backUp")) {
                 return;
             }
-            using (StreamReader sr = new StreamReader(filename)) {
-                PumpernickelSaveState save = null;
-                var jsonText = sr.ReadToEnd();
-                if (!filename.EndsWith("BETA")) {
-                    var saveBytes = Convert.FromBase64String(jsonText);
-                    var keyBytes = Encoding.UTF8.GetBytes("key");
-                    for (int i = 0; i < saveBytes.Length; i++) {
-                        saveBytes[i] ^= keyBytes[i % keyBytes.Length];
-                    }
-                    jsonText = Encoding.UTF8.GetString(saveBytes);
+            var readText = File.ReadAllTextAsync(filename);
+            readText.Wait();
+            PumpernickelSaveState save = null;
+            var jsonText = readText.Result;
+            if (!filename.EndsWith("BETA")) {
+                var saveBytes = Convert.FromBase64String(jsonText);
+                var keyBytes = Encoding.UTF8.GetBytes("key");
+                for (int i = 0; i < saveBytes.Length; i++) {
+                    saveBytes[i] ^= keyBytes[i % keyBytes.Length];
                 }
-                try {
-                    save = JsonConvert.DeserializeObject<PumpernickelSaveState>(jsonText);
-                }
-                catch {
-                    return;
-                }
-
-                if (filename.Contains("WATCHER")) {
-                    save.character = Character.Watcher;
-                }
-                else if (filename.Contains("THE_SILENT")) {
-                    save.character = Character.Silent;
-                }
-                else if (filename.Contains("IRONCLAD")) {
-                    save.character = Character.Ironclad;
-                }
-                else if (filename.Contains("DEFECT")) {
-                    save.character = Character.Defect;
-                }
-
-                save.OnLoad();
-
-                var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + save!.seed);
-                psi.UseShellExecute = false;
-                psi.RedirectStandardOutput = true;
-                psi.CreateNoWindow = true;
-                var proc = Process.Start(psi);
-
-                var psr = proc!.StandardOutput;
-                PumpernickelSaveState.instance.ParsePath(psr.ReadToEnd());
-
-                proc.WaitForExit();
+                jsonText = Encoding.UTF8.GetString(saveBytes);
             }
+            try {
+                save = JsonConvert.DeserializeObject<PumpernickelSaveState>(jsonText);
+            }
+            catch {
+                return;
+            }
+
+            if (filename.Contains("WATCHER")) {
+                save.character = PlayerCharacter.Watcher;
+            }
+            else if (filename.Contains("THE_SILENT")) {
+                save.character = PlayerCharacter.Silent;
+            }
+            else if (filename.Contains("IRONCLAD")) {
+                save.character = PlayerCharacter.Ironclad;
+            }
+            else if (filename.Contains("DEFECT")) {
+                save.character = PlayerCharacter.Defect;
+            }
+
+            save.OnLoad();
+
+            var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + save!.seed);
+            psi.UseShellExecute = false;
+            psi.RedirectStandardOutput = true;
+            psi.CreateNoWindow = true;
+            var proc = Process.Start(psi);
+
+            var psr = proc!.StandardOutput;
+            PumpernickelSaveState.instance.ParsePath(psr.ReadToEnd());
+
+            proc.WaitForExit();
         }
     }
 }

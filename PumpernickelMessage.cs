@@ -11,23 +11,25 @@ namespace ProjectPumpernickle {
         Cards,
         Gold,
         Potions,
+        Relic,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
         public static void HandleMessage(string fromJava) {
             stringBuilder.Append(fromJava);
-            if (fromJava.EndsWith("Done\n")) {
-                var lines = fromJava.Split('\n');
+            if (stringBuilder.ToString().EndsWith("Done\n")) {
+                var lines = stringBuilder.ToString().Split('\n');
                 switch (lines[0]) {
                     case "Reward": {
-                        ParseCardsMessage(lines.Skip(1).Take(lines.Length - 2));
+                        ParseCardsMessage(lines.Skip(1).Take(lines.Length - 3));
                         break;
                     }
                     case "GreenKey": {
-                        ParseGreenKeyMessage(lines.Skip(1).Take(lines.Length - 2));
+                        ParseGreenKeyMessage(lines.Skip(1).Take(lines.Length - 3));
                         break;
                     }
                 }
+                stringBuilder.Clear();
             }
         }
         protected static void AppendAdvice(StringBuilder builder, RewardType rewardType, List<string> argumentBuilder) {
@@ -38,6 +40,10 @@ namespace ProjectPumpernickle {
                 case RewardType.Cards: {
                     // This should wait until we've seen all the cards rewards before dispatching them
                     builder.Append(PumpernickelBrains.AdviseOnRewards(argumentBuilder));
+                    break;
+                }
+                case RewardType.Relic: {
+                    builder.Append("Take the " + argumentBuilder.Single() + "\r\n");
                     break;
                 }
                 case RewardType.Potions: {
@@ -70,6 +76,10 @@ namespace ProjectPumpernickle {
                 else if (rewardMember == "Gold") {
                     AppendAdvice(sb, rewardType, argumentBuilder);
                     rewardType = RewardType.Gold;
+                }
+                else if (rewardMember == "Relic") {
+                    AppendAdvice(sb, rewardType, argumentBuilder);
+                    rewardType = RewardType.Relic;
                 }
                 else {
                     argumentBuilder.Add(rewardMember);

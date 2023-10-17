@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -9,211 +10,59 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace ProjectPumpernickle {
-    public struct Vector2Int {
-        public int x;
-        public int y;
-    }
-    public enum Threat {
-        GremlinNob,
-        Lagavulin,
-        Hexxaghost,
-        Act1HardPool,
-    }
-    public enum PathShopPlan {
-        MaxRemove,
-        FixFight,
-        NormalShop,
-        HuntForShopRelic,
-        SaveGold,
-    }
-    public class Path {
-        public int elites;
-        public bool hasMegaElite;
-        public MapNode[] nodes = null;
-        public float[] expectedGold;
-        public int[] maxPlanningGold;
-        public float expectedHealthLoss;
-        public float riskOfDeath;
-        public int shopCount;
-        public PathShopPlan shopPlan;
-        public Dictionary<Threat, float> Threats = new Dictionary<Threat, float>();
-        public float Risk;
+    public class  Evaluation {
+        public float Score;
+        public List<string> Advice = new List<string>();
 
-        public float ExpectedPossibleCardRemoves() {
-            float removeCost = Save.state.purgeCost;
-            float totalRemoves = 0f;
-            for (int i = 0; i < nodes.Length; i++) {
-                if (nodes[i].nodeType == NodeType.Shop && maxPlanningGold[i] > removeCost) {
-                    var minPlanningGold = expectedGold[i] - (maxPlanningGold[i] - expectedGold[i]);
-                    var removeAvailableChance = Lerp.Inverse(minPlanningGold, maxPlanningGold[i], removeCost);
-                    removeCost += 25f * removeAvailableChance;
-                    totalRemoves += removeAvailableChance;
-                }
-            }
-            return totalRemoves;
-        }
-
-        public void ChooseShopPlan() {
-            var removeValue = PumpernickelBrains.CardRemovePoints(this);
-            var fixValue = PumpernickelBrains.FixShopPoint(this);
-            var normalValue = PumpernickelBrains.NormalShopPoint(this);
-            var huntValue = PumpernickelBrains.HuntForShopRelicPoint(this);
-            var saveValue = PumpernickelBrains.SaveGoldPoint(this);
-            var highest = new float[] {removeValue, fixValue, normalValue, huntValue, saveValue}.Max();
-            if (removeValue == highest) {
-                shopPlan = PathShopPlan.MaxRemove;
-            }
-            else if (fixValue == highest) {
-                shopPlan = PathShopPlan.FixFight;
-            }
-            else if (normalValue == highest) {
-                shopPlan = PathShopPlan.NormalShop;
-            }
-            else if (huntValue == highest) {
-                shopPlan = PathShopPlan.HuntForShopRelic;
-            }
-            else if (saveValue == highest) {
-                shopPlan = PathShopPlan.SaveGold;
-            }
-        }
-
-        public void ChoosePlanningThreats() {
-            // Could we fight gremlin nob right now?
-        }
-
-        public void ExpectBasicProgression() {
-
-        }
-
-        public void ExpectShopProgression() {
-            float expectedRemoves = 0;
-            for (int i = 0; i < nodes.Length; i++) {
-                expectedGold[i] += PumpernickelBrains.ExpectedGoldFrom(nodes[i].nodeType, shopPlan, expectedRemoves);
-            }
-        }
-
-        public void ChooseFinalThreats() {
-            // Could we fight gremlin nob by the time we get there?
+        public override string ToString() {
+            return string.Join("\r\n", Advice);
         }
     }
     public class PumpernickelBrains {
         public static string AdviseOnRewards(IEnumerable<string> cardRewards) {
             // Techincally, this needs to accept all the card rewards, and we need to multiplex them
-            float skip = Evaluate();
+            var skip = Evaluate();
+            skip.Advice.Append("Skip the cards");
             int bestPick = -1;
-            float bestValue = skip;
+            var bestValue = skip;
             var reward = cardRewards.ToArray();
             for (int i = 0; i < reward.Length; i++) {
-                var cardName = reward[i];
-                var cardIndex = PumpernickelSaveState.instance.AddCardByName(cardName);
-                float eval = Evaluate();
+                var cardId = reward[i];
+                var cardIndex = PumpernickelSaveState.instance.AddCardById(cardId);
+                var evaluation = Evaluate();
+                evaluation.Advice.Append("Take the " + Database.instance.cardsDict[reward[i]].name);
                 PumpernickelSaveState.instance.RemoveCardByIndex(cardIndex);
-                if (eval > bestValue) {
+                if (evaluation.Score > bestValue.Score) {
                     bestPick = i;
-                    bestValue = eval;
+                    bestValue = evaluation;
                 }
             }
-            if (bestPick == -1) {
-                return "Skip the cards\r\n";
-            }
-            return "Choose " + reward[bestPick] + "\r\n";
-        }
-
-        protected static IEnumerable<IEnumerable<MapNode>> IterateNodeSequences(MapNode root) {
-            foreach (var child in root.children) {
-                foreach (var path in IterateNodeSequences(child)) {
-                    yield return path.Append(child);
-                }
-            }
+            return bestValue.ToString();
         }
         protected static int RareRelicsAvailable() {
             var classRelics = 0;
             switch (PumpernickelSaveState.instance.character) {
-                case Character.Ironclad: {
+                case PlayerCharacter.Ironclad: {
                     classRelics = 3;
                     break;
                 }
-                case Character.Silent: {
+                case PlayerCharacter.Silent: {
                     classRelics = 3;
                     break;
                 }
-                case Character.Defect: {
+                case PlayerCharacter.Defect: {
                     classRelics = 1;
                     break;
                 }
-                case Character.Watcher: {
+                case PlayerCharacter.Watcher: {
                     classRelics = 2;
                     break;
                 }
             }
             return 25 + classRelics;
         }
-        protected static float ExpectedGoldFromRandomRelic() {
+        public static float ExpectedGoldFromRandomRelic() {
             return 1f / 6f * (1f / RareRelicsAvailable()) * 300f;
-        }
-        protected static int MaxPlanningGoldFrom(NodeType type) {
-            // The point of this is to plan probabilities for having enough gold to do X.
-            // We don't want to plan our shops around getting old coin or winning a joust.
-            switch (type) {
-                case NodeType.Fight: {
-                    return 20;
-                }
-                case NodeType.Elite: {
-                    return 35;
-                }
-                case NodeType.MegaElite: {
-                    return 35;
-                }
-            }
-            return 0;
-        }
-        protected static float ExpectedGoldFrom(NodeType type) {
-            switch(type) {
-                case NodeType.Fight: {
-                    return 15f;
-                }
-                case NodeType.Elite: {
-                    return 30f + ExpectedGoldFromRandomRelic();
-                }
-                case NodeType.MegaElite: {
-                    return 30 + ExpectedGoldFromRandomRelic();
-                }
-                case NodeType.Shop: {
-                    return -
-                }
-                case NodeType.Question: {
-                    // TODO
-                    return 0f;
-                }
-            }
-            return 0f;
-        }
-        protected static Path[] BuildAllPaths(MapNode root) {
-            var nodeSequences = IterateNodeSequences(root);
-            var paths = nodeSequences.Select(x => new Path() { nodes = x.ToArray() }).ToArray();
-            foreach (var path in paths) {
-                var elites = 0;
-                path.expectedGold = new float[path.nodes.Length];
-                path.expectedGold[0] = Save.state.gold;
-                path.maxPlanningGold = new int[path.nodes.Length];
-                path.maxPlanningGold[0] = Save.state.gold;
-                int index = 0;
-                foreach (var node in path.nodes) {
-                    if (node.nodeType == NodeType.Elite || node.nodeType == NodeType.MegaElite) {
-                        elites++;
-                    }
-                    path.hasMegaElite |= node.nodeType == NodeType.MegaElite;
-                    path.shopCount += (node.nodeType == NodeType.Shop) ? 1 : 0;
-                    path.maxPlanningGold[index] += MaxPlanningGoldFrom(node.nodeType);
-                    index++;
-                }
-                path.ChoosePlanningThreats();
-                path.ExpectBasicProgression();
-                path.ChooseShopPlan();
-                path.ExpectShopProgression();
-                path.ChooseFinalThreats();
-            }
-            return paths;
         }
 
         public static int PermanentDeckSize() {
@@ -224,7 +73,7 @@ namespace ProjectPumpernickle {
                 if (x.id == "Purity") {
                     return x.upgrades > 0 ? -5 : -3;
                 }
-                if (x.tags.ContainsKey(Tags.NonPermanent.ToString())) {
+                if (x.tags?.ContainsKey(Tags.NonPermanent.ToString()) == true) {
                     return 0f;
                 }
                 return 1;
@@ -241,7 +90,7 @@ namespace ProjectPumpernickle {
         }
 
         public static float CardRemovePoints(Path path) {
-            if (Save.state.character == Character.Watcher) {
+            if (Save.state.character == PlayerCharacter.Watcher) {
                 var anticipatedEndGameDeckSize = PermanentDeckSize() - ExpectedCardRemovesAvailable(path) + (HasCalmEnter() ? 0 : 1);
                 if (anticipatedEndGameDeckSize > 8) {
                     return .2f;
@@ -252,61 +101,27 @@ namespace ProjectPumpernickle {
             // TODO
             return .2f;
         }
-        public static float FightsBeforeElite(Path path) {
-            float fightsSoFar = 0f;
-            float fightChance = Save.state.event_chances[1];
-            for (int i = 0; i < path.nodes.Length; i++) {
-                switch (path.nodes[i].nodeType) {
-                    case NodeType.Elite: {
-                        return fightsSoFar;
-                    }
-                    case NodeType.MegaElite: {
-                        return fightsSoFar;
-                    }
-                    case NodeType.Fight: {
-                        fightsSoFar++;
-                        break;
-                    }
-                    case NodeType.Question: {
-                        fightsSoFar += fightChance;
-                        fightChance = .1f * fightChance + (fightChance + .1f) * (1f - fightChance);
-                        break;
-                    }
+
+        public static void DamageStatsPerCardReward(int byTurn, float cardsInDeck, out float damage, out float cost) {
+            // Assumes unupgraded
+            switch (Save.state.character) {
+                case PlayerCharacter.Watcher: {
+                    break;
+                }
+                default: {
+                    throw new NotImplementedException();
                 }
             }
-            return float.NaN;
-        }
-        public static float FixShopPoint(Path path) {
-            // How valuable is it to buy an attack card or potion to fix a scary fight?
-            if (Save.state.act_num == 1) {
-                var fightsBeforeElite = FightsBeforeElite(path);
-                if (fightsBeforeElite == 
-            }
-        }
-        public static float NormalShopPoint(Path path) {
-        }
-        public static float HuntForShopRelicPoint(Path path) {
-        }
-        public static float SaveGoldPoint(Path path) {
+            damage = 0; cost = 0;
         }
 
-        protected static float ShopValue(float expectedGold) {
-        }
-        public static float HowGoodIsTheShop(Path path) {
-            if (!path.hasShop) {
-                return 0f;
-            }
-            for (int i = 0; i < path.nodes.Length; i++) {
-                if (path.nodes[i].nodeType == NodeType.Shop) {
-                }
-            }
+        public static void CardRewardDamageStats(Path path, int nodeIndex, out float totalDamage, out float totalCost) {
+            //path.expectedCardRewards[nodeIndex]
+            totalCost = 0;
+            totalDamage = 0;
         }
 
-        public static void EvaluatePathing() {
-            var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
-            var allPaths = BuildAllPaths(currentNode);
-            var maxElites = allPaths.Select(x => x.elites).Max();
-            var minElites = allPaths.Select(x => x.elites).Min();
+        protected static float ScorePath(Path path) {
             // Things to think about:
             // - How many elites can I do this act? 
             // ✔ What is the largest number of elites available?
@@ -320,16 +135,98 @@ namespace ProjectPumpernickle {
             // - Do we have fight metascaling (ritual dagger, genetic algorithm, etc)
             // - What is our expected health loss per fight / elite
 
+            // ROUGH Rules:
+            //  - you get ~10 points for surviving acts 1, 2 and 3
+            //  - you get 2 points for the first 4 upgrades, then 1 for the next 6
+            //  - 1 point per relic up to 15
+            //  - .5 points per card reward
+            //  - card removes?
+            var points = 0f;
+
+            points += 10f * (1f - path.Risk);
+
+            var upgrades = path.expectedUpgrades[^1];
+            if (upgrades <= 4) {
+                points += upgrades * 2f;
+            }
+            else {
+                points += 8 + MathF.Min(upgrades - 4, 6);
+            }
+
+            points += MathF.Min(path.expectedRewardRelics[^1], 15f);
+
+            points += .5f * path.expectedCardRewards[^1];
+
+            return points;
         }
 
-        public static float Evaluate() {
-            EvaluatePathing();
-            float value = 0f;
+        public static string DescribePathing(Span<MapNode> pathNodes) {
+            var moveToPos = pathNodes[0].position;
+            var moveFromPos = PumpernickelSaveState.instance.GetCurrentNode().position;
+            var direction = moveFromPos.x > moveToPos.x ? "left" :
+                (moveFromPos.x < moveToPos.x ? "right" : "up");
+            var destination = pathNodes[0].nodeType.ToString();
+            return string.Format("Go {0} to the {1}", direction, destination);
+        }
+
+        public static string ChooseBestUpgrade(Path path, int index) {
+            return "Eruption";
+        }
+
+        public static Path EvaluatePathing(Evaluation evaluation, out float score) {
+            var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
+            var allPaths = Path.BuildAllPaths(currentNode);
+            var evaluatedPaths = allPaths.Select(x => (Path: x, Score: ScorePath(x))).OrderByDescending(x => x.Score).ToArray();
+            var bestPath = evaluatedPaths.First();
+            score = bestPath.Score;
+            bool needsMoreInfo = false;
+            int i = 0;
+            while (!needsMoreInfo) {
+                evaluation.Advice.Add(DescribePathing(bestPath.Path.nodes[i..]));
+                switch (bestPath.Path.nodes[i].nodeType) {
+                    case NodeType.Shop:
+                    case NodeType.Fight:
+                    case NodeType.Elite:
+                    case NodeType.MegaElite: {
+                        needsMoreInfo = true;
+                        break;
+                    }
+                    case NodeType.Chest: {
+                        needsMoreInfo = true;
+                        evaluation.Advice.Add("Open the chest");
+                        break;
+                    }
+                    case NodeType.Fire: {
+                        switch (bestPath.Path.fireChoices[i]) {
+                            case FireChoice.Rest: {
+                                evaluation.Advice.Add("Rest");
+                                break;
+                            }
+                            case FireChoice.Upgrade: {
+                                var bestUpgrade = ChooseBestUpgrade(bestPath.Path, i);
+                                evaluation.Advice.Add("Upgrade " + bestUpgrade);
+                                break;
+                            }
+                            default:
+                                throw new System.NotImplementedException();
+                        }
+                        break;
+                    }
+                }
+                i++;
+            }
+            return bestPath.Path;
+        }
+
+        public static Evaluation Evaluate() {
+            Evaluation evaluation = new Evaluation();
+            var chosenPath = EvaluatePathing(evaluation, out var pathScore);
+            evaluation.Score = pathScore;
             for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
                 var card = PumpernickelSaveState.instance.cards[i];
-                value += CardFunctionReflection.GetEvalFunctionCached(card.id)(card, i);
+                evaluation.Score += CardFunctionReflection.GetEvalFunctionCached(card.id)(card, i);
             }
-            return value;
+            return evaluation;
         }
     }
 }

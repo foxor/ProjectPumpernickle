@@ -42,12 +42,7 @@ namespace ProjectPumpernickle {
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
             if (damageMatch.Success) {
-                if (upgrades > 0) {
-                    tags["damage"] = float.Parse(damageMatch.Groups[3].Value);
-                }
-                else {
-                    tags["damage"] = float.Parse(damageMatch.Groups[1].Value);
-                }
+                tags["damage"] = float.Parse(damageMatch.Groups[1].Value);
             }
 
             switch (type) {
@@ -82,8 +77,9 @@ namespace ProjectPumpernickle {
     public class MapNode {
         public NodeType nodeType;
         public List<MapNode> children = new List<MapNode>();
+        public Vector2Int position;
     }
-    public enum Character {
+    public enum PlayerCharacter {
         Ironclad,
         Silent,
         Defect,
@@ -102,8 +98,16 @@ namespace ProjectPumpernickle {
         public int purgeCost;
         public int act_num;
         public float[] event_chances;
+        public string[] elite_monster_list;
+        public int elites1_killed;
+        public int elites2_killed;
+        public int elites3_killed;
+        public int monsters_killed;
+        public int current_health;
+        public int max_health;
+        public int floor_num;
 
-        public Character character;
+        public PlayerCharacter character;
 
         public MapNode[,] map = new MapNode[7, 15];
 
@@ -111,7 +115,7 @@ namespace ProjectPumpernickle {
             instance = this;
         }
 
-        public int AddCardByName(string name) {
+        public int AddCardById(string name) {
             var upgrades = name.EndsWith("+") ? 1 : 0;
             var card = new Card() {
                 id = name,
@@ -133,27 +137,27 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case 'R': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Fire };
+                        map[x, y] = new MapNode() { nodeType = NodeType.Fire, position = new Vector2Int(x, y) };
                         break;
                     }
                     case 'M': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Fight };
+                        map[x, y] = new MapNode() { nodeType = NodeType.Fight, position = new Vector2Int(x, y) };
                         break;
                     }
                     case '?': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Question };
+                        map[x, y] = new MapNode() { nodeType = NodeType.Question, position = new Vector2Int(x, y) };
                         break;
                     }
                     case 'E': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Elite };
+                        map[x, y] = new MapNode() { nodeType = NodeType.Elite, position = new Vector2Int(x, y) };
                         break;
                     }
                     case 'T': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Chest };
+                        map[x, y] = new MapNode() { nodeType = NodeType.Chest, position = new Vector2Int(x, y) };
                         break;
                     }
                     case '$': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Shop };
+                        map[x, y] = new MapNode() { nodeType = NodeType.Shop, position = new Vector2Int(x, y) };
                         break;
                     }
                 }
