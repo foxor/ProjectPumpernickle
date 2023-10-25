@@ -8,7 +8,16 @@ If our boss is slime or hexxa, slight synnergy to status consumers
 Setup tags have anti-synnergy with each other
 Cards have anti-synergy with other copies of themselves
 Orb generators have synergy with focus
+If an infinite is detected
+If we're trying to get an infinite, every card has a negative bias inversely proportionate to our deck space
 
+
+slight: 1-3
+moderate: 2-4
+significant: 3-5
+major: 6-8
+huge: ~10
+massive: 15
 
 
 ___ Relic algorithms: ___
@@ -498,3 +507,24 @@ Cold snap
  - minor negative bias
  -- damage card
  -- frost orb
+
+Bowling Bash
+ - minor negative bias
+ -- damage card
+ -- AoE
+
+Reach Heaven
+ - major negative bias
+ -- damage
+ -- retain
+
+Empty Body
+ - major negative bias
+ -- block card
+ -- stance exit
+
+Establishment
+ - slight negative bias
+ - massive synergy with meditate
+ - significant synergy with retain
+ - check for infinite

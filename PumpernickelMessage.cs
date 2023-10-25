@@ -12,6 +12,7 @@ namespace ProjectPumpernickle {
         Gold,
         Potions,
         Relic,
+        Key,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
@@ -28,37 +29,16 @@ namespace ProjectPumpernickle {
                         ParseGreenKeyMessage(lines.Skip(1).Take(lines.Length - 3));
                         break;
                     }
+                    case "Event": {
+                        ParseEventMessage(lines.Skip(1).Take(lines.Length - 3));
+                        break;
+                    }
                 }
                 stringBuilder.Clear();
             }
         }
-        protected static void AppendAdvice(StringBuilder builder, RewardType rewardType, List<string> argumentBuilder) {
-            switch (rewardType) {
-                case RewardType.None: {
-                    break;
-                }
-                case RewardType.Cards: {
-                    // This should wait until we've seen all the cards rewards before dispatching them
-                    builder.Append(PumpernickelBrains.AdviseOnRewards(argumentBuilder));
-                    break;
-                }
-                case RewardType.Relic: {
-                    builder.Append("Take the " + argumentBuilder.Single() + "\r\n");
-                    break;
-                }
-                case RewardType.Potions: {
-                    builder.Append("Take the potion\r\n");
-                    break;
-                }
-                case RewardType.Gold: {
-                    builder.Append("Take the gold\r\n");
-                    break;
-                }
-            }
-            argumentBuilder.Clear();
-        }
         protected static void ParseCardsMessage(IEnumerable<string> rewardGroups) {
-            StringBuilder sb = new StringBuilder();
+            List<RewardOption> rewardOptions = new List<RewardOption>();
             List<string> argumentBuilder = new List<string>();
             RewardType rewardType = RewardType.None;
             foreach (var rewardMember in rewardGroups) {
@@ -66,33 +46,63 @@ namespace ProjectPumpernickle {
                     continue;
                 }
                 else if (rewardMember == "Cards") {
-                    AppendAdvice(sb, rewardType, argumentBuilder);
+                    if (rewardType != RewardType.None) {
+                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+                    }
+                    argumentBuilder.Clear();
                     rewardType = RewardType.Cards;
                 }
                 else if (rewardMember == "Potion") {
-                    AppendAdvice(sb, rewardType, argumentBuilder);
+                    if (rewardType != RewardType.None) {
+                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+                    }
+                    argumentBuilder.Clear();
                     rewardType = RewardType.Potions;
                 }
                 else if (rewardMember == "Gold") {
-                    AppendAdvice(sb, rewardType, argumentBuilder);
+                    if (rewardType != RewardType.None) {
+                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+                    }
+                    argumentBuilder.Clear();
                     rewardType = RewardType.Gold;
                 }
                 else if (rewardMember == "Relic") {
-                    AppendAdvice(sb, rewardType, argumentBuilder);
+                    if (rewardType != RewardType.None) {
+                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+                    }
+                    argumentBuilder.Clear();
                     rewardType = RewardType.Relic;
+                }
+                else if (rewardMember == "Key") {
+                    if (rewardType != RewardType.None) {
+                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+                    }
+                    argumentBuilder.Clear();
+                    rewardType = RewardType.Key;
                 }
                 else {
                     argumentBuilder.Add(rewardMember);
                 }
             }
-            AppendAdvice(sb, rewardType, argumentBuilder);
-            PumpernickelAdviceWindow.SetText(sb.ToString());
+            if (rewardType != RewardType.None) {
+                rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+            }
+            argumentBuilder.Clear();
+            PumpernickelAdviceWindow.SetText(PathAdvice.AdviseOnRewards(rewardOptions));
         }
 
         protected static void ParseGreenKeyMessage(IEnumerable<string> floorCoordinate) {
-            int x = int.Parse(floorCoordinate.First());
-            int y = int.Parse(floorCoordinate.Skip(1).Single());
-            PumpernickelSaveState.instance.map[x, y].nodeType = NodeType.MegaElite;
+            if (floorCoordinate.Count() == 2) {
+                int x = int.Parse(floorCoordinate.First());
+                int y = int.Parse(floorCoordinate.Skip(1).Single());
+                PumpernickelSaveState.instance.map[x, y].nodeType = NodeType.MegaElite;
+            }
+        }
+        protected static void ParseEventMessage(IEnumerable<string> eventClassName) {
+            var javaClassPath = eventClassName.Single();
+            var eventName = javaClassPath.Substring(javaClassPath.LastIndexOf('.') + 1);
+            var evaluation = typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Invoke(null, null);
+            PumpernickelAdviceWindow.SetText(evaluation.ToString());
         }
     }
 }

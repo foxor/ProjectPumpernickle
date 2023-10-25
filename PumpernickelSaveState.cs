@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -15,8 +16,17 @@ namespace ProjectPumpernickle {
     }
     public enum Tags {
         NonPermanent,
+        CardDraw,
     }
-    public struct Card {
+    public enum Zone {
+        Hand,
+        Discard,
+        Draw,
+        Exhaust,
+        Exhume,
+        Power,
+    }
+    public class Card {
         public string id;
         public int misc;
         public int upgrades;
@@ -25,14 +35,21 @@ namespace ProjectPumpernickle {
         public string type;
         public string cost;
         public string description;
+        public float bias;
 
         public Dictionary<string, float> tags;
         public CardType cardType;
+        public int intCost = -1;
+        public Zone zone;
+
         public void CopyFrom(Card other) {
             this.name = other.name;
             this.type = other.type;
             this.cost = other.cost;
             this.description = other.description;
+            this.zone = other.zone;
+            this.bias = other.bias;
+            this.tags = other.tags;
         }
 
         public void OnLoad() {
@@ -44,6 +61,7 @@ namespace ProjectPumpernickle {
             if (damageMatch.Success) {
                 tags["damage"] = float.Parse(damageMatch.Groups[1].Value);
             }
+            int.TryParse(cost, out intCost);
 
             switch (type) {
                 case "Attack": {
@@ -85,6 +103,12 @@ namespace ProjectPumpernickle {
         Defect,
         Watcher,
     }
+    public class DamageTaken {
+        public float damage;
+        public string enemies;
+        public float floor;
+        public float turns;
+    }
     public class PumpernickelSaveState {
         public static PumpernickelSaveState instance;
 
@@ -106,10 +130,22 @@ namespace ProjectPumpernickle {
         public int current_health;
         public int max_health;
         public int floor_num;
+        public List<string> relics = new List<string>();
+        public string[] potions;
+        public bool has_emerald_key;
+        public bool has_ruby_key;
+        public bool has_sapphire_key;
+        public List<DamageTaken> metric_damage_taken;
 
         public PlayerCharacter character;
-
-        public MapNode[,] map = new MapNode[7, 15];
+        // TODO: handle boss
+        public MapNode[,] map = new MapNode[7, 14];
+        public float infiniteBlockPerCard;
+        public int infiniteRoom;
+        public int earliestInfinite;
+        public bool buildingInfinite;
+        public int missingCards;
+        public bool expectingToRedBlue;
 
         public PumpernickelSaveState() {
             instance = this;
@@ -122,6 +158,8 @@ namespace ProjectPumpernickle {
                 upgrades = upgrades,
                 misc = 0
             };
+            card.CopyFrom(Database.instance.cardsDict[card.id]);
+            card.OnLoad();
             cards.Add(card);
             return cards.Count - 1;
         }
@@ -214,6 +252,19 @@ namespace ProjectPumpernickle {
             var CurrentNode = map[room_x, room_y];
             // If we're talking to neow, make up a fake node with all the starting nodes as children
             return CurrentNode;
+        }
+
+        public int TakePotion(string potion) {
+            for (int i = 0; i < potions.Length; i++) {
+                if (potions[i].Equals("Potion Slot")) {
+                    potions[i] = potion;
+                    return i;
+                }
+            }
+            return -1;
+        }
+        public void RemovePotion(int potionIndex) {
+            potions[potionIndex] = "Potion Slot";
         }
     }
 }

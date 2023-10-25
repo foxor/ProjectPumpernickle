@@ -26,7 +26,7 @@ namespace ProjectPumpernickle {
                 };
             }
             return (Card c, int i) => {
-                return (float)method.Invoke(null, new object[] { c, i });
+                return (float)method.Invoke(null, new object[] { c, i }) + c.bias;
             };
         }
     }

@@ -2,9 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
+    public class Move {
+        public string type;
+        public string description;
+        public int damage;
+        public void OnLoad() {
+            if (type.Contains("a")) {
+                var match = Regex.Match(description, @"\d+ \((\d+)\)");
+                if (match.Success) {
+                    damage = int.Parse(match.Groups[1].Value);
+                }
+                else {
+                    match = Regex.Match(description, @"(\d+)");
+                    if (match.Success) {
+                        damage = int.Parse(match.Groups[1].Value);
+                    }
+                }
+            }
+        }
+    }
     public class Monster {
         public string id;
         public string name;
@@ -13,6 +33,7 @@ namespace ProjectPumpernickle {
         public string maxHP;
         public string minHPA;
         public string maxHPA;
+        public Move[] moves;
     }
     public class Encounter {
         public string id;
@@ -21,6 +42,8 @@ namespace ProjectPumpernickle {
         public int weight;
         public string[] characters;
         public bool special;
+        public float medianExpectedHealthLoss;
+        public float medianWorstCaseHealthLoss;
     }
     internal class Database {
         public static Database instance;
@@ -36,6 +59,13 @@ namespace ProjectPumpernickle {
             }
             foreach (var encounter in encounters) {
                 encounterDict[encounter.id] = encounter;
+            }
+            foreach (var monster in creatures) {
+                if (monster.moves != null) {
+                    foreach (var move in monster.moves) {
+                        move.OnLoad();
+                    }
+                }
             }
         }
     }

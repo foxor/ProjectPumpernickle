@@ -53,8 +53,20 @@ namespace ProjectPumpernickle {
             if (filename.EndsWith(".vdf") || filename.EndsWith("backUp")) {
                 return;
             }
-            var readText = File.ReadAllTextAsync(filename);
-            readText.Wait();
+            Task<string> readText = null;
+            for (int i = 0; i < 100; i++) {
+                try {
+                    readText = File.ReadAllTextAsync(filename);
+                    readText.Wait();
+                    break;
+                }
+                catch {
+                    Thread.Sleep(10);
+                }
+                if (i == 99) {
+                    throw new Exception("Can't read save file");
+                }
+            }
             PumpernickelSaveState save = null;
             var jsonText = readText.Result;
             if (!filename.EndsWith("BETA")) {

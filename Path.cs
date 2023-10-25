@@ -77,11 +77,23 @@ namespace ProjectPumpernickle {
                     totalRemoves += removeAvailableChance;
                 }
             }
+            var removesForMidActs = 2.3f;
+            var removesForActFour = 1f;
+            if (Save.state.act_num == 1) {
+                totalRemoves += removesForMidActs * 2 + removesForActFour;
+            }
+            else if (Save.state.act_num == 2) {
+                totalRemoves += removesForMidActs + removesForActFour;
+            }
+            else if (Save.state.act_num == 3) {
+                // TODO: make sure we will have enough gold for this
+                totalRemoves += removesForActFour;
+            }
             return totalRemoves;
         }
 
         public void ChooseShopPlan() {
-            var removeValue = PumpernickelBrains.CardRemovePoints(this);
+            var removeValue = PathAdvice.CardRemovePoints(this);
             var fixValue = FixShopPoint();
             var normalValue = NormalShopPoint();
             var huntValue = HuntForShopRelicPoint();
@@ -393,10 +405,10 @@ namespace ProjectPumpernickle {
                     return 15f;
                 }
                 case NodeType.Elite: {
-                    return 30f + PumpernickelBrains.ExpectedGoldFromRandomRelic();
+                    return 30f + Evaluators.ExpectedGoldFromRandomRelic();
                 }
                 case NodeType.MegaElite: {
-                    return 30 + PumpernickelBrains.ExpectedGoldFromRandomRelic();
+                    return 30 + Evaluators.ExpectedGoldFromRandomRelic();
                 }
                 case NodeType.Shop: {
                     return -1 * ExpectedGoldSpend(index);

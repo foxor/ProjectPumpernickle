@@ -38,17 +38,20 @@
             // 
             // textBox1
             // 
+            textBox1.Anchor = AnchorStyles.None;
             textBox1.Location = new Point(12, 12);
             textBox1.Multiline = true;
             textBox1.Name = "textBox1";
-            textBox1.Size = new Size(537, 296);
+            textBox1.RightToLeft = RightToLeft.Yes;
+            textBox1.Size = new Size(318, 162);
             textBox1.TabIndex = 1;
+            textBox1.TextAlign = HorizontalAlignment.Center;
             // 
             // PumpernickelAdviceWindow
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(573, 327);
+            ClientSize = new Size(347, 188);
             Controls.Add(textBox1);
             Controls.Add(pathing);
             Name = "PumpernickelAdviceWindow";

@@ -13,6 +13,9 @@ import com.megacrit.cardcrawl.helpers.EventHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
+import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import com.megacrit.cardcrawl.rooms.EventRoom;
+import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 import com.megacrit.cardcrawl.screens.CombatRewardScreen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +34,7 @@ public class SpirePatches {
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
+            boolean alreadySaidGreenKey = false;
             for (RewardItem rewardItem : AbstractDungeon.combatRewardScreen.rewards) {
                 switch (rewardItem.type) {
                     case CARD: {
@@ -47,6 +51,7 @@ public class SpirePatches {
                     }
                     case GOLD: {
                         outToServer.write("Gold\n".getBytes(StandardCharsets.UTF_8));
+                        outToServer.write((rewardItem.goldAmt + "\n").getBytes(StandardCharsets.UTF_8));
                         break;
                     }
                     case POTION: {
@@ -57,6 +62,14 @@ public class SpirePatches {
                     case RELIC: {
                         outToServer.write("Relic\n".getBytes(StandardCharsets.UTF_8));
                         outToServer.write((rewardItem.relic.relicId + "\n").getBytes(StandardCharsets.UTF_8));
+                    }
+                    case EMERALD_KEY: {
+                        // No idea why this is listed as a rewardItem twice
+                        if (!alreadySaidGreenKey) {
+                            outToServer.write("Key\n".getBytes(StandardCharsets.UTF_8));
+                            outToServer.write("Green\n".getBytes(StandardCharsets.UTF_8));
+                            alreadySaidGreenKey = true;
+                        }
                     }
                 }
             }
@@ -88,6 +101,25 @@ public class SpirePatches {
         catch (Exception e) {
         }
     }
+    public static void eventRolled() {
+        AbstractRoom room = AbstractDungeon.getCurrRoom();
+        if (room instanceof EventRoom) {
+            EventRoom event = (EventRoom) room;
+            try {
+                Socket clientSocket = new Socket("localhost", 13076);
+                DataOutputStream outToServer =
+                        new DataOutputStream(clientSocket.getOutputStream());
+                outToServer.write("Event\n".getBytes(StandardCharsets.UTF_8));
+                outToServer.write(event.event.getClass().getName().getBytes(StandardCharsets.UTF_8));
+                outToServer.write("\n".getBytes(StandardCharsets.UTF_8));
+                outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+                outToServer.flush();
+                clientSocket.close();
+            }
+            catch (Exception e) {
+            }
+        }
+    }
     // Recompute after generating a card reward
     @SpirePatch( clz = CombatRewardScreen.class, method = "setupItemReward" )
     public static class AbstractDungeonGetRewardCardsPatch {
@@ -97,5 +129,9 @@ public class SpirePatches {
     @SpirePatch( clz = AbstractDungeon.class, method = "setEmeraldElite")
     public static class AbstractDungeonSetEmeraldElitePatch {
         @SpirePostfixPatch public static void Postfix() { emeraldSet(); }
+    }
+    @SpirePatch(clz = AbstractDungeon.class, method = "nextRoomTransition", paramtypez = { SaveFile.class })
+    public static class OnEventRolledPatch {
+        @SpirePostfixPatch public static void Postfix() { eventRolled(); }
     }
 }
