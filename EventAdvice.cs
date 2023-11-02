@@ -13,5 +13,21 @@ namespace ProjectPumpernickle {
             var evaluation = PathAdvice.Evaluate(existingAdvice);
             return evaluation;
         }
+
+        public static Evaluation Vampires() {
+            var existingAdvice = new List<string>() {
+                "Refuse the bites"
+            };
+            var evaluation = PathAdvice.Evaluate(existingAdvice);
+            return evaluation;
+        }
+
+        public static Evaluation TheMausoleum() {
+            var existingAdvice = new List<string>() {
+                "Leave the Mausoleum"
+            };
+            var evaluation = PathAdvice.Evaluate(existingAdvice);
+            return evaluation;
+        }
     }
 }

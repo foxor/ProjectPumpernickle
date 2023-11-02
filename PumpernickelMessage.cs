@@ -33,6 +33,26 @@ namespace ProjectPumpernickle {
                         ParseEventMessage(lines.Skip(1).Take(lines.Length - 3));
                         break;
                     }
+                    case "BossRelic": {
+                        ParseBossRelicMessage(lines.Skip(1).Take(lines.Length - 3));
+                        break;
+                    }
+                    case "ChangeAct": {
+                        Save.state.act_num++;
+                        Save.state.room_y = -1;
+                        var healthLine = lines.Skip(1).First();
+                        Save.state.current_health = int.Parse(healthLine.Substring(healthLine.LastIndexOf(" ") + 1));
+                        PumpernickelAdviceWindow.instance.UpdateAct();
+                        GivePathingAdvice();
+                        break;
+                    }
+                    case "Shop": {
+                        throw new System.NotImplementedException("Unsupported message type: " + lines[0]);
+                        break;
+                    }
+                    default: {
+                        throw new System.NotImplementedException("Unsupported message type: " + lines[0]);
+                    }
                 }
                 stringBuilder.Clear();
             }
@@ -88,21 +108,32 @@ namespace ProjectPumpernickle {
                 rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
             }
             argumentBuilder.Clear();
-            PumpernickelAdviceWindow.SetText(PathAdvice.AdviseOnRewards(rewardOptions));
+            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
         }
 
         protected static void ParseGreenKeyMessage(IEnumerable<string> floorCoordinate) {
             if (floorCoordinate.Count() == 2) {
                 int x = int.Parse(floorCoordinate.First());
                 int y = int.Parse(floorCoordinate.Skip(1).Single());
-                PumpernickelSaveState.instance.map[x, y].nodeType = NodeType.MegaElite;
+                PumpernickelSaveState.instance.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
             }
         }
         protected static void ParseEventMessage(IEnumerable<string> eventClassName) {
             var javaClassPath = eventClassName.Single();
             var eventName = javaClassPath.Substring(javaClassPath.LastIndexOf('.') + 1);
             var evaluation = typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Invoke(null, null);
-            PumpernickelAdviceWindow.SetText(evaluation.ToString());
+            PumpernickelAdviceWindow.instance.SetEvaluation((Evaluation)evaluation);
+        }
+        protected static void ParseBossRelicMessage(IEnumerable<string> bossRelicOptions) {
+            List<RewardOption> rewardOptions = new List<RewardOption>() {
+                new RewardOption() {
+                    rewardType = RewardType.Relic, values = bossRelicOptions.ToArray()
+                },
+            };
+            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
+        }
+        protected static void GivePathingAdvice() {
+            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(new List<RewardOption>()));
         }
     }
 }

@@ -19,7 +19,7 @@ namespace ProjectPumpernickle {
 
         float IGlobalRule.Apply(Path path) {
             var room = Save.state.infiniteRoom;
-            var expectedCardRemoves = path.ExpectedPossibleCardRemoves();
+            var expectedCardRemoves = path == null ? Path.ExpectedFutureActCardRemoves() : path.ExpectedPossibleCardRemoves();
             var finalRoom = room + expectedCardRemoves;
             var infiniteNow = room > 0;
             var infiniteEnd = finalRoom > 2f;

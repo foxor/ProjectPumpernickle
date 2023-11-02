@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -19,6 +21,12 @@ namespace ProjectPumpernickle {
             this.x = x;
             this.y = y;
         }
+        public override bool Equals([NotNullWhen(true)] object? obj) {
+            if (obj is Vector2Int v) {
+                return v.x == x && v.y == y;
+            }
+            return base.Equals(obj);
+        }
     }
     public enum PathShopPlan {
         MaxRemove,
@@ -28,11 +36,15 @@ namespace ProjectPumpernickle {
         SaveGold,
     }
     public enum FireChoice {
+        None,
         Rest,
         Upgrade,
         Key,
     }
     public class Path {
+        public static readonly float MAX_ACCEPTABLE_RISK = .8f;
+        public static readonly float MIN_ACCEPTABLE_RISK = .05f;
+
         public int elites;
         public bool hasMegaElite;
         public MapNode[] nodes = null;
@@ -43,6 +55,7 @@ namespace ProjectPumpernickle {
         public PathShopPlan shopPlan;
         public Dictionary<string, float> Threats = new Dictionary<string, float>();
         public float Risk;
+        public Path OffRamp;
         public float[] expectedCardRewards = null;
         public float[] expectedRewardRelics = null;
         public bool[] plannedCardRemove = null;
@@ -51,32 +64,26 @@ namespace ProjectPumpernickle {
         public string[][] possibleThreats = null;
         public float[] expectedUpgrades = null;
         public FireChoice[] fireChoices = null;
+        public float score;
 
         public void InitArrays() {
-            expectedGold = new float[nodes.Length];
-            minPlanningGold = new int[nodes.Length];
-            expectedCardRewards = new float[nodes.Length];
-            expectedRewardRelics = new float[nodes.Length];
-            plannedCardRemove = new bool[nodes.Length];
-            expectedHealth = new float[nodes.Length];
-            worstCaseHealth = new float[nodes.Length];
-            possibleThreats = new string[nodes.Length][];
-            expectedUpgrades = new float[nodes.Length];
-            fireChoices = new FireChoice[nodes.Length];
+            var bosses = Save.state.act_num == 3 ? 2 : 1;
+            var planningNodes = nodes.Length + bosses;
+            expectedGold = new float[planningNodes];
+            minPlanningGold = new int[planningNodes];
+            expectedCardRewards = new float[planningNodes];
+            expectedRewardRelics = new float[planningNodes];
+            plannedCardRemove = new bool[planningNodes];
+            expectedHealth = new float[planningNodes];
+            worstCaseHealth = new float[planningNodes];
+            possibleThreats = new string[planningNodes][];
+            expectedUpgrades = new float[planningNodes];
+            fireChoices = new FireChoice[planningNodes];
             InitializePossibleThreats();
         }
 
-        public float ExpectedPossibleCardRemoves() {
-            float removeCost = Save.state.purgeCost;
+        public static float ExpectedFutureActCardRemoves() {
             float totalRemoves = 0f;
-            for (int i = 0; i < nodes.Length; i++) {
-                if (nodes[i].nodeType == NodeType.Shop && minPlanningGold[i] > removeCost) {
-                    var maxPlanningGold = expectedGold[i] - (expectedGold[i] -  minPlanningGold[i]);
-                    var removeAvailableChance = Lerp.Inverse(minPlanningGold[i], maxPlanningGold, removeCost);
-                    removeCost += 25f * removeAvailableChance;
-                    totalRemoves += removeAvailableChance;
-                }
-            }
             var removesForMidActs = 2.3f;
             var removesForActFour = 1f;
             if (Save.state.act_num == 1) {
@@ -90,6 +97,20 @@ namespace ProjectPumpernickle {
                 totalRemoves += removesForActFour;
             }
             return totalRemoves;
+        }
+
+        public float ExpectedPossibleCardRemoves() {
+            float removeCost = Save.state.purgeCost;
+            float totalRemoves = 0f;
+            for (int i = 0; i < nodes.Length; i++) {
+                if (nodes[i].nodeType == NodeType.Shop && minPlanningGold[i] > removeCost) {
+                    var maxPlanningGold = expectedGold[i] - (expectedGold[i] -  minPlanningGold[i]);
+                    var removeAvailableChance = Lerp.Inverse(minPlanningGold[i], maxPlanningGold, removeCost);
+                    removeCost += 25f * removeAvailableChance;
+                    totalRemoves += removeAvailableChance;
+                }
+            }
+            return totalRemoves + ExpectedFutureActCardRemoves();
         }
 
         public void ChooseShopPlan() {
@@ -156,6 +177,10 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
+            possibleThreats[nodes.Length] = new string[] { Save.state.boss };
+            if (Save.state.act_num == 3) {
+                possibleThreats[nodes.Length + 1] = NextBossOptions().ToArray();
+            }
         }
 
         public static string[] EasyPool() {
@@ -186,6 +211,32 @@ namespace ProjectPumpernickle {
                 cantBe = Save.state.elite_monster_list[Save.state.elites1_killed - 1];
             }
             return Database.instance.encounters.Where(x => x.act == Save.state.act_num && x.pool.Equals("elite") && x.id != cantBe).Select(x => x.id);
+        }
+
+        public static IEnumerable<string> NextBossOptions() {
+            switch (Save.state.boss) {
+                case "Time Eater": {
+                    return new string[] {
+                        "Awakened One",
+                        "Donu Deca",
+                    };
+                }
+                case "Awakened One": {
+                    return new string[] {
+                        "Time Eater",
+                        "Donu Deca",
+                    };
+                }
+                case "Donu Deca": {
+                    return new string[] {
+                        "Awakened One",
+                        "Time Eater",
+                    };
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
         }
 
         public void FindBasicProperties() {
@@ -241,9 +292,10 @@ namespace ProjectPumpernickle {
         }
 
         public void ExpectShopProgression() {
-            float expectedRemoves = 0;
+            var gold = (float)Save.state.gold;
             for (int i = 0; i < nodes.Length; i++) {
-                expectedGold[i] += ExpectedGoldFrom(i);
+                gold += ExpectedGoldFrom(i);
+                expectedGold[i] = gold;
                 // TODO: also add cards and relics and such
             }
         }
@@ -258,8 +310,8 @@ namespace ProjectPumpernickle {
         }
 
         public bool ShouldRest(int index) {
-            for (int i = index + 1; i < nodes.Length; i++) {
-                if (nodes[i].nodeType == NodeType.Fire) {
+            for (int i = index + 1; i < expectedHealth.Length; i++) {
+                if (i < nodes.Length && nodes[i].nodeType == NodeType.Fire) {
                     return false;
                 }
                 if (HealthTooLow(i)) {
@@ -272,7 +324,10 @@ namespace ProjectPumpernickle {
         public void PlanFires() {
             var upgrades = 0;
             for (int i = 0; i < nodes.Length; i++) {
-                if (NeedsRedKey(i)) {
+                if (nodes[i].nodeType != NodeType.Fire) {
+                    fireChoices[i] = FireChoice.None;
+                }
+                else if (NeedsRedKey(i)) {
                     fireChoices[i] = FireChoice.Key;
                 }
                 else if (ShouldRest(i)) {
@@ -289,7 +344,7 @@ namespace ProjectPumpernickle {
 
         public void ChoosePlanningThreats() {
             // What are the scary fights with our deck right now
-            for (int i = 0; i < nodes.Length; i++) {
+            for (int i = 0; i < possibleThreats.Length; i++) {
                 var lastExpectedHealth = i == 0 ? Save.state.current_health : expectedHealth[i - 1];
                 var lastWorstCaseHealth = i == 0 ? Save.state.current_health : worstCaseHealth[i - 1];
                 float totalExpectedHealthLoss = 0f;
@@ -322,7 +377,7 @@ namespace ProjectPumpernickle {
             var worstCaseHealth = expectedHealth - worstCaseDamage;
             if (worstCaseDamage > expectedDamage && worstCaseHealth < 0f) {
                 var deathLikelihood = -worstCaseHealth / (worstCaseDamage - expectedDamage);
-                var fractionMultiplier = Lerp.From(0, 2, deathLikelihood);
+                var fractionMultiplier = Lerp.FromUncapped(0, 2, deathLikelihood);
                 Threats[threat] += fractionMultiplier * healthFraction;
                 // These risks aggregate across all encounters, which is a bit strange
                 Risk += deathLikelihood;
@@ -337,6 +392,9 @@ namespace ProjectPumpernickle {
         }
 
         public static IEnumerable<List<MapNode>> IterateNodeSequences(MapNode root, bool skipFirstNode = false) {
+            if (root == null) {
+                yield break;
+            }
             if (root.children.Any()) {
                 foreach (var child in root.children) {
                     foreach (var path in IterateNodeSequences(child)) {
@@ -356,7 +414,7 @@ namespace ProjectPumpernickle {
             switch (shopPlan) {
                 case PathShopPlan.MaxRemove: {
                     var removeCost = Save.state.purgeCost;
-                    var previousRemoves = plannedCardRemove.Take(index).Select(b => b ? 1 : 0).Aggregate((acc, x) => acc + x);
+                    var previousRemoves = index == 0 ? 0 : plannedCardRemove.Take(index).Select(b => b ? 1 : 0).Aggregate((acc, x) => acc + x);
                     removeCost += 25 * previousRemoves;
                     if (minPlanningGold[index] >= removeCost) {
                         plannedCardRemove[index] = true;
@@ -437,15 +495,14 @@ namespace ProjectPumpernickle {
         public float SaveGoldPoint() {
             return 0f;
         }
-        public float HowGoodIsTheShop() {
-            if (shopCount == 0) {
-                return 0f;
+        public float ExpectedGoldBroughtToShops() {
+            var goldBrought = 0f;
+            for (int i = 0; i < nodes.Length; i++) {
+                if (nodes[i].nodeType == NodeType.Shop) {
+                    goldBrought += expectedGold[i];
+                }
             }
-            throw new System.NotImplementedException();
-            //for (int i = 0; i < path.nodes.Length; i++) {
-            //    if (path.nodes[i].nodeType == NodeType.Shop) {
-            //    }
-            //}
+            return goldBrought;
         }
         public static Path[] BuildAllPaths(MapNode root) {
             // FIXME: this is only accurate in act 1?
@@ -462,14 +519,24 @@ namespace ProjectPumpernickle {
                 path.PlanFires();
                 path.FinalThreatAnalysis();
             }
-            foreach (var child in root.children) {
-                var pathsThatGoThisWay = paths.Where(x => x.nodes[0] == child);
-                var safestPathThisWay = pathsThatGoThisWay.OrderBy(x => x.Risk).First();
-                foreach (var path in pathsThatGoThisWay) {
-                    path.Risk = safestPathThisWay.Risk;
+            if (root != null) {
+                foreach (var child in root.children) {
+                    var pathsThatGoThisWay = paths.Where(x => x.nodes[0] == child);
+                    var safestPathThisWay = pathsThatGoThisWay.OrderBy(x => x.Risk).First();
+                    foreach (var path in pathsThatGoThisWay) {
+                        path.OffRamp = safestPathThisWay;
+                    }
                 }
             }
             return paths;
+        }
+        public void MergeScoreWithOffRamp() {
+            float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, Risk);
+            float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, OffRamp.Risk);
+            riskT = (riskT * MathF.E * 2) - MathF.E;
+            offRampRiskT = (offRampRiskT * MathF.E * 2) - MathF.E;
+            float riskRelevance = PumpernickelMath.Sigmoid(riskT - offRampRiskT);
+            score = Lerp.From(score, OffRamp.score, riskRelevance);
         }
     }
 }

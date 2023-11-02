@@ -36,6 +36,7 @@ namespace ProjectPumpernickle {
         public string cost;
         public string description;
         public float bias;
+        public float upgradeBias;
 
         public Dictionary<string, float> tags;
         public CardType cardType;
@@ -50,6 +51,7 @@ namespace ProjectPumpernickle {
             this.zone = other.zone;
             this.bias = other.bias;
             this.tags = other.tags;
+            this.upgradeBias = other.upgradeBias;
         }
 
         public void OnLoad() {
@@ -138,8 +140,7 @@ namespace ProjectPumpernickle {
         public List<DamageTaken> metric_damage_taken;
 
         public PlayerCharacter character;
-        // TODO: handle boss
-        public MapNode[,] map = new MapNode[7, 14];
+        public MapNode[,,] map = new MapNode[4, 7, 15];
         public float infiniteBlockPerCard;
         public int infiniteRoom;
         public int earliestInfinite;
@@ -166,79 +167,86 @@ namespace ProjectPumpernickle {
         public void RemoveCardByIndex(int index) {
             cards.RemoveAt(index);
         }
-        protected void ParseNodes(int y, string line) {
+        protected void ParseNodes(int act, int y, string line) {
             for (int x = 0; x < 7; x++) {
                 var c = line[x * 3];
                 switch (c) {
                     case ' ': {
-                        map[x, y] = null;
+                        map[act, x, y] = null;
                         break;
                     }
                     case 'R': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Fire, position = new Vector2Int(x, y) };
+                        map[act, x, y] = new MapNode() { nodeType = NodeType.Fire, position = new Vector2Int(x, y) };
                         break;
                     }
                     case 'M': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Fight, position = new Vector2Int(x, y) };
+                        map[act, x, y] = new MapNode() { nodeType = NodeType.Fight, position = new Vector2Int(x, y) };
                         break;
                     }
                     case '?': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Question, position = new Vector2Int(x, y) };
+                        map[act, x, y] = new MapNode() { nodeType = NodeType.Question, position = new Vector2Int(x, y) };
                         break;
                     }
                     case 'E': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Elite, position = new Vector2Int(x, y) };
+                        map[act, x, y] = new MapNode() { nodeType = NodeType.Elite, position = new Vector2Int(x, y) };
                         break;
                     }
                     case 'T': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Chest, position = new Vector2Int(x, y) };
+                        map[act, x, y] = new MapNode() { nodeType = NodeType.Chest, position = new Vector2Int(x, y) };
                         break;
                     }
                     case '$': {
-                        map[x, y] = new MapNode() { nodeType = NodeType.Shop, position = new Vector2Int(x, y) };
+                        map[act, x, y] = new MapNode() { nodeType = NodeType.Shop, position = new Vector2Int(x, y) };
                         break;
                     }
                 }
             }
         }
-        protected void ParseConnections(int toY, string line) {
+        protected void ParseConnections(int act, int toY, string line) {
             int targetY = toY - 1;
             for (int i = 0; i < line.Length; i++) {
                 var targetX = (i + 1) / 3;
                 switch (line[i]) {
                     case '\\': {
-                        map[targetX, targetY].children.Add(map[targetX - 1, toY]);
+                        map[act, targetX, targetY].children.Add(map[act, targetX - 1, toY]);
                         break;
                     }
                     case '|': {
-                        map[targetX, targetY].children.Add(map[targetX + 0, toY]);
+                        map[act, targetX, targetY].children.Add(map[act, targetX + 0, toY]);
                         break;
                     }
                     case '/': {
-                        map[targetX, targetY].children.Add(map[targetX + 1, toY]);
+                        map[act, targetX, targetY].children.Add(map[act, targetX + 1, toY]);
                         break;
                     }
                 }
             }
         }
         protected void ParseActMap(string[] lines, int act) {
-            if (act_num != act) {
-                return;
-            }
             for (int row = 0; row < 15; row++) {
                 var line = lines[row * 2].Substring(7);
-                ParseNodes(14 - row, line);
+                ParseNodes(act, 14 - row, line);
             }
             for (int row = 0; row < 14; row++) {
                 var line = lines[row * 2 + 1].Substring(7);
-                ParseConnections(14 - row, line);
+                ParseConnections(act, 14 - row, line);
             }
         }
         public void ParsePath(string path) {
             var pathLines = path.Split(new char[] {'\n'});
-            ParseActMap(pathLines[5..34], 1);
-            ParseActMap(pathLines[39..67], 2);
-            ParseActMap(pathLines[73..101], 3);
+            var actLines = new string[][] {
+                pathLines[5..34],
+                pathLines[39..68],
+                pathLines[73..102],
+            };
+            ParseActMap(actLines[0], 1);
+            ParseActMap(actLines[1], 2);
+            ParseActMap(actLines[2], 3);
+            var pathTexts = actLines.Select(actLines => {
+                var lines = actLines.Select(x => x.Substring(7)).ToArray();
+                return string.Join("\n", lines);
+            }).ToArray();
+            PumpernickelAdviceWindow.instance.Invoke(PumpernickelAdviceWindow.SetPathTexts, new object[] { pathTexts });
         }
 
         public void OnLoad() {
@@ -249,7 +257,15 @@ namespace ProjectPumpernickle {
         }
 
         public MapNode GetCurrentNode() {
-            var CurrentNode = map[room_x, room_y];
+            if (room_x < 0) {
+                if (room_y < 0) {
+                    var startNode = new MapNode();
+                    startNode.children = Enumerable.Range(0, map.GetLength(0)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
+                    return startNode;
+                }
+                return null;
+            }
+            var CurrentNode = map[Save.state.act_num, room_x, room_y];
             // If we're talking to neow, make up a fake node with all the starting nodes as children
             return CurrentNode;
         }

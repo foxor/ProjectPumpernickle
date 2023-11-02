@@ -78,7 +78,16 @@ namespace ProjectPumpernickle {
         }
 
         public static string ChooseBestUpgrade(Path path, int index) {
-            return "Eruption";
+            var numPriorUpgrades = path.fireChoices.Take(index).Where(x => x == FireChoice.Upgrade).Count();
+            var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0).Select(x => {
+                var upgradeValue = EvaluationFunctionReflection.GetUpgradeFunctionCached(x.Card.id)(x.Card, x.Index);
+                return (Card: x.Card, Val: upgradeValue);
+            }).OrderByDescending(x => x.Val);
+            return unupgradedCards.Skip(numPriorUpgrades).First().Card.id;
+        }
+
+        public static int FloorToAct(int floorNum) {
+            return floorNum <= 17 ? 1 : (floorNum <= 34 ? 2 : (floorNum <= 51 ? 3 : 4));
         }
     }
 }

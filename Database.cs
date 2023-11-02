@@ -45,13 +45,20 @@ namespace ProjectPumpernickle {
         public float medianExpectedHealthLoss;
         public float medianWorstCaseHealthLoss;
     }
+    public class Relic {
+        public string id;
+        public float bias;
+    }
     internal class Database {
         public static Database instance;
         public Card[] cards = null;
         public Monster[] creatures = null;
         public Encounter[] encounters = null;
+        public Relic[] relics = null;
+
         public Dictionary<string, Card> cardsDict = new Dictionary<string, Card>();
         public Dictionary<string, Encounter> encounterDict = new Dictionary<string, Encounter>();
+        public Dictionary<string, Relic> relicsDict = new Dictionary<string, Relic>();
 
         public void OnLoad() {
             foreach (var card in cards) {
@@ -59,6 +66,9 @@ namespace ProjectPumpernickle {
             }
             foreach (var encounter in encounters) {
                 encounterDict[encounter.id] = encounter;
+            }
+            foreach (var relic in relics) {
+                relicsDict[relic.id] = relic;
             }
             foreach (var monster in creatures) {
                 if (monster.moves != null) {

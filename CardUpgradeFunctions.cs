@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
-    public static class CardFunctions {
+    public static class CardUpgradeFunctions {
         public static float Bash(Card c, int index) {
             var value = 0f;
             return value;
@@ -968,12 +968,6 @@ namespace ProjectPumpernickle {
         }
         public static float Halt(Card c, int index) {
             var value = 0f;
-            if (Save.state.expectingToRedBlue) {
-                value += 2f;
-            }
-            else {
-                value -= 5f;
-            }
             return value;
         }
         public static float JustLucky(Card c, int index) {
@@ -1175,36 +1169,6 @@ namespace ProjectPumpernickle {
         }
         public static float Establishment(Card c, int index) {
             var value = 0f;
-            var firstEstablishment = Save.state.cards.FirstIndexOf(x => x.id.Equals("Establishment")) == index;
-            if (Save.state.relics.Contains("Snecko Eye")) {
-                return 0f;
-            }
-            if (Save.state.cards.Any(x => x.id.Equals("Meditate")) && firstEstablishment) {
-                value += 15f;
-                Save.state.buildingInfinite = true;
-                Save.state.expectingToRedBlue = false;
-                var cardDraw = Save.state.cards.Where(x => x.tags.ContainsKey(Tags.CardDraw.ToString()) && (x.intCost != -1));
-                var drawCount = cardDraw.Count();
-                var cardsToAdd = 0;
-                if (drawCount < 2) {
-                    cardsToAdd += 2 - drawCount;
-                }
-                Save.state.infiniteRoom = 11 - Evaluators.PermanentDeckSize() - cardsToAdd;
-                var cardDrawCost = Save.state.cards.Where(x => x.tags.ContainsKey(Tags.CardDraw.ToString()) && x.intCost != -1).OrderBy(x => x.intCost).Take(2).Select(x => x.intCost).Sum();
-                if (cardsToAdd > 0) {
-                    cardDrawCost += cardsToAdd * 1;
-                }
-                var meditatePlus = Save.state.cards.Any(x => x.id.Equals("Meditate") && x.upgrades > 0);
-                var minMeditates = meditatePlus ? 1 : 2;
-                var fixedCost = 1 + 1 * minMeditates;
-                if (meditatePlus && fixedCost + cardDrawCost <= Evaluators.TurnOneEnergy()) {
-                    Save.state.earliestInfinite = 2;
-                }
-                else {
-                    Save.state.earliestInfinite = 3;
-                }
-                Save.state.missingCards += cardsToAdd;
-            }
             return value;
         }
         public static float Judgement(Card c, int index) {
@@ -1522,17 +1486,6 @@ namespace ProjectPumpernickle {
         public static float Writhe(Card c, int index) {
             var value = 0f;
             return value;
-        }
-    }
-}
-
-public static class MultiplexPairsExtension {
-    public static IEnumerable<T[]> MultiplexPairs<T>(this IEnumerable<T> source) {
-        var sourceArray = source.ToArray();
-        for (int i = 0; i < sourceArray.Length; i++) {
-            for (int j = i + 1; j < sourceArray.Length; j++) {
-                yield return new T[] { sourceArray[i], sourceArray[j] };
-            }
         }
     }
 }

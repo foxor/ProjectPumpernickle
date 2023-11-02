@@ -11,10 +11,13 @@ using System.Xml.Linq;
 
 namespace ProjectPumpernickle {
     public class  Evaluation {
+        public static Evaluation Active;
         public float Score;
         public List<string> Advice = new List<string>();
+        public Path Path;
 
         public Evaluation() {
+            Active = this;
             Save.state.earliestInfinite = 0;
             Save.state.buildingInfinite = false;
             Save.state.missingCards = 0;
@@ -60,6 +63,7 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case RewardType.Relic: {
+                        // TODO: some relics require more advice when they are chosen, like bottles, empty cage and astolabe
                         relics.Add(chosen);
                         Save.state.relics.Add(chosen);
                         description.Add("Take the " + chosen);
@@ -67,9 +71,7 @@ namespace ProjectPumpernickle {
                     }
                     case RewardType.Potions: {
                         description.Add("Take the " + chosen);
-                        Save.state.TakePotion(chosen);
-                        relics.Add(chosen);
-                        Save.state.relics.Add(chosen);
+                        potionIndicies.Add(Save.state.TakePotion(chosen));
                         break;
                     }
                     case RewardType.Key: {
@@ -124,9 +126,9 @@ namespace ProjectPumpernickle {
                 rewardIndicies.Clear();
             }
         }
-        public static string AdviseOnRewards(List<RewardOption> rewardOptions) {
+        public static Evaluation AdviseOnRewards(List<RewardOption> rewardOptions) {
             var evaluations = MultiplexRewards(rewardOptions).ToArray();
-            return evaluations.OrderByDescending(x => x.Score).First().ToString();
+            return evaluations.OrderByDescending(x => x.Score).First();
         }
 
         public static float ExpectedCardRemovesAvailable(Path path) {
@@ -165,7 +167,11 @@ namespace ProjectPumpernickle {
                 return "Go to the boss fight";
             }
             var moveToPos = pathNodes[0].position;
-            var moveFromPos = PumpernickelSaveState.instance.GetCurrentNode().position;
+            var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
+            if (currentNode == null) {
+                return "Go to the next act";
+            }
+            var moveFromPos = currentNode.position;
             var direction = moveFromPos.x > moveToPos.x ? "left" :
                 (moveFromPos.x < moveToPos.x ? "right" : "up");
             var destination = pathNodes[0].nodeType.ToString();
@@ -175,14 +181,23 @@ namespace ProjectPumpernickle {
         public static Path EvaluatePathing(Evaluation evaluation, out float score) {
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
             var allPaths = Path.BuildAllPaths(currentNode);
-            var evaluatedPaths = allPaths.Select(x => (Path: x, Score: Scoring.ScorePath(x))).OrderByDescending(x => x.Score).ToArray();
-            var bestPath = evaluatedPaths.First();
-            score = bestPath.Score;
+            if (!allPaths.Any()) {
+                score = Scoring.ScorePath(null);
+                return null;
+            }
+            foreach (var path in allPaths) {
+                path.score = Scoring.ScorePath(path);
+            }
+            foreach (var path in allPaths) {
+                path.MergeScoreWithOffRamp();
+            }
+            var bestPath = allPaths.OrderByDescending(x => x.score).First();
+            score = bestPath.score;
             bool needsMoreInfo = false;
             int i = 0;
-            while (!needsMoreInfo && bestPath.Path.nodes.Count() > i) {
-                evaluation.Advice.Add(DescribePathing(bestPath.Path.nodes[i..]));
-                switch (bestPath.Path.nodes[i].nodeType) {
+            while (!needsMoreInfo && bestPath.nodes.Count() > i) {
+                evaluation.Advice.Add(DescribePathing(bestPath.nodes[i..]));
+                switch (bestPath.nodes[i].nodeType) {
                     case NodeType.Shop:
                     case NodeType.Question:
                     case NodeType.Fight:
@@ -197,13 +212,13 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case NodeType.Fire: {
-                        switch (bestPath.Path.fireChoices[i]) {
+                        switch (bestPath.fireChoices[i]) {
                             case FireChoice.Rest: {
                                 evaluation.Advice.Add("Rest");
                                 break;
                             }
                             case FireChoice.Upgrade: {
-                                var bestUpgrade = Evaluators.ChooseBestUpgrade(bestPath.Path, i);
+                                var bestUpgrade = Evaluators.ChooseBestUpgrade(bestPath, i);
                                 evaluation.Advice.Add("Upgrade " + bestUpgrade);
                                 break;
                             }
@@ -215,7 +230,10 @@ namespace ProjectPumpernickle {
                 }
                 i++;
             }
-            return bestPath.Path;
+            if (!needsMoreInfo) {
+                evaluation.Advice.Add("Fight " + Save.state.boss);
+            }
+            return bestPath;
         }
 
         public static Evaluation Evaluate(List<string> existingAdvice) {
@@ -223,13 +241,19 @@ namespace ProjectPumpernickle {
             if (existingAdvice != null) {
                 evaluation.Advice = existingAdvice;
             }
-            var chosenPath = EvaluatePathing(evaluation, out var pathScore);
+            evaluation.Path = EvaluatePathing(evaluation, out var pathScore);
             evaluation.Score = pathScore;
             for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
                 var card = PumpernickelSaveState.instance.cards[i];
-                evaluation.Score += CardFunctionReflection.GetEvalFunctionCached(card.id)(card, i);
+                evaluation.Score += EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
             }
-            evaluation.Score += Scoring.EvaluateGlobalRules(chosenPath);
+            for (int i = 0; i < PumpernickelSaveState.instance.relics.Count; i++) {
+                var relicId = PumpernickelSaveState.instance.relics[i];
+                // TODO: fix setup relics?
+                var relic = Database.instance.relicsDict[relicId];
+                evaluation.Score += EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
+            }
+            evaluation.Score += Scoring.EvaluateGlobalRules(evaluation.Path);
             return evaluation;
         }
     }

@@ -10,6 +10,8 @@ namespace ProjectPumpernickle {
         public float Apply(Path path);
     }
     internal class Scoring {
+        public static readonly float GOLD_AT_SHOP_PER_POINT = 150f;
+
         protected static IGlobalRule[] GlobalRules;
         static Scoring() {
             var globalRuleTypes = typeof(Scoring).Assembly.GetTypes().Where(x => typeof(IGlobalRule).IsAssignableFrom(x) && typeof(IGlobalRule) != x);
@@ -48,11 +50,12 @@ namespace ProjectPumpernickle {
             //  - 1 point per hundred gold
             //  - 1 point per key
             //  - 1 point per 10 health
+            //  - points for bringing gold to shops
             var points = 0f;
 
-            points += 10f * (1f - path.Risk);
+            points += 10f * (1f - (path == null ? 0f : path.Risk));
 
-            var upgrades = path.expectedUpgrades[^1];
+            var upgrades = path == null ? 0 : path.expectedUpgrades[^1];
             if (upgrades <= 4) {
                 points += upgrades * 2f;
             }
@@ -60,9 +63,11 @@ namespace ProjectPumpernickle {
                 points += 8 + MathF.Min(upgrades - 4, 6);
             }
 
-            points += MathF.Min(path.expectedRewardRelics[^1], 15f);
+            var expectedRelics = path == null ? Save.state.relics.Count : path.expectedRewardRelics[^1];
+            points += MathF.Min(expectedRelics, 15f);
 
-            points += .5f * path.expectedCardRewards[^1];
+            var expectedCardRewards = path == null ? 0 : path.expectedCardRewards[^1];
+            points += .5f * expectedCardRewards;
 
             points += Save.state.gold / 100f;
 
@@ -73,7 +78,9 @@ namespace ProjectPumpernickle {
             var effectiveHealth = Evaluators.GetEffectiveHealth();
             points += effectiveHealth / 10f;
 
-            if (Save.state.act_num == 3 && !Save.state.has_emerald_key && !path.hasMegaElite) {
+            points += path.ExpectedGoldBroughtToShops() / GOLD_AT_SHOP_PER_POINT;
+
+            if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path?.hasMegaElite != true) {
                 points = 0f;
             }
 

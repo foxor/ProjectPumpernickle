@@ -120,4 +120,35 @@
   <metadata name="pathing.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
+  <data name="PathPreview.Text" xml:space="preserve">
+    <value>R  R  R  R          
+|/    |  |          
+M     M  M          
+| \     \| \        
+?  ?     M  ?       
+|    \ /  /         
+?     M  $          
+| \ / |    \        
+M  E  $     M       
+|  | \  \   |       
+E  M  ?  M  $       
+  \|/    |    \     
+   T     T     T    
+   | \     \     \  
+   M  R     E     E 
+ / | \|   /       | 
+R  R  E  M        R 
+|  |  |/          | 
+E  E  R           E 
+|    \| \         | 
+?     M  ?        M 
+|   / | \|        | 
+?  M  M  ?        ? 
+  \|  |  | \      | 
+   M  ?  M  M     M 
+ / |/      \  \   | 
+?  M        ?  M  M 
+|  |      /    |  | 
+M  M     M     M  M </value>
+  </data>
 </root>

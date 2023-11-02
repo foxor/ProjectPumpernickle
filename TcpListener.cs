@@ -42,8 +42,7 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
-            catch (SocketException e) {
-                Console.WriteLine("SocketException: {0}", e);
+            catch {
             }
             finally {
                 server!.Stop();

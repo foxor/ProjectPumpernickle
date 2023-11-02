@@ -6,6 +6,7 @@ using System.Text;
 namespace ProjectPumpernickle {
     internal static class Program {
         internal static PumpernickelAdviceWindow? mainWindow;
+        public static FileSystemWatcher watcher;
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -14,24 +15,25 @@ namespace ProjectPumpernickle {
             ApplicationConfiguration.Initialize();
             mainWindow = new PumpernickelAdviceWindow();
 
+            Application.Run(mainWindow);
+        }
+        public static void OnStartup() {
             ParseDatabase();
 
-            var watcher = new FileSystemWatcher();
+            watcher = new FileSystemWatcher();
             watcher.Path = @"C:\Program Files (x86)\Steam\steamapps\common\SlayTheSpire\saves";
             watcher.Changed += OnChanged;
             watcher.Created += OnCreated;
             watcher.EnableRaisingEvents = true;
 
-            var lastWritten = Directory.GetFiles(watcher.Path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
-            if (lastWritten != null) {
-                ParseFile(lastWritten);
-            }
-
             TcpListener.control = mainWindow;
             var pipeListener = new Thread(new ThreadStart(TcpListener.Run));
             pipeListener.Start();
 
-            Application.Run(mainWindow);
+            var lastWritten = Directory.GetFiles(watcher.Path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
+            if (lastWritten != null) {
+                ParseFile(lastWritten);
+            }
         }
         private static void ParseDatabase() {
             using (StreamReader sr = new StreamReader("data.json")) {
