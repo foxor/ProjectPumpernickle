@@ -14,8 +14,8 @@ namespace ProjectPumpernickle {
         public static Func<Card, int, float> GetCardEvalFunctionCached(string cardId) {
             return GetFunctionCached(cardId, cardCache, CardFunctionFactory(typeof(CardFunctions), x => x.bias));
         }
-        public static Func<Card, int, float> GetUpgradeFunctionCached(string cardId) {
-            return GetFunctionCached(cardId, upgradeCache, CardFunctionFactory(typeof(CardUpgradeFunctions), x => x.upgradeBias));
+        public static Func<Card, int, float> GetUpgradeHealthPerFightFunctionCached(string cardId) {
+            return GetFunctionCached(cardId, upgradeCache, CardFunctionFactory(typeof(CardUpgradeFunctions), x => x.upgradeHealthPerFight));
         }
         public static Func<Relic, float> GetRelicEvalFunctionCached(string relicId) {
             return GetFunctionCached(relicId, relicCache, GetRelicEvalFunction);

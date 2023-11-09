@@ -64,6 +64,7 @@ namespace ProjectPumpernickle {
         public string[][] possibleThreats = null;
         public float[] expectedUpgrades = null;
         public FireChoice[] fireChoices = null;
+        public float[] expectedShops = null;
         public float score;
 
         public void InitArrays() {
@@ -79,6 +80,7 @@ namespace ProjectPumpernickle {
             possibleThreats = new string[planningNodes][];
             expectedUpgrades = new float[planningNodes];
             fireChoices = new FireChoice[planningNodes];
+            expectedShops = new float[planningNodes];
             InitializePossibleThreats();
         }
 
@@ -98,8 +100,11 @@ namespace ProjectPumpernickle {
             }
             return totalRemoves;
         }
+        public static float ExpectedFutureActCardRemovesBeforeNemesis() {
+            return ExpectedFutureActCardRemoves() - 2f;
+        }
 
-        public float ExpectedPossibleCardRemoves() {
+        protected float ExpectedCardRemovesInternal(bool beforeElite = false) {
             float removeCost = Save.state.purgeCost;
             float totalRemoves = 0f;
             for (int i = 0; i < nodes.Length; i++) {
@@ -109,8 +114,23 @@ namespace ProjectPumpernickle {
                     removeCost += 25f * removeAvailableChance;
                     totalRemoves += removeAvailableChance;
                 }
+                if ((nodes[i].nodeType == NodeType.Elite || nodes[i].nodeType == NodeType.MegaElite) && beforeElite) {
+                    break;
+                }
             }
-            return totalRemoves + ExpectedFutureActCardRemoves();
+            return totalRemoves;
+        }
+
+        public float ExpectedPossibleCardRemoves() {
+            return ExpectedCardRemovesInternal() + ExpectedFutureActCardRemoves();
+        }
+
+        public float ExpectedPossibleCardRemovesBeforeNemesis() {
+            if (Save.state.act_num != 3) {
+                return ExpectedCardRemovesInternal() + ExpectedFutureActCardRemovesBeforeNemesis();
+            }
+            var beforeElite = true;
+            return ExpectedCardRemovesInternal(beforeElite);
         }
 
         public void ChooseShopPlan() {
@@ -261,9 +281,9 @@ namespace ProjectPumpernickle {
             float fightsSoFar = 0f;
             float relicsSoFar = 0f;
             float fightChance = Save.state.event_chances[1];
+            float shopChance = Save.state.event_chances[2];
+            float shopsSoFar = 0f;
 
-            expectedCardRewards = new float[nodes.Length];
-            expectedRewardRelics = new float[nodes.Length];
             for (int i = 0; i < nodes.Length; i++) {
                 switch (nodes[i].nodeType) {
                     case NodeType.Elite: {
@@ -280,20 +300,33 @@ namespace ProjectPumpernickle {
                         fightsSoFar++;
                         break;
                     }
+                    case NodeType.Shop: {
+                        shopsSoFar++;
+                        break;
+                    }
                     case NodeType.Question: {
                         fightsSoFar += fightChance;
+                        shopsSoFar += shopChance;
                         fightChance = .1f * fightChance + (fightChance + .1f) * (1f - fightChance);
+                        shopChance = .03f * shopChance + (shopChance + .03f) * (1f - shopChance);
+                        // TODO: shop chance
                         break;
                     }
                 }
                 expectedCardRewards[i] = fightsSoFar;
                 expectedRewardRelics[i] = relicsSoFar;
+                expectedShops[i] = shopsSoFar;
+            }
+            for (int i = nodes.Length; i < expectedCardRewards.Length; i++) {
+                expectedCardRewards[i] = expectedCardRewards[i - 1];
+                expectedRewardRelics[i] = expectedRewardRelics[i - 1];
+                expectedShops[i] = expectedShops[i - 1];
             }
         }
 
         public void ExpectShopProgression() {
             var gold = (float)Save.state.gold;
-            for (int i = 0; i < nodes.Length; i++) {
+            for (int i = 0; i < expectedGold.Length; i++) {
                 gold += ExpectedGoldFrom(i);
                 expectedGold[i] = gold;
                 // TODO: also add cards and relics and such
@@ -306,7 +339,7 @@ namespace ProjectPumpernickle {
 
         public bool HealthTooLow(int index) {
             // TODO: this better
-            return expectedHealth[index] <= 0;
+            return worstCaseHealth[index] <= 0;
         }
 
         public bool ShouldRest(int index) {
@@ -322,15 +355,25 @@ namespace ProjectPumpernickle {
         }
 
         public void PlanFires() {
-            var upgrades = 0;
+            var upgrades = 0f;
             for (int i = 0; i < nodes.Length; i++) {
+                var restValue = MathF.Min(Save.state.max_health * .3f, Save.state.max_health - expectedHealth[i]);
+                var upgradeValue = Evaluators.UpgradeValue(this, i);
                 if (nodes[i].nodeType != NodeType.Fire) {
                     fireChoices[i] = FireChoice.None;
+                    if (Save.state.cards.Any(x => x.id.Equals("LessonLearned"))) {
+                        if (nodes[i].nodeType == NodeType.Fight) {
+                            upgrades += .9f;
+                        }
+                        if (nodes[i].nodeType == NodeType.Elite || nodes[i].nodeType == NodeType.MegaElite) {
+                            upgrades += .6f;
+                        }
+                    }
                 }
                 else if (NeedsRedKey(i)) {
                     fireChoices[i] = FireChoice.Key;
                 }
-                else if (ShouldRest(i)) {
+                else if (ShouldRest(i) || restValue > upgradeValue) {
                     fireChoices[i] = FireChoice.Rest;
                     expectedHealth[i] += Save.state.max_health * .3f;
                 }
@@ -345,8 +388,8 @@ namespace ProjectPumpernickle {
         public void ChoosePlanningThreats() {
             // What are the scary fights with our deck right now
             for (int i = 0; i < possibleThreats.Length; i++) {
-                var lastExpectedHealth = i == 0 ? Save.state.current_health : expectedHealth[i - 1];
-                var lastWorstCaseHealth = i == 0 ? Save.state.current_health : worstCaseHealth[i - 1];
+                var lastExpectedHealth = i == 0 ? Evaluators.GetEffectiveHealth() : expectedHealth[i - 1];
+                var lastWorstCaseHealth = i == 0 ? Evaluators.GetEffectiveHealth() : worstCaseHealth[i - 1];
                 float totalExpectedHealthLoss = 0f;
                 float worstWorstCaseHealthLoss = 0f;
                 foreach (var possibleEncounter in possibleThreats[i]) {
@@ -457,6 +500,10 @@ namespace ProjectPumpernickle {
             return 0;
         }
         public float ExpectedGoldFrom(int index) {
+            if (index >= nodes.Length) {
+                // Boss gold
+                return 75f;
+            }
             var type = nodes[index].nodeType;
             switch (type) {
                 case NodeType.Fight: {
@@ -495,6 +542,12 @@ namespace ProjectPumpernickle {
         public float SaveGoldPoint() {
             return 0f;
         }
+        public static float ExpectedGoldBroughtToShopsNextAct(float goldNextAct) {
+            var chanceOfTwoShops = Lerp.Inverse(300f, 600f, goldNextAct);
+            var goldBeforeShop = 120f;
+            var goldForSecondShop = 300f;
+            return goldNextAct + goldBeforeShop + (goldForSecondShop * chanceOfTwoShops);
+        }
         public float ExpectedGoldBroughtToShops() {
             var goldBrought = 0f;
             for (int i = 0; i < nodes.Length; i++) {
@@ -502,7 +555,105 @@ namespace ProjectPumpernickle {
                     goldBrought += expectedGold[i];
                 }
             }
+            var actThreeGoldToShop = 250;
+            var actFourGoldToShop = 250;
+            if (Save.state.act_num == 1) {
+                goldBrought += ExpectedGoldBroughtToShopsNextAct(expectedGold[^1]);
+                goldBrought += actThreeGoldToShop;
+                goldBrought += actFourGoldToShop;
+            }
+            if (Save.state.act_num == 2) {
+                goldBrought += ExpectedGoldBroughtToShopsNextAct(expectedGold[^1]);
+                goldBrought += actFourGoldToShop;
+            }
+            if (Save.state.act_num == 3) {
+                goldBrought += expectedGold[^1];
+            }
             return goldBrought;
+        }
+        public static float ExpectedFutureActCardRewards() {
+            return 8.5f;
+        }
+        public static float ExpectedHuntedCardsFoundInFutureActs() {
+            var normalActCardRewards = ExpectedFutureActCardRewards();
+            var normalActShops = .85f;
+            var normalActsLeft = Evaluators.NormalFutureActsLeft();
+            if (!Save.state.huntingCards.Any()) {
+                return 0f;
+            }
+            // +1 from spire elites
+            var totalCardRewards = (normalActCardRewards * normalActsLeft) + 1;
+            var totalShopsLeft = (normalActsLeft * normalActsLeft) + 1;
+
+            var totalChance = 0f;
+            foreach (var huntedCard in Save.state.huntingCards) {
+                var card = Database.instance.cardsDict[huntedCard];
+                var rarity = card.cardRarity;
+                var color = card.cardColor;
+                var cardType = card.cardType;
+                var chanceToFind = 0f;
+                if (color == Color.Colorless) {
+                    chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * totalShopsLeft;
+                }
+                else {
+                    switch (rarity) {
+                        case Rarity.Common:
+                        case Rarity.Uncommon:
+                        case Rarity.Rare: {
+                            chanceToFind += Evaluators.ChanceOfSpecificCardInReward(color, rarity, totalCardRewards);
+                            chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * totalShopsLeft;
+                            break;
+                        }
+                        case Rarity.Special: {
+                            // god help you
+                            break;
+                        }
+                    }
+                }
+                totalChance += chanceToFind;
+            }
+            return totalChance;
+        }
+        public float ExpectedHuntedCardsFound() {
+            if (!Save.state.huntingCards.Any()) {
+                return 0f;
+            }
+            var totalChance = 0f;
+            var totalExpectedCardRewards = expectedCardRewards[^1];
+            foreach (var huntedCard in Save.state.huntingCards) {
+                var card = Database.instance.cardsDict[huntedCard];
+                var rarity = card.cardRarity;
+                var color = card.cardColor;
+                var cardType = card.cardType;
+                var shopsWithGold = 0f;
+                var previousFloorShopChance = 0f;
+                for (int i = 0; i < nodes.Length; i++) {
+                    var marginalShopChance = expectedShops[i] - previousFloorShopChance;
+                    previousFloorShopChance = expectedShops[i];
+                    shopsWithGold += Evaluators.IsEnoughToBuyCard(expectedGold[i], rarity) * marginalShopChance;
+                }
+                var chanceToFind = 0f;
+                if (color == Color.Colorless) {
+                    chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * shopsWithGold;
+                }
+                else {
+                    switch (rarity) {
+                        case Rarity.Common:
+                        case Rarity.Uncommon:
+                        case Rarity.Rare: {
+                            chanceToFind += Evaluators.ChanceOfSpecificCardInReward(color, rarity, totalExpectedCardRewards);
+                            chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * shopsWithGold;
+                            break;
+                        }
+                        case Rarity.Special: {
+                            // god help you
+                            break;
+                        }
+                    }
+                }
+                totalChance += chanceToFind;
+            }
+            return totalChance + ExpectedHuntedCardsFoundInFutureActs();
         }
         public static Path[] BuildAllPaths(MapNode root) {
             // FIXME: this is only accurate in act 1?
@@ -537,6 +688,53 @@ namespace ProjectPumpernickle {
             offRampRiskT = (offRampRiskT * MathF.E * 2) - MathF.E;
             float riskRelevance = PumpernickelMath.Sigmoid(riskT - offRampRiskT);
             score = Lerp.From(score, OffRamp.score, riskRelevance);
+        }
+
+        public static IEnumerable<float> ExpectedFutureUpgradesDuringFights(float endOfActUpgrades) {
+            var averageActSequence = new float[] {
+                0f,
+                0f,
+                .4f,
+                .8f,
+                1.2f,
+                1.6f,
+                2.0f,
+                2.4f,
+            };
+            var hasLessonLearned = Save.state.cards.Any(x => x.id.Equals("LessonLearned"));
+            if (hasLessonLearned) {
+                averageActSequence = new float[] {
+                    .9f,
+                    1.8f,
+                    2.7f,
+                    3.6f,
+                    4.5f,
+                    5.4f,
+                    6.3f,
+                    7.2f,
+                };
+            }
+            var normalActsLeft = MathF.Max(2 - Save.state.act_num, 0);
+            var fightsLeft = normalActsLeft * averageActSequence.Length + 2;
+            var upgradeSequence = new List<float>();
+            var upgrades = endOfActUpgrades;
+            for (int i = 0; i < normalActsLeft; i++) {
+                for (int j = 0; j < averageActSequence.Length; j++) {
+                    upgrades += averageActSequence[j];
+                    yield return upgrades;
+                }
+            }
+            // Act 4
+            upgrades += .5f;
+            yield return upgrades;
+            if (hasLessonLearned) {
+                upgrades += .9f;
+            }
+            yield return upgrades;
+        }
+        public IEnumerable<float> ExpectedUpgradesDuringFights() {
+            var fightFloors = Enumerable.Range(0, expectedUpgrades.Length).Where(x => x >= nodes.Length || nodes[x].nodeType.IsFight());
+            return fightFloors.Select(x => expectedUpgrades[x]).Concat(ExpectedFutureUpgradesDuringFights(expectedUpgrades[^1]));
         }
     }
 }

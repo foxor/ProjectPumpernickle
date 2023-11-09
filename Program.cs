@@ -5,8 +5,8 @@ using System.Text;
 
 namespace ProjectPumpernickle {
     internal static class Program {
+        public static float LastUpdatedTime;
         internal static PumpernickelAdviceWindow? mainWindow;
-        public static FileSystemWatcher watcher;
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -20,18 +20,31 @@ namespace ProjectPumpernickle {
         public static void OnStartup() {
             ParseDatabase();
 
-            watcher = new FileSystemWatcher();
-            watcher.Path = @"C:\Program Files (x86)\Steam\steamapps\common\SlayTheSpire\saves";
-            watcher.Changed += OnChanged;
-            watcher.Created += OnCreated;
-            watcher.EnableRaisingEvents = true;
-
             TcpListener.control = mainWindow;
             var pipeListener = new Thread(new ThreadStart(TcpListener.Run));
             pipeListener.Start();
-
-            var lastWritten = Directory.GetFiles(watcher.Path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
-            if (lastWritten != null) {
+        }
+        public static void ParseNewFile(int floorNum, bool expectFightOver) {
+            var path = @"C:\Program Files (x86)\Steam\steamapps\common\SlayTheSpire\saves";
+            var lastWritten = Directory.GetFiles(path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
+            var writtenTime = File.GetLastWriteTime(lastWritten);
+            ParseFile(lastWritten);
+            var loadedFloorNum = Save.state.floor_num;
+            var didFightThisFloor = Save.state.metric_damage_taken.Any(x => x.floor == floorNum);
+            if (loadedFloorNum != floorNum || (expectFightOver && !didFightThisFloor)) {
+                var waitStartTime = DateTime.Now;
+                while (true) {
+                    var newWriteTime = File.GetLastWriteTime(lastWritten);
+                    if (newWriteTime != writtenTime) {
+                        break;
+                    }
+                    var currentTime = DateTime.Now;
+                    var deltaTime = currentTime - waitStartTime;
+                    if (deltaTime > TimeSpan.FromSeconds(3)) {
+                        throw new Exception("File wasn't updated within 3 seconds, when we expected it to be");
+                    }
+                    Thread.Sleep(10);
+                }
                 ParseFile(lastWritten);
             }
         }
@@ -50,6 +63,11 @@ namespace ProjectPumpernickle {
 
         private static void OnCreated(object sender, FileSystemEventArgs e) {
             ParseFile(e.FullPath);
+        }
+        public static void ParseLatestFile() {
+            var path = @"C:\Program Files (x86)\Steam\steamapps\common\SlayTheSpire\saves";
+            var lastWritten = Directory.GetFiles(path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
+            ParseFile(lastWritten);
         }
         private static void ParseFile(string filename) {
             if (filename.EndsWith(".vdf") || filename.EndsWith("backUp")) {

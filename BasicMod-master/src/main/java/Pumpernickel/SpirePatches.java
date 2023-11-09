@@ -4,6 +4,7 @@ import basicmod.BasicMod;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
@@ -35,6 +36,8 @@ public class SpirePatches {
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write("true\n".getBytes(StandardCharsets.UTF_8)); // Are we expecting a fight to have just ended
             boolean alreadySaidGreenKey = false;
             for (RewardItem rewardItem : AbstractDungeon.combatRewardScreen.rewards) {
                 switch (rewardItem.type) {
@@ -67,7 +70,7 @@ public class SpirePatches {
                     }
                     case EMERALD_KEY: {
                         // No idea why this is listed as a rewardItem twice
-                        if (!alreadySaidGreenKey) {
+                        if (!alreadySaidGreenKey && !Settings.hasEmeraldKey) {
                             outToServer.write("Key\n".getBytes(StandardCharsets.UTF_8));
                             outToServer.write("Green\n".getBytes(StandardCharsets.UTF_8));
                             alreadySaidGreenKey = true;
@@ -112,6 +115,7 @@ public class SpirePatches {
                 DataOutputStream outToServer =
                         new DataOutputStream(clientSocket.getOutputStream());
                 outToServer.write("Event\n".getBytes(StandardCharsets.UTF_8));
+                outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
                 outToServer.write(event.event.getClass().getName().getBytes(StandardCharsets.UTF_8));
                 outToServer.write("\n".getBytes(StandardCharsets.UTF_8));
                 outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
@@ -127,7 +131,10 @@ public class SpirePatches {
             Socket clientSocket = new Socket("localhost", 13076);
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
-            outToServer.write("BossRelic\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write("false\n".getBytes(StandardCharsets.UTF_8)); // Are we expecting a fight to have just ended
+            outToServer.write("Relic\n".getBytes(StandardCharsets.UTF_8));
             AbstractRoom room = AbstractDungeon.getCurrRoom();
             for (AbstractRelic relic : AbstractDungeon.bossRelicScreen.relics) {
                 outToServer.write((relic.relicId + "\n").getBytes(StandardCharsets.UTF_8));
@@ -139,13 +146,14 @@ public class SpirePatches {
         catch (Exception e) {
         }
     }
-    public static void changeAct() {
+    public static void newDungeon() {
         try {
             Socket clientSocket = new Socket("localhost", 13076);
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
-            outToServer.write("ChangeAct\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write("NewDungeon\n".getBytes(StandardCharsets.UTF_8));
             outToServer.write(("CurrentHealth: " + AbstractDungeon.player.currentHealth + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write(("FirstBoss: " + AbstractDungeon.bossKey + "\n").getBytes(StandardCharsets.UTF_8));
             outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
             outToServer.flush();
             clientSocket.close();
@@ -159,6 +167,7 @@ public class SpirePatches {
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("Shop\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
             outToServer.write("Cards\n".getBytes(StandardCharsets.UTF_8));
             for (AbstractCard card : AbstractDungeon.shopScreen.coloredCards) {
                 outToServer.write((card.cardID + ": " + card.price + "\n").getBytes(StandardCharsets.UTF_8));
@@ -205,9 +214,9 @@ public class SpirePatches {
     public static class OnBossRelicPatch {
         @SpirePostfixPatch public static void Postfix() { bossRelicReward(); }
     }
-    @SpirePatch(clz = AbstractDungeon.class, method = "dungeonTransitionSetup", paramtypez = { })
-    public static class OnLeaveRoomPatch {
-        @SpirePostfixPatch public static void Postfix() { changeAct(); }
+    @SpirePatch(clz = AbstractDungeon.class, method = "initializeCardPools", paramtypez = { })
+    public static class OnActChangePatch {
+        @SpirePostfixPatch public static void Postfix() { newDungeon(); }
     }
     @SpirePatch(clz = ShopScreen.class, method = "init", paramtypez = { ArrayList.class, ArrayList.class })
     public static class OnEnterShopPatch {

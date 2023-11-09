@@ -1203,7 +1203,19 @@ namespace ProjectPumpernickle {
                 else {
                     Save.state.earliestInfinite = 3;
                 }
-                Save.state.missingCards += cardsToAdd;
+                Save.state.missingCardCount = cardsToAdd;
+                if (cardsToAdd > 0) {
+                    Save.state.HuntForCard("EmptyMind");
+                    Save.state.HuntForCard("CutThroughFate");
+                    Save.state.HuntForCard("Adaptation");
+                    Save.state.HuntForCard("InnerPeace");
+                    Save.state.HuntForCard("Sanctity");
+                    Save.state.HuntForCard("WheelKick");
+                    Save.state.HuntForCard("Deep Breath");
+                    Save.state.HuntForCard("Flash of Steel");
+                    Save.state.HuntForCard("Finesse");
+                    Save.state.HuntForCard("Pray");
+                }
             }
             return value;
         }

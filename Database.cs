@@ -63,6 +63,7 @@ namespace ProjectPumpernickle {
         public void OnLoad() {
             foreach (var card in cards) {
                 cardsDict[card.id] = card;
+                card.OnLoad();
             }
             foreach (var encounter in encounters) {
                 encounterDict[encounter.id] = encounter;

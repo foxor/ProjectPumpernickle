@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
+﻿using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     public enum CardType {
@@ -14,17 +9,24 @@ namespace ProjectPumpernickle {
         Curse,
         Status,
     }
+    public enum Rarity {
+        Common,
+        Uncommon,
+        Rare,
+        Basic,
+        Special,
+    }
     public enum Tags {
         NonPermanent,
         CardDraw,
     }
-    public enum Zone {
-        Hand,
-        Discard,
-        Draw,
-        Exhaust,
-        Exhume,
-        Power,
+    public enum Color {
+        Red,
+        Green,
+        Blue,
+        Purple,
+        Colorless,
+        Curse,
     }
     public class Card {
         public string id;
@@ -36,22 +38,31 @@ namespace ProjectPumpernickle {
         public string cost;
         public string description;
         public float bias;
-        public float upgradeBias;
+        public float upgradeHealthPerFight;
+        public string rarity;
+        public string color;
 
         public Dictionary<string, float> tags;
         public CardType cardType;
         public int intCost = -1;
-        public Zone zone;
+        public Rarity cardRarity;
+        public Color cardColor;
 
         public void CopyFrom(Card other) {
             this.name = other.name;
             this.type = other.type;
             this.cost = other.cost;
             this.description = other.description;
-            this.zone = other.zone;
             this.bias = other.bias;
+            this.upgradeHealthPerFight = other.upgradeHealthPerFight;
+            this.rarity = other.rarity;
+            this.color = other.color;
+
             this.tags = other.tags;
-            this.upgradeBias = other.upgradeBias;
+            this.cardType = other.cardType;
+            this.intCost = other.intCost;
+            this.cardRarity = other.cardRarity;
+            this.cardColor = other.cardColor;
         }
 
         public void OnLoad() {
@@ -83,6 +94,56 @@ namespace ProjectPumpernickle {
                     break;
                 }
             }
+
+            switch (rarity) {
+                case "Common": {
+                    cardRarity = Rarity.Common;
+                    break;
+                }
+                case "Uncommon": {
+                    cardRarity = Rarity.Uncommon;
+                    break;
+                }
+                case "Rare": {
+                    cardRarity = Rarity.Rare;
+                    break;
+                }
+                case "Basic": {
+                    cardRarity = Rarity.Basic;
+                    break;
+                }
+                case "Special": {
+                    cardRarity = Rarity.Special;
+                    break;
+                }
+            }
+
+            switch (color) {
+                case "Red": {
+                    cardColor = Color.Red;
+                    break;
+                }
+                case "Green": {
+                    cardColor = Color.Green;
+                    break;
+                }
+                case "Blue": {
+                    cardColor = Color.Blue;
+                    break;
+                }
+                case "Purple": {
+                    cardColor = Color.Purple;
+                    break;
+                }
+                case "Colorless": {
+                    cardColor = Color.Colorless;
+                    break;
+                }
+                case "Curse": {
+                    cardColor = Color.Curse;
+                    break;
+                }
+            }
         }
     }
     public enum NodeType {
@@ -93,6 +154,16 @@ namespace ProjectPumpernickle {
         Shop,
         Fire,
         Chest,
+    }
+    public static class NodeTypeExtensions {
+        public static bool IsFight(this NodeType nodeType) {
+            return nodeType switch {
+                NodeType.Fight => true,
+                NodeType.Elite => true,
+                NodeType.MegaElite => true,
+                _ => false,
+            };
+        }
     }
     public class MapNode {
         public NodeType nodeType;
@@ -138,6 +209,7 @@ namespace ProjectPumpernickle {
         public bool has_ruby_key;
         public bool has_sapphire_key;
         public List<DamageTaken> metric_damage_taken;
+        public int card_random_seed_randomizer;
 
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, 7, 15];
@@ -145,8 +217,9 @@ namespace ProjectPumpernickle {
         public int infiniteRoom;
         public int earliestInfinite;
         public bool buildingInfinite;
-        public int missingCards;
         public bool expectingToRedBlue;
+        public int missingCardCount;
+        public List<string> huntingCards = new List<string>();
 
         public PumpernickelSaveState() {
             instance = this;
@@ -154,13 +227,13 @@ namespace ProjectPumpernickle {
 
         public int AddCardById(string name) {
             var upgrades = name.EndsWith("+") ? 1 : 0;
+            name = name.Replace("+", "");
             var card = new Card() {
                 id = name,
                 upgrades = upgrades,
                 misc = 0
             };
             card.CopyFrom(Database.instance.cardsDict[card.id]);
-            card.OnLoad();
             cards.Add(card);
             return cards.Count - 1;
         }
@@ -252,7 +325,6 @@ namespace ProjectPumpernickle {
         public void OnLoad() {
             foreach (var card in cards) {
                 card.CopyFrom(Database.instance.cardsDict[card.id]);
-                card.OnLoad();
             }
         }
 
@@ -281,6 +353,15 @@ namespace ProjectPumpernickle {
         }
         public void RemovePotion(int potionIndex) {
             potions[potionIndex] = "Potion Slot";
+        }
+
+        public void HuntForCard(string cardId) {
+            if (huntingCards == null) {
+                huntingCards = new List<string>();
+            }
+            if (!huntingCards.Contains(cardId)) {
+                huntingCards.Add(cardId);
+            }
         }
     }
 }

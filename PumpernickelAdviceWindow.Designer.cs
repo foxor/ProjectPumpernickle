@@ -45,6 +45,7 @@
             AdviceBox.Multiline = true;
             AdviceBox.Name = "AdviceBox";
             AdviceBox.RightToLeft = RightToLeft.Yes;
+            AdviceBox.ScrollBars = ScrollBars.Vertical;
             AdviceBox.Size = new Size(243, 232);
             AdviceBox.TabIndex = 1;
             AdviceBox.TextAlign = HorizontalAlignment.Center;

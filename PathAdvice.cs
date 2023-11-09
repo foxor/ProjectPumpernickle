@@ -12,6 +12,7 @@ using System.Xml.Linq;
 namespace ProjectPumpernickle {
     public class  Evaluation {
         public static Evaluation Active;
+        // How to make score auditable
         public float Score;
         public List<string> Advice = new List<string>();
         public Path Path;
@@ -20,8 +21,8 @@ namespace ProjectPumpernickle {
             Active = this;
             Save.state.earliestInfinite = 0;
             Save.state.buildingInfinite = false;
-            Save.state.missingCards = 0;
             Save.state.expectingToRedBlue = Save.state.character == PlayerCharacter.Watcher;
+            Save.state.huntingCards.Clear();
         }
 
         public override string ToString() {
@@ -31,33 +32,39 @@ namespace ProjectPumpernickle {
     public class RewardOption {
         public RewardType rewardType;
         public string[] values;
+        public int cost;
     }
     public class RewardContext : IDisposable {
         public List<string> relics = new List<string>();
         public List<int> cardIndicies = new List<int>();
-        public int gold;
+        public int goldAdded;
         public List<int> potionIndicies = new List<int>();
         public List<string> description = new List<string>();
         public bool tookGreenKey;
+        public List<Card> cardsRemoved = new List<Card>();
+        public List<int> removedCardIndicies = new List<int>();
         public RewardContext(List<RewardOption> rewardOptions, List<int> rewardIndicies) {
-            var i = 0;
-            foreach (var reward in rewardOptions) {
+            for (int i = 0; i < rewardIndicies.Count; i++) {
+                var rewardGroup = rewardOptions[i];
                 var index = rewardIndicies[i];
-                if (index >= reward.values.Length) {
+                if (index >= rewardGroup.values.Length) {
                     // We're skipping this reward
-                    description.Add("Skip the " + reward.rewardType);
+                    description.Add("Skip the " + rewardGroup.rewardType);
                     continue;
                 }
-                var chosen = reward.values[index];
-                switch (reward.rewardType) {
+                var chosen = rewardGroup.values[index];
+                var chosenId = chosen.Replace("+", "");
+                Save.state.gold -= rewardGroup.cost;
+                goldAdded -= rewardGroup.cost;
+                switch (rewardGroup.rewardType) {
                     case RewardType.Cards: {
-                        cardIndicies.Add(PumpernickelSaveState.instance.AddCardById(chosen));
-                        description.Add("Take the " + Database.instance.cardsDict[chosen].name);
+                        cardIndicies.Add(PumpernickelSaveState.instance.AddCardById(chosenId));
+                        description.Add("Take the " + Database.instance.cardsDict[chosenId].name);
                         break;
                     }
                     case RewardType.Gold: {
                         var value = int.Parse(chosen);
-                        gold += value;
+                        goldAdded += value;
                         Save.state.gold += value;
                         description.Add("Take the gold");
                         break;
@@ -69,7 +76,7 @@ namespace ProjectPumpernickle {
                         description.Add("Take the " + chosen);
                         break;
                     }
-                    case RewardType.Potions: {
+                    case RewardType.Potion: {
                         description.Add("Take the " + chosen);
                         potionIndicies.Add(Save.state.TakePotion(chosen));
                         break;
@@ -88,8 +95,15 @@ namespace ProjectPumpernickle {
                         }
                         break;
                     }
+                    case RewardType.CardRemove: {
+                        var removeIndex = Evaluators.WorstCardIndex();
+                        cardsRemoved.Add(Save.state.cards[removeIndex]);
+                        removedCardIndicies.Add(removeIndex);
+                        description.Add("Remove the " + Save.state.cards[removeIndex].name);
+                        Save.state.cards.RemoveAt(removeIndex);
+                        break;
+                    }
                 }
-                i++;
             }
         }
 
@@ -97,16 +111,30 @@ namespace ProjectPumpernickle {
             foreach (var relic in relics) {
                 Save.state.relics.Remove(relic);
             }
-            foreach (var cardIndex in cardIndicies) {
+            foreach (var cardIndex in cardIndicies.OrderByDescending(x => x)) {
                 PumpernickelSaveState.instance.RemoveCardByIndex(cardIndex);
             }
-            Save.state.gold -= gold;
+            Save.state.gold -= goldAdded;
             foreach (var potionIndex in potionIndicies) {
-                Save.state.RemovePotion(potionIndex);
+                if (potionIndex != -1) {
+                    Save.state.RemovePotion(potionIndex);
+                }
             }
             if (tookGreenKey) {
                 Save.state.has_emerald_key = false;
             }
+            for (int i = cardsRemoved.Count - 1; i >= 0; i--) {
+                var card = cardsRemoved[i];
+                var index = removedCardIndicies[i];
+                Save.state.cards.Insert(index, card);
+            }
+        }
+
+        public bool IsValid() {
+            var valid = true;
+            valid &= Save.state.gold > 0;
+            valid &= !potionIndicies.Any(x => x == -1);
+            return valid;
         }
     }
     public class PathAdvice {
@@ -114,6 +142,7 @@ namespace ProjectPumpernickle {
             var totalOptions = rewardOptions.Select(x => x.values.Length + 1).Aggregate(1, (a, x) => a * x);
             List<int> rewardIndicies = new List<int>();
             for (int i = 0; i < totalOptions; i++) {
+                rewardIndicies.Clear();
                 int residual = i;
                 for (int j = 0; j < rewardOptions.Count; j++) {
                     var optionCount = rewardOptions[j].values.Length + 1;
@@ -121,9 +150,11 @@ namespace ProjectPumpernickle {
                     residual /= optionCount;
                 }
                 using (var context = new RewardContext(rewardOptions, rewardIndicies)) {
+                    if (!context.IsValid()) {
+                        continue;
+                    }
                     yield return Evaluate(context.description);
                 }
-                rewardIndicies.Clear();
             }
         }
         public static Evaluation AdviseOnRewards(List<RewardOption> rewardOptions) {

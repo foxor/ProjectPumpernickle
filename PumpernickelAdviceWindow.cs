@@ -7,7 +7,7 @@ namespace ProjectPumpernickle {
         public static PumpernickelAdviceWindow instance = null;
         protected int lastHoveredIndex = -1;
         protected string[] PathTexts = new string[0];
-        protected Color defaultColor;
+        protected System.Drawing.Color defaultColor;
         protected Evaluation chosenEvaluation;
 
         public PumpernickelAdviceWindow() {
@@ -85,7 +85,7 @@ namespace ProjectPumpernickle {
                     var charIndex = PositionToIndex(pathNode.position);
                     PathPreview.SelectionStart = charIndex;
                     PathPreview.SelectionLength = 1;
-                    PathPreview.SelectionColor = Color.Red;
+                    PathPreview.SelectionColor = System.Drawing.Color.Red;
                     // Does this need to get set back?
                 }
             }

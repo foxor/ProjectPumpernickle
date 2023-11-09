@@ -55,7 +55,9 @@ namespace ProjectPumpernickle {
 
             points += 10f * (1f - (path == null ? 0f : path.Risk));
 
-            var upgrades = path == null ? 0 : path.expectedUpgrades[^1];
+            var futureUpgrades = (path == null ? Path.ExpectedFutureUpgradesDuringFights(0f) : path.ExpectedUpgradesDuringFights()).Last();
+            var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
+            var upgrades = futureUpgrades + presentUpgrades;
             if (upgrades <= 4) {
                 points += upgrades * 2f;
             }
@@ -78,10 +80,11 @@ namespace ProjectPumpernickle {
             var effectiveHealth = Evaluators.GetEffectiveHealth();
             points += effectiveHealth / 10f;
 
-            points += path.ExpectedGoldBroughtToShops() / GOLD_AT_SHOP_PER_POINT;
+            var goldBrought = path == null ? Path.ExpectedGoldBroughtToShopsNextAct(Save.state.gold) : path.ExpectedGoldBroughtToShops();
+            points += goldBrought / GOLD_AT_SHOP_PER_POINT;
 
             if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path?.hasMegaElite != true) {
-                points = 0f;
+                points = float.MinValue;
             }
 
             return points;
