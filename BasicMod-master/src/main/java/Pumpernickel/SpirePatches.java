@@ -11,13 +11,18 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.EventRoom;
+import com.megacrit.cardcrawl.rooms.MonsterRoom;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
+import com.megacrit.cardcrawl.rooms.TreasureRoom;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 import com.megacrit.cardcrawl.screens.CombatRewardScreen;
 import com.megacrit.cardcrawl.screens.select.BossRelicSelectScreen;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.neow.NeowEvent;
+import com.megacrit.cardcrawl.neow.NeowReward;
+import com.megacrit.cardcrawl.neow.NeowRoom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,7 +42,12 @@ public class SpirePatches {
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
             outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
-            outToServer.write("true\n".getBytes(StandardCharsets.UTF_8)); // Are we expecting a fight to have just ended
+            if (AbstractDungeon.getCurrRoom().getClass() == TreasureRoom.class) {
+                outToServer.write("false\n".getBytes(StandardCharsets.UTF_8));
+            }
+            else {
+                outToServer.write("true\n".getBytes(StandardCharsets.UTF_8)); // Are we expecting a fight to have just ended
+            }
             boolean alreadySaidGreenKey = false;
             for (RewardItem rewardItem : AbstractDungeon.combatRewardScreen.rewards) {
                 switch (rewardItem.type) {
@@ -196,6 +206,28 @@ public class SpirePatches {
         catch (Exception e) {
         }
     }
+    public static void neow() {
+        try {
+            Socket clientSocket = new Socket("localhost", 13076);
+            DataOutputStream outToServer =
+                    new DataOutputStream(clientSocket.getOutputStream());
+            outToServer.write("Neow\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            NeowEvent event = (NeowEvent)AbstractDungeon.getCurrRoom().event;
+            
+            Field rewardField = NeowEvent.class.getDeclaredField("rewards");
+            rewardField.setAccessible(true);
+            ArrayList<NeowReward> rewards = (ArrayList<NeowReward>)rewardField.get(event);
+            for (NeowReward reward : rewards) {
+                outToServer.write((reward.drawback.name() + ": " + reward.type.name() + "\n").getBytes(StandardCharsets.UTF_8));
+            }
+            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.flush();
+            clientSocket.close();
+        }
+        catch (Exception e) {
+        }
+    }
     // Recompute after generating a card reward
     @SpirePatch( clz = CombatRewardScreen.class, method = "setupItemReward" )
     public static class AbstractDungeonGetRewardCardsPatch {
@@ -221,5 +253,9 @@ public class SpirePatches {
     @SpirePatch(clz = ShopScreen.class, method = "init", paramtypez = { ArrayList.class, ArrayList.class })
     public static class OnEnterShopPatch {
         @SpirePostfixPatch public static void Postfix() { shop(); }
+    }
+    @SpirePatch(clz = NeowEvent.class, method = "blessing", paramtypez = { })
+    public static class OnNeowRewardPatch {
+        @SpirePostfixPatch public static void Postfix() { neow(); }
     }
 }

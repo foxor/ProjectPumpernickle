@@ -18,22 +18,25 @@ namespace ProjectPumpernickle {
             }
         }
 
-        float IGlobalRule.Apply(Path path) {
+        void IGlobalRule.Apply(Evaluation evaluation) {
             var room = Save.state.infiniteRoom;
-            var expectedCardRemoves = path == null ? Path.ExpectedFutureActCardRemoves() : path.ExpectedPossibleCardRemoves();
-            var expectedPreNemesisRemoves = path == null ? Path.ExpectedFutureActCardRemovesBeforeNemesis() : path.ExpectedPossibleCardRemovesBeforeNemesis();
+            var expectedCardRemoves = evaluation.Path.EndOfActPath ? Path.ExpectedFutureActCardRemoves() : evaluation.Path.ExpectedPossibleCardRemoves();
+            var expectedPreNemesisRemoves = evaluation.Path.EndOfActPath ? Path.ExpectedFutureActCardRemovesBeforeNemesis() : evaluation.Path.ExpectedPossibleCardRemovesBeforeNemesis();
             var finalRoom = room + expectedCardRemoves;
             var nemesisRoom = room + expectedPreNemesisRemoves;
             var infiniteNow = room >= 0;
             var infiniteEnd = finalRoom >= 2f;
             var infiniteNemesis = nemesisRoom >= 5f;
+            var infiniteQuality = Evaluators.InfiniteQuality();
             if (Save.state.relics.Contains("Medical Kit")) {
                 infiniteEnd = finalRoom >= 0;
                 infiniteNemesis = nemesisRoom >= 0;
             }
-            return (infiniteNow ? 1 : -1) * NOW_POINTS +
+            var points = ((infiniteNow ? 1 : -1) * NOW_POINTS +
                 (infiniteEnd ? 1 : -1) * END_OF_GAME_POINTS +
-                (infiniteNemesis ? 1 : -1) * NEMESIS_POINTS;
+                (infiniteNemesis ? 1 : -1) * NEMESIS_POINTS
+            ) * infiniteQuality;
+            evaluation.AddScore(ScoreReason.DeckSizeLimit, points);
         }
     }
 }

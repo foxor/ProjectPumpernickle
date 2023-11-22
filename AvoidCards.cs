@@ -9,9 +9,9 @@ namespace ProjectPumpernickle {
     internal class AvoidCards : IGlobalRule {
         bool IGlobalRule.ShouldApply => true;
 
-        float IGlobalRule.Apply(Path path) {
+        void IGlobalRule.Apply(Evaluation evaluation) {
             // TODO: modulate this based on perminant cards / card draw
-            return MathF.Pow(Save.state.cards.Count / -25f, 3f);
+            evaluation.AddScore(ScoreReason.AvoidCard, MathF.Pow(Save.state.cards.Count / -25f, 3f));
         }
     }
 }

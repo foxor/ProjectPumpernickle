@@ -40,6 +40,7 @@ namespace ProjectPumpernickle {
         Rest,
         Upgrade,
         Key,
+        Lift,
     }
     public class Path {
         public static readonly float MAX_ACCEPTABLE_RISK = .8f;
@@ -61,15 +62,28 @@ namespace ProjectPumpernickle {
         public bool[] plannedCardRemove = null;
         public float[] expectedHealth = null;
         public float[] worstCaseHealth = null;
-        public string[][] possibleThreats = null;
+        public Encounter[][] possibleThreats = null;
         public float[] expectedUpgrades = null;
         public FireChoice[] fireChoices = null;
         public float[] expectedShops = null;
-        public float score;
+        public float[] scores = new float[(byte)ScoreReason.COUNT];
+        public float[] fightChance = null;
+        public int planningNodes;
+        public bool EndOfActPath;
+
+        public void AddScore(ScoreReason reason, float delta) {
+            scores[(byte)reason] += delta;
+        }
+
+        public float score {
+            get {
+                return scores.Sum();
+            }
+        }
 
         public void InitArrays() {
-            var bosses = Save.state.act_num == 3 ? 2 : 1;
-            var planningNodes = nodes.Length + bosses;
+            var bosses = Save.state.act_num == 3 ? 5 : 1;
+            planningNodes = nodes.Length + bosses;
             expectedGold = new float[planningNodes];
             minPlanningGold = new int[planningNodes];
             expectedCardRewards = new float[planningNodes];
@@ -77,10 +91,11 @@ namespace ProjectPumpernickle {
             plannedCardRemove = new bool[planningNodes];
             expectedHealth = new float[planningNodes];
             worstCaseHealth = new float[planningNodes];
-            possibleThreats = new string[planningNodes][];
+            possibleThreats = new Encounter[planningNodes][];
             expectedUpgrades = new float[planningNodes];
             fireChoices = new FireChoice[planningNodes];
             expectedShops = new float[planningNodes];
+            fightChance = new float[planningNodes];
             InitializePossibleThreats();
         }
 
@@ -161,12 +176,12 @@ namespace ProjectPumpernickle {
             var hasSeenElite = false;
             var easyPoolLeft = Save.state.act_num == 1 ? 3 : 2;
             easyPoolLeft = Math.Max(0, easyPoolLeft - Save.state.monsters_killed);
-            for (int i = 0; i < nodes.Length; i++) {
-                switch (nodes[i].nodeType) {
+            for (int i = 0; i < possibleThreats.Length; i++) {
+                switch (GetNodeType(i)) {
                     case NodeType.Shop:
                     case NodeType.Fire:
                     case NodeType.Chest: {
-                        possibleThreats[i] = new string[0];
+                        possibleThreats[i] = new Encounter[0];
                         continue;
                     }
                     case NodeType.Elite:
@@ -191,31 +206,37 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case NodeType.Question: {
-                        // TODO
-                        possibleThreats[i] = new string[0];
+                        // If we hit a question mark fight, that doesn't change the total number of easy pool fights we do
+                        possibleThreats[i] = HardPool();
+                        // TODO: add event fights
                         break;
                     }
+                    // case NodeType.Boss is handled below
                 }
             }
-            possibleThreats[nodes.Length] = new string[] { Save.state.boss };
+            possibleThreats[nodes.Length] = new Encounter[] { Database.instance.encounterDict[Save.state.boss] };
             if (Save.state.act_num == 3) {
-                possibleThreats[nodes.Length + 1] = NextBossOptions().ToArray();
+                possibleThreats[nodes.Length + 0] = NextBossOptions().ToArray();
+                possibleThreats[nodes.Length + 1] = new Encounter[0];
+                possibleThreats[nodes.Length + 2] = new Encounter[0];
+                possibleThreats[nodes.Length + 3] = new Encounter[0];
+                possibleThreats[nodes.Length + 4] = new Encounter[] { Database.instance.encounterDict["Corrupt Heart"] };
             }
         }
 
-        public static string[] EasyPool() {
-            return Database.instance.encounters.Where(x => x.act == Save.state.act_num && x.pool.Equals("easy")).Select(x => x.id).ToArray();
+        public static Encounter[] EasyPool() {
+            return Database.instance.EasyPools[Save.state.act_num - 1];
         }
 
-        public static string[] HardPool() {
-            return Database.instance.encounters.Where(x => x.act == Save.state.act_num && x.pool.Equals("hard")).Select(x => x.id).ToArray();
+        public static Encounter[] HardPool() {
+            return Database.instance.HardPools[Save.state.act_num - 1];
         }
 
-        public static string[] EliteOptions() {
-            return Database.instance.encounters.Where(x => x.act == Save.state.act_num && x.pool.Equals("elite")).Select(x => x.id).ToArray();
+        public static Encounter[] EliteOptions() {
+            return Database.instance.Elites[Save.state.act_num - 1];
         }
 
-        public static IEnumerable<string> NextEliteOptions() {
+        public static IEnumerable<Encounter> NextEliteOptions() {
             var killed = 0;
             if (Save.state.act_num == 1) {
                 killed = Save.state.elites1_killed;
@@ -230,28 +251,28 @@ namespace ProjectPumpernickle {
             if (killed != 0) {
                 cantBe = Save.state.elite_monster_list[Save.state.elites1_killed - 1];
             }
-            return Database.instance.encounters.Where(x => x.act == Save.state.act_num && x.pool.Equals("elite") && x.id != cantBe).Select(x => x.id);
+            return EliteOptions().Where(x => x.act == Save.state.act_num && x.pool.Equals("elite") && x.id != cantBe);
         }
 
-        public static IEnumerable<string> NextBossOptions() {
+        public static IEnumerable<Encounter> NextBossOptions() {
             switch (Save.state.boss) {
                 case "Time Eater": {
                     return new string[] {
                         "Awakened One",
                         "Donu Deca",
-                    };
+                    }.Select(x => Database.instance.encounterDict[x]);
                 }
                 case "Awakened One": {
                     return new string[] {
                         "Time Eater",
                         "Donu Deca",
-                    };
+                    }.Select(x => Database.instance.encounterDict[x]);
                 }
                 case "Donu Deca": {
                     return new string[] {
                         "Awakened One",
                         "Time Eater",
-                    };
+                    }.Select(x => Database.instance.encounterDict[x]);
                 }
                 default: {
                     throw new NotImplementedException();
@@ -275,29 +296,37 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public void ExpectBasicProgression() {
+        public void ExpectBasicProgression(int startingCardRewards) {
             // Early in the run, every card reward is a huge impact on the deck quality.
             // We need this so that we know a floor 10 elite won't kill us
             float fightsSoFar = 0f;
             float relicsSoFar = 0f;
-            float fightChance = Save.state.event_chances[1];
+            float cardRewardsSoFar = startingCardRewards;
+            float floorFightChance = Save.state.event_chances[1];
             float shopChance = Save.state.event_chances[2];
             float shopsSoFar = 0f;
 
-            for (int i = 0; i < nodes.Length; i++) {
-                switch (nodes[i].nodeType) {
+            for (int i = 0; i < expectedCardRewards.Length; i++) {
+                fightChance[i] = 0f;
+                switch (GetNodeType(i)) {
                     case NodeType.Elite: {
                         fightsSoFar++;
                         relicsSoFar++;
+                        cardRewardsSoFar++;
+                        fightChance[i] = 1f;
                         break;
                     }
                     case NodeType.MegaElite: {
                         fightsSoFar++;
+                        cardRewardsSoFar++;
                         relicsSoFar++;
+                        fightChance[i] = 1f;
                         break;
                     }
                     case NodeType.Fight: {
                         fightsSoFar++;
+                        cardRewardsSoFar++;
+                        fightChance[i] = 1f;
                         break;
                     }
                     case NodeType.Shop: {
@@ -305,22 +334,19 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case NodeType.Question: {
-                        fightsSoFar += fightChance;
+                        fightsSoFar += floorFightChance;
                         shopsSoFar += shopChance;
-                        fightChance = .1f * fightChance + (fightChance + .1f) * (1f - fightChance);
+                        cardRewardsSoFar += floorFightChance;
+                        fightChance[i] = floorFightChance;
+                        floorFightChance = .1f * floorFightChance + (floorFightChance + .1f) * (1f - floorFightChance);
                         shopChance = .03f * shopChance + (shopChance + .03f) * (1f - shopChance);
                         // TODO: shop chance
                         break;
                     }
                 }
-                expectedCardRewards[i] = fightsSoFar;
+                expectedCardRewards[i] = cardRewardsSoFar;
                 expectedRewardRelics[i] = relicsSoFar;
                 expectedShops[i] = shopsSoFar;
-            }
-            for (int i = nodes.Length; i < expectedCardRewards.Length; i++) {
-                expectedCardRewards[i] = expectedCardRewards[i - 1];
-                expectedRewardRelics[i] = expectedRewardRelics[i - 1];
-                expectedShops[i] = expectedShops[i - 1];
             }
         }
 
@@ -334,7 +360,15 @@ namespace ProjectPumpernickle {
         }
 
         public bool NeedsRedKey(int index) {
-            return false;
+            if (Save.state.act_num != 3 || Save.state.has_ruby_key) {
+                return false;
+            }
+            var fireNodes = Enumerable.Range(0, nodes.Length).Where(x => nodes[x].nodeType == NodeType.Fire);
+            var fireCount = fireNodes.Count();
+            if (fireCount == 1) {
+                return true;
+            }
+            return fireNodes.Skip(fireCount - 2).First() == index;
         }
 
         public bool HealthTooLow(int index) {
@@ -354,18 +388,59 @@ namespace ProjectPumpernickle {
             return HealthTooLow(nodes.Length - 1);
         }
 
+        public NodeType GetNodeType(int i) {
+            if (i < nodes.Length) {
+                return nodes[i].nodeType;
+            }
+            switch (i - nodes.Length) {
+                case 0: {
+                    return NodeType.Boss;
+                }
+                case 1: {
+                    return NodeType.Fire;
+                }
+                case 2: {
+                    return NodeType.Shop;
+                }
+                case 3: {
+                    return NodeType.Elite;
+                }
+                case 4: {
+                    return NodeType.Boss;
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
+        }
+
+        private void TestPlan(ref float bestValue, ref FireChoice bestFireChoice, float value, FireChoice choice) {
+            if (value > bestValue) {
+                bestValue = value;
+                bestFireChoice = choice;
+            }
+        }
+
         public void PlanFires() {
             var upgrades = 0f;
-            for (int i = 0; i < nodes.Length; i++) {
-                var restValue = MathF.Min(Save.state.max_health * .3f, Save.state.max_health - expectedHealth[i]);
+            for (int i = 0; i < fireChoices.Length; i++) {
+                var restValue = Evaluators.RestValue(this, i);
                 var upgradeValue = Evaluators.UpgradeValue(this, i);
-                if (nodes[i].nodeType != NodeType.Fire) {
+                var liftValue = Evaluators.LiftValue(this, i);
+
+                var bestChoice = FireChoice.Upgrade;
+                var bestValue = upgradeValue;
+                TestPlan(ref bestValue, ref bestChoice, restValue, FireChoice.Rest);
+                TestPlan(ref bestValue, ref bestChoice, liftValue, FireChoice.Lift);
+
+                var nodeType = GetNodeType(i);
+                if (nodeType != NodeType.Fire) {
                     fireChoices[i] = FireChoice.None;
                     if (Save.state.cards.Any(x => x.id.Equals("LessonLearned"))) {
-                        if (nodes[i].nodeType == NodeType.Fight) {
+                        if (nodeType == NodeType.Fight) {
                             upgrades += .9f;
                         }
-                        if (nodes[i].nodeType == NodeType.Elite || nodes[i].nodeType == NodeType.MegaElite) {
+                        if (nodeType == NodeType.Elite || nodeType == NodeType.MegaElite) {
                             upgrades += .6f;
                         }
                     }
@@ -373,13 +448,18 @@ namespace ProjectPumpernickle {
                 else if (NeedsRedKey(i)) {
                     fireChoices[i] = FireChoice.Key;
                 }
-                else if (ShouldRest(i) || restValue > upgradeValue) {
+                else if (ShouldRest(i)) {
                     fireChoices[i] = FireChoice.Rest;
                     expectedHealth[i] += Save.state.max_health * .3f;
                 }
                 else {
-                    fireChoices[i] = FireChoice.Upgrade;
-                    upgrades++;
+                    fireChoices[i] = bestChoice;
+                    if (bestChoice == FireChoice.Rest) {
+                        expectedHealth[i] += Save.state.max_health * .3f;
+                    }
+                    else if (bestChoice == FireChoice.Upgrade) {
+                        upgrades++;
+                    }
                 }
                 expectedUpgrades[i] = upgrades;
             }
@@ -392,17 +472,18 @@ namespace ProjectPumpernickle {
                 var lastWorstCaseHealth = i == 0 ? Evaluators.GetEffectiveHealth() : worstCaseHealth[i - 1];
                 float totalExpectedHealthLoss = 0f;
                 float worstWorstCaseHealthLoss = 0f;
+                var totalWeight = possibleThreats[i].Select(x => x.weight).Sum();
                 foreach (var possibleEncounter in possibleThreats[i]) {
                     FightSimulator.SimulateFight(possibleEncounter, out var expectedHealthLoss, out var worstCaseHealthLoss);
                     totalExpectedHealthLoss += expectedHealthLoss;
                     worstWorstCaseHealthLoss = MathF.Max(worstCaseHealthLoss, worstWorstCaseHealthLoss);
-                    AssessThreat(possibleEncounter, expectedHealthLoss, worstCaseHealthLoss, lastExpectedHealth);
+                    var chanceOfThis = (possibleEncounter.weight * 1f / totalWeight) * fightChance[i];
+                    AssessThreat(possibleEncounter, expectedHealthLoss, worstCaseHealthLoss, lastExpectedHealth, chanceOfThis);
                 }
                 var averageExpectedHealthLoss = totalExpectedHealthLoss / possibleThreats.Length;
                 expectedHealth[i] = lastExpectedHealth - averageExpectedHealthLoss;
                 worstCaseHealth[i] = lastWorstCaseHealth - worstWorstCaseHealthLoss;
             }
-            NormalizeThreats();
             // TODO: threats from future acts
         }
 
@@ -413,24 +494,17 @@ namespace ProjectPumpernickle {
             // TODO: threats from future acts
         }
 
-        protected void AssessThreat(string threat, float expectedDamage, float worstCaseDamage, float expectedHealth) {
-            Threats.TryAdd(threat, 0f);
+        protected void AssessThreat(Encounter threat, float expectedDamage, float worstCaseDamage, float expectedHealth, float chanceOfThis) {
+            Threats.TryAdd(threat.id, 0f);
             var healthFraction = expectedDamage / Save.state.max_health;
-            Threats[threat] += healthFraction;
+            Threats[threat.id] += healthFraction;
             var worstCaseHealth = expectedHealth - worstCaseDamage;
             if (worstCaseDamage > expectedDamage && worstCaseHealth < 0f) {
                 var deathLikelihood = -worstCaseHealth / (worstCaseDamage - expectedDamage);
                 var fractionMultiplier = Lerp.FromUncapped(0, 2, deathLikelihood);
-                Threats[threat] += fractionMultiplier * healthFraction;
+                Threats[threat.id] += fractionMultiplier * healthFraction * chanceOfThis;
                 // These risks aggregate across all encounters, which is a bit strange
                 Risk += deathLikelihood;
-            }
-        }
-
-        protected void NormalizeThreats() {
-            var totalThreat = Threats.Values.Sum();
-            foreach (var threat in Threats.Keys.ToArray()) {
-                Threats[threat] /= totalThreat;
             }
         }
 
@@ -583,7 +657,7 @@ namespace ProjectPumpernickle {
             }
             // +1 from spire elites
             var totalCardRewards = (normalActCardRewards * normalActsLeft) + 1;
-            var totalShopsLeft = (normalActsLeft * normalActsLeft) + 1;
+            var totalShopsLeft = (normalActShops * normalActsLeft) + 1;
 
             var totalChance = 0f;
             foreach (var huntedCard in Save.state.huntingCards) {
@@ -655,15 +729,14 @@ namespace ProjectPumpernickle {
             }
             return totalChance + ExpectedHuntedCardsFoundInFutureActs();
         }
-        public static Path[] BuildAllPaths(MapNode root) {
-            // FIXME: this is only accurate in act 1?
-            var skipFirstNode = Save.state.floor_num != 0;
+        public static Path[] BuildAllPaths(MapNode root, int startingCardRewards) {
+            var skipFirstNode = true;
             var nodeSequences = IterateNodeSequences(root, skipFirstNode);
             var paths = nodeSequences.Select(x => new Path() { nodes = x.ToArray() }).ToArray();
             foreach (var path in paths) {
                 path.InitArrays();
                 path.FindBasicProperties();
-                path.ExpectBasicProgression();
+                path.ExpectBasicProgression(startingCardRewards);
                 path.ChoosePlanningThreats();
                 path.ChooseShopPlan();
                 path.ExpectShopProgression();
@@ -687,7 +760,9 @@ namespace ProjectPumpernickle {
             riskT = (riskT * MathF.E * 2) - MathF.E;
             offRampRiskT = (offRampRiskT * MathF.E * 2) - MathF.E;
             float riskRelevance = PumpernickelMath.Sigmoid(riskT - offRampRiskT);
-            score = Lerp.From(score, OffRamp.score, riskRelevance);
+            for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
+                scores[i] = Lerp.From(scores[i], OffRamp.scores[i], riskRelevance);
+            }
         }
 
         public static IEnumerable<float> ExpectedFutureUpgradesDuringFights(float endOfActUpgrades) {
@@ -735,6 +810,9 @@ namespace ProjectPumpernickle {
         public IEnumerable<float> ExpectedUpgradesDuringFights() {
             var fightFloors = Enumerable.Range(0, expectedUpgrades.Length).Where(x => x >= nodes.Length || nodes[x].nodeType.IsFight());
             return fightFloors.Select(x => expectedUpgrades[x]).Concat(ExpectedFutureUpgradesDuringFights(expectedUpgrades[^1]));
+        }
+        public bool ContainsGuaranteedChest() {
+            return nodes.Any(x => x.nodeType == NodeType.Chest);
         }
     }
 }

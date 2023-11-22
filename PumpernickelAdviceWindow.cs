@@ -28,6 +28,9 @@ namespace ProjectPumpernickle {
         }
 
         public void UpdateAct() {
+            if (Save.state.act_num == 4) {
+                return;
+            }
             PathPreview.Text = PathTexts[Save.state.act_num - 1];
         }
 
@@ -64,6 +67,15 @@ namespace ProjectPumpernickle {
                             "Worst Case Health: " + chosenEvaluation.Path.worstCaseHealth[pathIndex] + "\n" +
                             "Expected Gold: " + chosenEvaluation.Path.expectedGold[pathIndex] + "\n"
                         ;
+                        var chosenNode = chosenEvaluation.Path.nodes[pathIndex];
+                        if (chosenNode.nodeType == NodeType.Shop) {
+                            PathNodeInfoBox.Text +=
+                                "Shop Plan: " + chosenEvaluation.Path.shopPlan.ToString();
+                        }
+                        if (chosenNode.nodeType == NodeType.Fire) {
+                            PathNodeInfoBox.Text +=
+                                "Fire Choice: " + chosenEvaluation.Path.fireChoices[pathIndex].ToString();
+                        }
                     }
                 }
                 else {

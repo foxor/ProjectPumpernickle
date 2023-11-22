@@ -15,10 +15,13 @@ namespace ProjectPumpernickle {
         Rare,
         Basic,
         Special,
+        Randomable,
+        Boss,
     }
     public enum Tags {
         NonPermanent,
         CardDraw,
+        Damage,
     }
     public enum Color {
         Red,
@@ -72,7 +75,7 @@ namespace ProjectPumpernickle {
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
             if (damageMatch.Success) {
-                tags["damage"] = float.Parse(damageMatch.Groups[1].Value);
+                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[1].Value);
             }
             int.TryParse(cost, out intCost);
 
@@ -154,6 +157,7 @@ namespace ProjectPumpernickle {
         Shop,
         Fire,
         Chest,
+        Boss,
     }
     public static class NodeTypeExtensions {
         public static bool IsFight(this NodeType nodeType) {
@@ -175,6 +179,7 @@ namespace ProjectPumpernickle {
         Silent,
         Defect,
         Watcher,
+        Any,
     }
     public class DamageTaken {
         public float damage;
@@ -210,16 +215,22 @@ namespace ProjectPumpernickle {
         public bool has_sapphire_key;
         public List<DamageTaken> metric_damage_taken;
         public int card_random_seed_randomizer;
+        public bool chose_neow_reward;
 
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, 7, 15];
         public float infiniteBlockPerCard;
         public int infiniteRoom;
+        public bool infiniteDoesDamage;
+        public bool infiniteBlocks;
+        public bool infiniteDrawPositive;
+        public bool infiniteEnergyPositive;
         public int earliestInfinite;
         public bool buildingInfinite;
         public bool expectingToRedBlue;
         public int missingCardCount;
         public List<string> huntingCards = new List<string>();
+        public float chanceOfOutcome;
 
         public PumpernickelSaveState() {
             instance = this;
@@ -329,13 +340,10 @@ namespace ProjectPumpernickle {
         }
 
         public MapNode GetCurrentNode() {
-            if (room_x < 0) {
-                if (room_y < 0) {
-                    var startNode = new MapNode();
-                    startNode.children = Enumerable.Range(0, map.GetLength(0)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
-                    return startNode;
-                }
-                return null;
+            if (room_x < 0 || room_y < 0) {
+                var startNode = new MapNode();
+                startNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
+                return startNode;
             }
             var CurrentNode = map[Save.state.act_num, room_x, room_y];
             // If we're talking to neow, make up a fake node with all the starting nodes as children

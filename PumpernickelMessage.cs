@@ -15,6 +15,7 @@ namespace ProjectPumpernickle {
         Relic,
         Key,
         CardRemove,
+        Neow,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
@@ -68,6 +69,13 @@ namespace ProjectPumpernickle {
                         var didFight = false;
                         Program.ParseNewFile(floor, didFight);
                         ParseShopMessage(lines.Skip(2).Take(lines.Length - 4));
+                        break;
+                    }
+                    case "Neow": {
+                        var floor = int.Parse(lines[1]);
+                        var didFight = false;
+                        Program.ParseNewFile(floor, didFight);
+                        ParseNeowMessage(lines.Skip(2).Take(lines.Length - 4));
                         break;
                     }
                     default: {
@@ -183,6 +191,25 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
+            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
+        }
+        protected static void ParseNeowMessage(IEnumerable<string> neowOptionLines) {
+            List<string> neowCost = new List<string>();
+            List<string> neowRewards = new List<string>();
+            foreach (var line in neowOptionLines) {
+                var cost = line.Substring(0, line.IndexOf(":"));
+                var reward = line.Substring(line.LastIndexOf(" ") + 1);
+                neowCost.Add(cost);
+                neowRewards.Add(reward);
+            }
+            List<RewardOption> rewardOptions = new List<RewardOption>() {
+                new RewardOption() {
+                    neowCost = neowCost.ToArray(),
+                    values = neowRewards.ToArray(),
+                    rewardType = RewardType.Neow,
+                    skippable = false,
+                },
+            };
             PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
         }
     }

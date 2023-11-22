@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
@@ -8,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
-    internal class Evaluators {
-        protected static int RareRelicsAvailable() {
+    internal static class Evaluators {
+        internal static int RareRelicsAvailable() {
             var classRelics = 0;
             switch (PumpernickelSaveState.instance.character) {
                 case PlayerCharacter.Ironclad: {
@@ -64,8 +65,20 @@ namespace ProjectPumpernickle {
             totalDamage = 0;
         }
 
-        public static float GetPotionHealthValue(string potionId) {
-            return 10f;
+        public static float GetPotionHealthValue(string potionId, float expectedHealth) {
+            var potionValue = 10f;
+            switch (potionId) {
+                case "Ancient Potion": {
+                    potionValue = 0f;
+                    break;
+                }
+                case "Fruit Juice": {
+                    return 5f;
+                }
+            }
+            var healthFactor = Lerp.Inverse(10f, 30f, expectedHealth);
+            var healthEfficiencyMultiplier = Lerp.From(1f/3f, 1f, healthFactor);
+            return potionValue * healthEfficiencyMultiplier;
         }
 
         public static float GetEffectiveHealth() {
@@ -75,18 +88,21 @@ namespace ProjectPumpernickle {
                 if (potion.Equals("Potion Slot")) {
                     continue;
                 }
-                effectiveHealth += GetPotionHealthValue(potion);
+                effectiveHealth += GetPotionHealthValue(potion, literalHealth);
             }
             return effectiveHealth;
         }
 
-        public static string ChooseBestUpgrade(Path path, int index) {
-            var numPriorUpgrades = path.expectedUpgrades.Take(index).Sum();
+        public static string ChooseBestUpgrade(Path path = null, int index = -1) {
+            var numPriorUpgrades = path == null ? 0 : (int)path.expectedUpgrades.Take(index).Sum();
             var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0).Select(x => {
                 var upgradeValue = EvaluationFunctionReflection.GetUpgradeHealthPerFightFunctionCached(x.Card.id)(x.Card, x.Index);
                 return (Card: x.Card, Val: upgradeValue);
             }).OrderByDescending(x => x.Val);
-            return unupgradedCards.Skip((int)numPriorUpgrades).First().Card.id;
+            if (numPriorUpgrades >= unupgradedCards.Count()) {
+                return null;
+            }
+            return unupgradedCards.Skip(numPriorUpgrades).First().Card.id;
         }
 
         public static int FloorToAct(int floorNum) {
@@ -122,6 +138,19 @@ namespace ProjectPumpernickle {
             UpdateCardRarityChances(cardsOfRarity, averageBlizz, remainingRewards);
         }
 
+        public static float ChanceOfSpecificCard(Color color, Rarity rarity) {
+            // This code doesn't handle duplicates correctly.  The abstraction used here is mostly incompatible with that feature, and the math gets hard
+            var populationSize = Database.instance.cards.Where(x => x.cardColor == color && x.cardRarity == rarity).Count();
+            var hitDensity = 1f / populationSize;
+            return hitDensity;
+        }
+
+        public static float ChanceOfSpecificRelic(PlayerCharacter character, Rarity rarity) {
+            var populationSize = Database.instance.relics.Where(x => x.forCharacter.Is(character) && x.rarity.Is(rarity)).Count();
+            var hitDensity = 1f / populationSize;
+            return hitDensity;
+        }
+
         public static float ChanceOfSpecificCardInReward(Color color, Rarity rarity, float expectedCardRewards) {
             var cardBlizzRandomizer = Save.state.card_random_seed_randomizer;
             var cardsOfRarity = new float[] {
@@ -151,9 +180,7 @@ namespace ProjectPumpernickle {
                 }
             }
 
-            // This code doesn't handle duplicates correctly.  The abstraction used here is mostly incompatible with that feature, and the math gets hard
-            var populationSize = Database.instance.cards.Where(x => x.cardColor == color && x.cardRarity == rarity).Count();
-            var hitDensity = 1f / populationSize;
+            var hitDensity = ChanceOfSpecificCard(color, rarity);
             return hitDensity * cardsOfThisRarity;
         }
 
@@ -195,12 +222,20 @@ namespace ProjectPumpernickle {
             return Lerp.Inverse(minCost, maxCost, expectedGold);
         }
 
-        public static int WorstCardIndex() {
+        public static bool ShouldRemoveStrikeBeforeDefend() {
+            if (Save.state.act_num == 1 && Save.state.boss == "Hexaghost") {
+                return false;
+            }
+            return true;
+        }
+
+        public static int CardRemoveTarget() {
             var basics = Save.state.cards.Where(x => x.cardRarity == Rarity.Basic && x.upgrades == 0);
             if (basics.Any()) {
-                var strikes = basics.Where(x => x.name.Equals("Strike"));
-                if (strikes.Any()) {
-                    return Save.state.cards.IndexOf(strikes.First());
+                var toRemove = ShouldRemoveStrikeBeforeDefend() ? "Strike" : "Defend";
+                var firstRemoves = basics.Where(x => x.name.Equals(toRemove));
+                if (firstRemoves.Any()) {
+                    return Save.state.cards.IndexOf(firstRemoves.First());
                 }
                 else {
                     return Save.state.cards.IndexOf(basics.First());
@@ -208,9 +243,10 @@ namespace ProjectPumpernickle {
             }
             var upgradedBasics = Save.state.cards.Where(x => x.cardRarity == Rarity.Basic);
             if (upgradedBasics.Any()) {
-                var strikes = upgradedBasics.Where(x => x.name.Equals("Strike"));
-                if (strikes.Any()) {
-                    return Save.state.cards.IndexOf(strikes.First());
+                var toRemove = ShouldRemoveStrikeBeforeDefend() ? "Strike" : "Defend";
+                var firstRemoves = upgradedBasics.Where(x => x.name.Equals(toRemove));
+                if (firstRemoves.Any()) {
+                    return Save.state.cards.IndexOf(firstRemoves.First());
                 }
                 else {
                     return Save.state.cards.IndexOf(upgradedBasics.First());
@@ -244,6 +280,9 @@ namespace ProjectPumpernickle {
 
         public static float UpgradeValue(Path path, int floorIndex) {
             var bestUpgrade = ChooseBestUpgrade(path, floorIndex);
+            if (bestUpgrade == null) {
+                return 0f;
+            }
             var bestHealthPerFight = Database.instance.cardsDict[bestUpgrade].upgradeHealthPerFight;
             var expectedFightsAfter = ExpectedFightsAfter(path, floorIndex);
             var numPriorUpgrades = path.expectedUpgrades.Take(floorIndex).Sum();
@@ -263,8 +302,112 @@ namespace ProjectPumpernickle {
             return totalMissingHealth;
         }
 
+        public static float LiftValue(Path path, int i) {
+            if (!Save.state.relics.Contains("Girya")) {
+                return float.MinValue;
+            }
+            // FIXME: this math needs to be better, it's health not points
+            return 3.5f;
+        }
+
+        public static float RestValue(Path path, int i) {
+            var healthGained = MathF.Min(Save.state.max_health * .3f, Save.state.max_health - path.expectedHealth[i]);
+            //if (chance of gain health elsewhere) {
+            //    healthGained *= 1 - chance rest unecessary;
+            //}
+            return healthGained;
+        }
+
         public static int NormalFutureActsLeft() {
             return Math.Max(0, 3 - Save.state.act_num);
+        }
+
+        public static float InfiniteQuality() {
+            return MathF.Min(1f, MathF.Max(0f,
+                (Save.state.infiniteDoesDamage ? .6f : 0f) +
+                (Save.state.infiniteBlocks ? .2f : 0f) +
+                (Save.state.infiniteBlockPerCard > 2f ? .5f : 0f) +
+                (Save.state.infiniteDrawPositive ? .1f : 0f) +
+                (Save.state.infiniteEnergyPositive ? .1f : 0f) +
+                (Save.state.earliestInfinite * -.3f)
+            ));
+        }
+        public static string BestCopyTarget() {
+            return "Adaptation";
+        }
+
+        public static bool Is(this Color a, Color b) {
+            return (a == b);
+        }
+        public static bool IsRandomable(this Rarity r) {
+            return r switch {
+                Rarity.Common => true,
+                Rarity.Uncommon => true,
+                Rarity.Rare => true,
+                _ => false,
+            };
+        }
+        public static bool Is(this Rarity a, Rarity b) {
+            return (a == b) || (a == Rarity.Randomable && b.IsRandomable()) || (b == Rarity.Randomable && a.IsRandomable());
+        }
+        public static bool Is(this PlayerCharacter a, PlayerCharacter b) {
+            return (a == b) || (a == PlayerCharacter.Any || b == PlayerCharacter.Any);
+        }
+
+        public static void RandomCardValue(Color color, out Card bestCard, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
+            bestValue = float.MinValue;
+            worstValue = float.MaxValue;
+            bestCard = null;
+            foreach (var card in Database.instance.cards) {
+                if (card.cardColor.Is(color) && card.cardRarity.Is(rarity)) {
+                    var cardScore = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, -1);
+                    if (cardScore > bestValue) {
+                        bestValue = cardScore;
+                        bestCard = card;
+                    }
+                    if (cardScore < worstValue) {
+                        worstValue = cardScore;
+                    }
+                }
+            }
+        }
+
+        public static void RandomRelicValue(PlayerCharacter forCharacter, out Relic bestRelic, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
+            bestValue = float.MinValue;
+            worstValue = float.MaxValue;
+            bestRelic = null;
+            foreach (var relic in Database.instance.relics) {
+                if (relic.forCharacter.Is(forCharacter) && relic.rarity.Is(rarity)) {
+                    var cardScore = EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
+                    if (cardScore > bestValue) {
+                        bestValue = cardScore;
+                        bestRelic = relic;
+                    }
+                    if (cardScore < worstValue) {
+                        worstValue = cardScore;
+                    }
+                }
+            }
+        }
+
+        public static Color ToColor(this PlayerCharacter character) {
+            switch (Save.state.character) {
+                case PlayerCharacter.Ironclad: {
+                    return Color.Red;
+                }
+                case PlayerCharacter.Silent: {
+                    return Color.Green;
+                }
+                case PlayerCharacter.Defect: {
+                    return Color.Blue;
+                }
+                case PlayerCharacter.Watcher: {
+                    return Color.Purple;
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
         }
     }
 }

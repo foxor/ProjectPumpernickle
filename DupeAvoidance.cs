@@ -14,7 +14,7 @@ namespace ProjectPumpernickle {
         protected bool ShouldAvoidPunishment(string cardId) => false;
         protected bool PartialPunishment(string cardId) => false;
 
-        float IGlobalRule.Apply(Path path) {
+        void IGlobalRule.Apply(Evaluation evaluation) {
             var totalPunishment = 0f;
             var counts = new Dictionary<string, int>();
             foreach (var cardId in Save.state.cards.Select(x => x.id)) {
@@ -31,7 +31,7 @@ namespace ProjectPumpernickle {
                     totalPunishment += PUNISHMENT_PER_CARD * (dupe.Value - 1);
                 }
             }
-            return totalPunishment;
+            evaluation.AddScore(ScoreReason.AvoidDuplicateCards, totalPunishment);
         }
     }
 }

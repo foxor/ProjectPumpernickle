@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ProjectPumpernickle {
     public interface IGlobalRule {
         public bool ShouldApply { get; }
-        public float Apply(Path path);
+        public void Apply(Evaluation evaluation);
     }
     internal class Scoring {
         public static readonly float GOLD_AT_SHOP_PER_POINT = 150f;
@@ -17,17 +17,33 @@ namespace ProjectPumpernickle {
             var globalRuleTypes = typeof(Scoring).Assembly.GetTypes().Where(x => typeof(IGlobalRule).IsAssignableFrom(x) && typeof(IGlobalRule) != x);
             GlobalRules = globalRuleTypes.Select(x => (IGlobalRule)Activator.CreateInstance(x)).ToArray();
         }
-        public static float EvaluateGlobalRules(Path path) {
-            var globalEvaluation = 0f;
+        public static void EvaluateGlobalRules(Evaluation evaluation) {
             foreach (var globalRule in GlobalRules) {
                 if (globalRule.ShouldApply) {
-                    globalEvaluation += globalRule.Apply(path);
+                    globalRule.Apply(evaluation);
                 }
             }
-            return globalEvaluation;
         }
 
-        public static float ScorePath(Path path) {
+        public static void ApplyVariance(Evaluation[] evaluations, Evaluation preRewardScore) {
+            // Evaluations are projected optimistically
+            // Normally, we want to punish overly optimistic evaluations,
+            // however, if all the evaluations are risky, we want to pick 
+            // evaluations that actually have a shot
+            var defaultRisk = preRewardScore.Path.Risk;
+            var defaultScore = preRewardScore.Score;
+            var availableSafetyFactor = 1f - Lerp.Inverse(0.5f, 1f, defaultRisk);
+            foreach (var evaluation in evaluations) {
+                var worstCaseScore = defaultScore;
+                var worstCaseEstimatedScore = Lerp.From(worstCaseScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
+                var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
+                var failureChance = 1f - evaluation.RewardVariance;
+                var variancePenalty = maxScoreLoss * failureChance * availableSafetyFactor;
+                evaluation.AddScore(ScoreReason.Variance, variancePenalty);
+            }
+        }
+
+        public static void ScorePath(Path path) {
             // Things to think about:
             // - How many elites can I do this act? 
             // ✔ What is the largest number of elites available?
@@ -53,41 +69,42 @@ namespace ProjectPumpernickle {
             //  - points for bringing gold to shops
             var points = 0f;
 
-            points += 10f * (1f - (path == null ? 0f : path.Risk));
+            path.AddScore(ScoreReason.ActSurvival, 10f * (1f - (path == null ? 0f : path.Risk)));
 
             var futureUpgrades = (path == null ? Path.ExpectedFutureUpgradesDuringFights(0f) : path.ExpectedUpgradesDuringFights()).Last();
             var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
             var upgrades = futureUpgrades + presentUpgrades;
             if (upgrades <= 4) {
-                points += upgrades * 2f;
+                path.AddScore(ScoreReason.UpgradeCount, upgrades * 2f);
             }
             else {
-                points += 8 + MathF.Min(upgrades - 4, 6);
+                path.AddScore(ScoreReason.UpgradeCount, 8 + MathF.Min(upgrades - 4, 6));
             }
 
             var expectedRelics = path == null ? Save.state.relics.Count : path.expectedRewardRelics[^1];
-            points += MathF.Min(expectedRelics, 15f);
+            path.AddScore(ScoreReason.RelicCount, MathF.Min(expectedRelics, 15f));
 
             var expectedCardRewards = path == null ? 0 : path.expectedCardRewards[^1];
-            points += .5f * expectedCardRewards;
+            path.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards);
 
-            points += Save.state.gold / 100f;
+            path.AddScore(ScoreReason.GoldGained, Save.state.gold / 100f);
 
-            points += Save.state.has_emerald_key ? 1 : 0;
-            points += Save.state.has_ruby_key ? 1 : 0;
-            points += Save.state.has_sapphire_key ? 1 : 0;
+            path.AddScore(ScoreReason.Key, Save.state.has_emerald_key ? 1 : 0);
+            path.AddScore(ScoreReason.Key, Save.state.has_ruby_key ? 1 : 0);
+            path.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? 1 : 0);
 
             var effectiveHealth = Evaluators.GetEffectiveHealth();
-            points += effectiveHealth / 10f;
+            path.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 10f);
 
             var goldBrought = path == null ? Path.ExpectedGoldBroughtToShopsNextAct(Save.state.gold) : path.ExpectedGoldBroughtToShops();
-            points += goldBrought / GOLD_AT_SHOP_PER_POINT;
+            path.AddScore(ScoreReason.BringGoldToShop, goldBrought / GOLD_AT_SHOP_PER_POINT);
 
             if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path?.hasMegaElite != true) {
-                points = float.MinValue;
+                path.AddScore(ScoreReason.MissingKey, float.MinValue);
             }
-
-            return points;
+            if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && path.ContainsGuaranteedChest()) {
+                path.AddScore(ScoreReason.MissingKey, float.MinValue);
+            }
         }
     }
 }

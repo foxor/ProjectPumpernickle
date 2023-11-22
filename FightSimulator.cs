@@ -29,11 +29,12 @@ namespace ProjectPumpernickle {
             }
             return strengthDelta;
         }
-        public static void SimulateFight(string encounterId, out float expectedHealthLoss, out float worstCaseHealthLoss) {
-            var medianExpectedDamage = Database.instance.encounterDict[encounterId].medianExpectedHealthLoss;
-            var medianWorstCaseDamage = Database.instance.encounterDict[encounterId].medianWorstCaseHealthLoss;
+        // I don't like this
+        public static void SimulateFight(Encounter encounter, out float expectedHealthLoss, out float worstCaseHealthLoss) {
+            var medianExpectedDamage = encounter.medianExpectedHealthLoss;
+            var medianWorstCaseDamage = encounter.medianWorstCaseHealthLoss;
             var expectedDamageDelta = InductiveStrength();
-            var worstCaseMultiplier = medianWorstCaseDamage / medianExpectedDamage;
+            var worstCaseMultiplier = medianWorstCaseDamage / MathF.Max(1f, medianExpectedDamage);
             expectedHealthLoss = MathF.Max(medianExpectedDamage + expectedDamageDelta, 0f);
             var worstCaseDamageDelta = Math.Max(expectedDamageDelta, expectedDamageDelta * worstCaseMultiplier);
             worstCaseHealthLoss = MathF.Max(medianWorstCaseDamage + worstCaseDamageDelta, 0f);

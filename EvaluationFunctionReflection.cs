@@ -11,6 +11,7 @@ namespace ProjectPumpernickle {
         protected static Dictionary<string, Func<Card, int, float>> cardCache = new Dictionary<string, Func<Card, int, float>>();
         protected static Dictionary<string, Func<Card, int, float>> upgradeCache = new Dictionary<string, Func<Card, int, float>>();
         protected static Dictionary<string, Func<Relic, float>> relicCache = new Dictionary<string, Func<Relic, float>>();
+        protected static Dictionary<string, Func<float>> fightCache = new Dictionary<string, Func<float>>();
         public static Func<Card, int, float> GetCardEvalFunctionCached(string cardId) {
             return GetFunctionCached(cardId, cardCache, CardFunctionFactory(typeof(CardFunctions), x => x.bias));
         }
@@ -19,6 +20,9 @@ namespace ProjectPumpernickle {
         }
         public static Func<Relic, float> GetRelicEvalFunctionCached(string relicId) {
             return GetFunctionCached(relicId, relicCache, GetRelicEvalFunction);
+        }
+        public static Func<Relic, float> GetFightEvalFunctionCached(string encounterId) {
+            return GetFunctionCached(encounterId, relicCache, GetFightEvalFunction);
         }
         private static T GetFunctionCached<T>(string id, Dictionary<string, T> cache, Func<string, T> FunctionFactory) {
             if (cache.TryGetValue(id, out var func)) {
@@ -57,6 +61,17 @@ namespace ProjectPumpernickle {
             }
             return (Relic r) => {
                 return (float)method.Invoke(null, new object[] { r }) + r.bias;
+            };
+        }
+        protected static Func<float> GetFightEvalFunction(string encounterId) {
+            var method = typeof(FightSimulators).GetMethod(encounterId, BindingFlags.Static | BindingFlags.Public);
+            if (method == null) {
+                return () => {
+                    return 0;
+                };
+            }
+            return () => {
+                return (float)method.Invoke(null, null);
             };
         }
     }

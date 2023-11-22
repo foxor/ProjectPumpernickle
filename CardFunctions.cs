@@ -22,8 +22,14 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float ARMAMENTS_VALUE_PER_UNUPGRADED_CARD = .2f;
         public static float Armaments(Card c, int index) {
             var value = 0f;
+            var armamentsIndex = Enumerable.Range(0, Save.state.cards.Count).Where(x => Save.state.cards[x].id.Equals("Armaments")).FirstIndexOf(x => x == index);
+            var unupgradedCards = Save.state.cards.Where(x => x.upgrades == 0).Count();
+            if (armamentsIndex == 0) {
+                value += unupgradedCards * ARMAMENTS_VALUE_PER_UNUPGRADED_CARD;
+            }
             return value;
         }
         public static float BodySlam(Card c, int index) {
@@ -1205,6 +1211,7 @@ namespace ProjectPumpernickle {
                 }
                 Save.state.missingCardCount = cardsToAdd;
                 if (cardsToAdd > 0) {
+                    // Should this set some of the Save.state.infiniteBlockPositive type things?
                     Save.state.HuntForCard("EmptyMind");
                     Save.state.HuntForCard("CutThroughFate");
                     Save.state.HuntForCard("Adaptation");
@@ -1216,6 +1223,12 @@ namespace ProjectPumpernickle {
                     Save.state.HuntForCard("Finesse");
                     Save.state.HuntForCard("Pray");
                 }
+                else {
+                    Save.state.infiniteDrawPositive = cardDraw.Select(x => x.tags[Tags.CardDraw.ToString()] - 1).Sum() > 0;
+                    Save.state.infiniteDoesDamage = Save.state.infiniteDrawPositive || cardDraw.Any(x => x.tags.ContainsKey(Tags.Damage.ToString()));
+                    Save.state.infiniteBlocks = Save.state.infiniteDrawPositive;
+                }
+                Save.state.infiniteEnergyPositive = true;
             }
             return value;
         }
