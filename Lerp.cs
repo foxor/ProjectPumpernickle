@@ -10,7 +10,7 @@ namespace ProjectPumpernickle {
             if (t <= 0) {
                 return min;
             }
-            if (t >= max) {
+            if (t >= 1f) {
                 return max;
             }
             return (max - min) * t + min;

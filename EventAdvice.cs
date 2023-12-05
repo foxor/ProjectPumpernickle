@@ -6,60 +6,43 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class EventAdvice {
-        public static Evaluation GoldenIdolEvent() {
+        public static Evaluation[] GoldenIdolEvent() {
             var existingAdvice = new List<string>() {
                 "Take the golden idol, give up max hp"
             };
-            var evaluation = new Evaluation() {
-                Advice = existingAdvice,
-            };
-            PathAdvice.Evaluate(evaluation);
-            return evaluation;
+            return Advice.AddPathingAdvice(existingAdvice);
         }
 
-        public static Evaluation Vampires() {
+        public static Evaluation[] Vampires() {
             var existingAdvice = new List<string>() {
                 "Refuse the bites"
             };
-            var evaluation = new Evaluation() {
-                Advice = existingAdvice,
-            };
-            PathAdvice.Evaluate(evaluation);
-            return evaluation;
+            return Advice.AddPathingAdvice(existingAdvice);
         }
 
-        public static Evaluation TheMausoleum() {
+        public static Evaluation[] TheMausoleum() {
             var existingAdvice = new List<string>() {
                 "Leave the Mausoleum"
             };
-            var evaluation = new Evaluation() {
-                Advice = existingAdvice,
-            };
-            PathAdvice.Evaluate(evaluation);
-            return evaluation;
+            return Advice.AddPathingAdvice(existingAdvice);
         }
 
-        public static Evaluation MindBloom() {
+        public static Evaluation[] MindBloom() {
             var existingAdvice = new List<string>() {
                 "Fight the act 1 boss"
             };
-            var evaluation = new Evaluation() {
-                Advice = existingAdvice,
-                NeedsMoreInfo = true,
-            };
-            PathAdvice.Evaluate(evaluation);
-            return evaluation;
+            var evals = Advice.AddPathingAdvice(existingAdvice);
+            foreach (var eval in evals) {
+                eval.NeedsMoreInfo = true;
+            }
+            return evals;
         }
 
-        public static Evaluation Duplicator() {
+        public static Evaluation[] Duplicator() {
             var existingAdvice = new List<string>() {
                 "Duplicate " + Database.instance.cardsDict[Evaluators.BestCopyTarget()].name
             };
-            var evaluation = new Evaluation() {
-                Advice = existingAdvice,
-            };
-            PathAdvice.Evaluate(evaluation);
-            return evaluation;
+            return Advice.AddPathingAdvice(existingAdvice);
         }
     }
 }

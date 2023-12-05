@@ -52,7 +52,12 @@ namespace ProjectPumpernickle {
             Console.WriteLine(fromJava);
             control.Invoke(() => {
                 var capture = fromJava;
-                PumpernickelMessage.HandleMessage(capture);
+                try {
+                    PumpernickelMessage.HandleMessage(capture);
+                }
+                catch (Exception e) {
+                    PumpernickelAdviceWindow.instance.DisplayException(e);
+                }
             });
         }
     }

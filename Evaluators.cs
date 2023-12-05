@@ -93,20 +93,36 @@ namespace ProjectPumpernickle {
             return effectiveHealth;
         }
 
-        public static string ChooseBestUpgrade(Path path = null, int index = -1) {
+        public static string ChooseBestUpgrade(out float bestPowerMultiplier, Path path = null, int index = -1) {
             var numPriorUpgrades = path == null ? 0 : (int)path.expectedUpgrades.Take(index).Sum();
             var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0).Select(x => {
-                var upgradeValue = EvaluationFunctionReflection.GetUpgradeHealthPerFightFunctionCached(x.Card.id)(x.Card, x.Index);
+                var upgradeValue = EvaluationFunctionReflection.GetUpgradePowerMultiplierFunctionCached(x.Card.id)(x.Card, x.Index);
                 return (Card: x.Card, Val: upgradeValue);
             }).OrderByDescending(x => x.Val);
             if (numPriorUpgrades >= unupgradedCards.Count()) {
+                bestPowerMultiplier = 0f;
                 return null;
             }
-            return unupgradedCards.Skip(numPriorUpgrades).First().Card.id;
+            var anticipatedSelection = unupgradedCards.Skip(numPriorUpgrades).First();
+            bestPowerMultiplier = anticipatedSelection.Val;
+            return anticipatedSelection.Card.id;
         }
 
         public static int FloorToAct(int floorNum) {
             return floorNum <= 17 ? 1 : (floorNum <= 34 ? 2 : (floorNum <= 51 ? 3 : 4));
+        }
+        public static int ActToFirstFloor(int actNum) {
+            return actNum switch {
+                1 => 0,
+                2 => 18,
+                3 => 35,
+                4 => 52
+            };
+        }
+        public static int FloorsIntoAct(int floorNum) {
+            var act = FloorToAct(floorNum);
+            var actStart = ActToFirstFloor(act);
+            return floorNum - actStart;
         }
 
         public static readonly int BASE_RARE_CHANCE = 3;
@@ -278,28 +294,24 @@ namespace ProjectPumpernickle {
             return fights + ExpectedFightsInFutureActs();
         }
 
-        public static float UpgradeValue(Path path, int floorIndex) {
-            var bestUpgrade = ChooseBestUpgrade(path, floorIndex);
+        public static float UpgradeHealthSaved(Path path, int floorIndex) {
+            var bestUpgrade = ChooseBestUpgrade(out var powerMultiplier, path, floorIndex);
             if (bestUpgrade == null) {
                 return 0f;
             }
-            var bestHealthPerFight = Database.instance.cardsDict[bestUpgrade].upgradeHealthPerFight;
-            var expectedFightsAfter = ExpectedFightsAfter(path, floorIndex);
-            var numPriorUpgrades = path.expectedUpgrades.Take(floorIndex).Sum();
-            var totalMissingUpgrades = Save.state.cards.Where(x => x.upgrades == 0).Count() - numPriorUpgrades;
-            // healthPerFight * expectedFightsAfter would be the answer if we were to never get the selected upgrade
-            // for the rest of the game.  In reality, the next upgrade we get would be this one, and for many of the
-            // fights for the rest of the game, we'd be lacking the second best upgrade, and the upgrades would get worse
-            // and worse.  The value of an upgrade is proportional to the area under the curve of missing upgrade
-            // values for the rest of the game.
-            var totalMissingHealth = 0f;
-            foreach (var expectedUpgrades in path.ExpectedUpgradesDuringFights()) {
-                if (expectedUpgrades < totalMissingUpgrades) {
-                    var missingHealthPerFight = bestHealthPerFight * MathF.Pow(.8f, expectedUpgrades);
-                    totalMissingHealth += missingHealthPerFight;
+            var cardCount = Save.state.cards.Count;
+            var deckPowerMultiplierForCard = (cardCount - 1f + powerMultiplier) / cardCount;
+            var upgradePath = Path.Copy(path);
+            upgradePath.SimulateHealthEvolution(deckPowerMultiplierForCard, floorIndex);
+            var totalHealthSaved = 0f;
+            for (int i = 1; i < upgradePath.expectedHealth.Length; i++) {
+                var loss = path.expectedHealth[i - 1] - path.expectedHealth[i];
+                var lossWithUpgrade = upgradePath.expectedHealth[i - 1] - upgradePath.expectedHealth[i];
+                if (loss > 0f) {
+                    totalHealthSaved += (loss - lossWithUpgrade);
                 }
             }
-            return totalMissingHealth;
+            return totalHealthSaved;
         }
 
         public static float LiftValue(Path path, int i) {
@@ -408,6 +420,115 @@ namespace ProjectPumpernickle {
                     throw new NotImplementedException();
                 }
             }
+        }
+
+        public static float NormalElites(PlayerCharacter character, int act) {
+            switch (character) {
+                case PlayerCharacter.Ironclad: {
+                    return act switch {
+                        1 => 2.4f,
+                        2 => 3f,
+                        3 => 3f,
+                        _ => -1f,
+                    };
+                }
+                case PlayerCharacter.Silent: {
+                    return act switch {
+                        1 => 1.5f,
+                        2 => 2.2f,
+                        3 => 3.1f,
+                        _ => -1f,
+                    };
+                }
+                case PlayerCharacter.Defect: {
+                    return act switch {
+                        1 => 2.8f,
+                        2 => 1.5f,
+                        3 => 3f,
+                        _ => -1f,
+                    };
+                }
+                case PlayerCharacter.Watcher: {
+                    return act switch {
+                        1 => 2.5f,
+                        2 => .5f,
+                        3 => 3.5f,
+                        _ => -1f,
+                    };
+                }
+                default: {
+                    throw new System.NotImplementedException();
+                }
+            }
+        }
+        public static float EstimateOverallPower() {
+            var defensivePower = FightSimulator.EstimateDefensivePower();
+            var damage = FightSimulator.EstimateDamagePerTurn();
+            var normalDamage = FightSimulator.NormalDamageForFloor(Save.state.floor_num);
+            var offensivePower = damage / normalDamage;
+            var overallPower = defensivePower * offensivePower;
+            return overallPower;
+        }
+
+        public static float DesiredElites(float overallPower, int forAct) {
+            var normalElites = NormalElites(Save.state.character, forAct);
+            // If your overallPower == 1f, you're right on track, so interpolation = 1
+            var interpolation = Lerp.Inverse(.75f, 1.25f, overallPower) * 2f;
+            var deltaElites = 1.5f * (interpolation - .5f) * 2f;
+            return normalElites + deltaElites;
+        }
+
+        public static float DesiredFights(float overallPower) {
+            var normalFights = 3.5f;
+            // If your overallPower == 1f, you're right on track, so interpolation = 1
+            var interpolation = Lerp.InverseUncapped(.75f, 1.25f, overallPower) * 2f;
+            var deltaFights = 3f * (interpolation - .5f) * 2f;
+            return normalFights + deltaFights;
+        }
+
+        public static float DesiredShops(float estimatedBeginningGold) {
+            return estimatedBeginningGold switch {
+                > 380f => 2f,
+                < 80f => 0f,
+                _ => 1f,
+            };
+        }
+
+        public static bool WantsEarlyShop(float estimatedBeginningGold) {
+            return estimatedBeginningGold > 250f;
+        }
+
+
+        public static float ExpectedCardRemovesAvailable(Path path) {
+            // TODO
+            return 5f;
+        }
+
+        public static float CardRemovePoints(Path path) {
+            if (Save.state.character == PlayerCharacter.Watcher) {
+                var anticipatedEndGameDeckSize = Evaluators.PermanentDeckSize() - ExpectedCardRemovesAvailable(path) + (Evaluators.HasCalmEnter() ? 0 : 1);
+                if (anticipatedEndGameDeckSize > 8) {
+                    return .2f;
+                }
+                // Allocate 20 pumpernickel points to getting 5 removes on watcher going for infinite
+                return path.ExpectedPossibleCardRemoves() / 5f * 20f;
+            }
+            // TODO
+            return .2f;
+        }
+
+        public static void DamageStatsPerCardReward(int byTurn, float cardsInDeck, out float damage, out float cost) {
+            // Assumes unupgraded
+            switch (Save.state.character) {
+                case PlayerCharacter.Watcher: {
+                    break;
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
+            damage = 0;
+            cost = 0;
         }
     }
 }

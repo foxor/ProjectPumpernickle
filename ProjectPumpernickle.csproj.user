@@ -4,5 +4,8 @@
     <Compile Update="PumpernickelAdviceWindow.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="PumpernickelExplanation.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
 </Project>

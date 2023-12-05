@@ -32,7 +32,10 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case "GreenKey": {
-                        ParseGreenKeyMessage(lines.Skip(1).Take(lines.Length - 3));
+                        var floor = int.Parse(lines[1]);
+                        var didFight = false;
+                        Program.ParseNewFile(floor, didFight);
+                        ParseGreenKeyMessage(lines.Skip(2).Take(lines.Length - 4));
                         break;
                     }
                     case "Event": {
@@ -43,24 +46,42 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case "NewDungeon": {
-                        if (Save.state == null) {
-                            Program.ParseLatestFile();
+                        Save.state.act_num++;
+                        Save.state.room_y = -1;
+                        Save.state.event_chances = new float[] {
+                            0f,
+                            0.1f,
+                            0.03f,
+                            0.02f,
+                        };
+                        var healthLine = lines.Skip(1).First();
+                        Save.state.current_health = int.Parse(healthLine.Substring(healthLine.LastIndexOf(" ") + 1));
+                        var bossLine = lines.Skip(2).First();
+                        Save.state.boss = bossLine.Substring(bossLine.IndexOf(" ") + 1);
+                        var relicHeaderIndex = lines.FirstIndexOf(x => x.Equals("Relics: "));
+                        var deckIndex = 0;
+                        for (int i = 4; i < relicHeaderIndex; i++) {
+                            var colonIndex = lines[i].IndexOf(':');
+                            var cardId = lines[i].Substring(0, colonIndex);
+                            while (deckIndex < Save.state.cards.Count && !Save.state.cards[deckIndex].id.Equals(cardId)) {
+                                Save.state.cards.RemoveAt(deckIndex);
+                            }
+                            if (deckIndex >= Save.state.cards.Count) {
+                                var upgrades = int.Parse(lines[i].Substring(colonIndex + 1));
+                                var card = Database.instance.cardsDict[cardId];
+                                // Do we need a copy constructor so that we're not messing with the database version?
+                                card.upgrades = upgrades;
+                                Save.state.cards.Add(card);
+                            }
+                            deckIndex++;
                         }
-                        else {
-                            Save.state.act_num++;
-                            Save.state.room_y = -1;
-                            Save.state.event_chances = new float[] {
-                                0f,
-                                0.1f,
-                                0.03f,
-                                0.02f,
-                            };
-                            var healthLine = lines.Skip(1).First();
-                            Save.state.current_health = int.Parse(healthLine.Substring(healthLine.LastIndexOf(" ") + 1));
-                            var bossLine = lines.Skip(2).First();
-                            Save.state.boss = bossLine.Substring(bossLine.IndexOf(" ") + 1);
+                        var greenKeyHeaderIndex = lines.FirstIndexOf(x => x.Equals("GreenKey"));
+                        for (int i = relicHeaderIndex + 1 + Save.state.relics.Count; i < greenKeyHeaderIndex; i++) {
+                            var relicId = lines[i];
+                            Save.state.relics.Add(relicId);
                         }
                         PumpernickelAdviceWindow.instance.UpdateAct();
+                        ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..^2]);
                         GivePathingAdvice();
                         break;
                     }
@@ -136,24 +157,22 @@ namespace ProjectPumpernickle {
                 rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
             }
             argumentBuilder.Clear();
-            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
+            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(rewardOptions));
         }
 
         protected static void ParseGreenKeyMessage(IEnumerable<string> floorCoordinate) {
-            if (floorCoordinate.Count() == 2) {
-                int x = int.Parse(floorCoordinate.First());
-                int y = int.Parse(floorCoordinate.Skip(1).Single());
-                PumpernickelSaveState.instance.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
-            }
+            int x = int.Parse(floorCoordinate.First());
+            int y = int.Parse(floorCoordinate.Skip(1).Single());
+            PumpernickelSaveState.instance.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
         }
         protected static void ParseEventMessage(IEnumerable<string> eventClassName) {
             var javaClassPath = eventClassName.Single();
             var eventName = javaClassPath.Substring(javaClassPath.LastIndexOf('.') + 1);
-            var evaluation = typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Invoke(null, null);
-            PumpernickelAdviceWindow.instance.SetEvaluation((Evaluation)evaluation);
+            var evaluations = (Evaluation[])typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Invoke(null, null);
+            PumpernickelAdviceWindow.instance.SetEvaluations(evaluations);
         }
         protected static void GivePathingAdvice() {
-            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(new List<RewardOption>()));
+            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(new List<RewardOption>()));
         }
         protected static void ParseShopMessage(IEnumerable<string> shopOptionLines) {
             RewardType activeRewardType = RewardType.None;
@@ -191,7 +210,7 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
-            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
+            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(rewardOptions));
         }
         protected static void ParseNeowMessage(IEnumerable<string> neowOptionLines) {
             List<string> neowCost = new List<string>();
@@ -210,7 +229,7 @@ namespace ProjectPumpernickle {
                     skippable = false,
                 },
             };
-            PumpernickelAdviceWindow.instance.SetEvaluation(PathAdvice.AdviseOnRewards(rewardOptions));
+            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(rewardOptions));
         }
     }
 }

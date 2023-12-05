@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace ProjectPumpernickle {
     public enum CardType {
@@ -22,6 +21,8 @@ namespace ProjectPumpernickle {
         NonPermanent,
         CardDraw,
         Damage,
+        Block,
+        BottleEquity,
     }
     public enum Color {
         Red,
@@ -41,9 +42,10 @@ namespace ProjectPumpernickle {
         public string cost;
         public string description;
         public float bias;
-        public float upgradeHealthPerFight;
+        public float upgradePowerMultiplier;
         public string rarity;
         public string color;
+        public bool bottled;
 
         public Dictionary<string, float> tags;
         public CardType cardType;
@@ -57,7 +59,7 @@ namespace ProjectPumpernickle {
             this.cost = other.cost;
             this.description = other.description;
             this.bias = other.bias;
-            this.upgradeHealthPerFight = other.upgradeHealthPerFight;
+            this.upgradePowerMultiplier = other.upgradePowerMultiplier;
             this.rarity = other.rarity;
             this.color = other.color;
 
@@ -76,6 +78,11 @@ namespace ProjectPumpernickle {
             var damageMatch = damageRegex.Match(description);
             if (damageMatch.Success) {
                 tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[1].Value);
+            }
+            var blockRegex = new Regex(@"Gain (\d+) (\((\d+)\) )?block");
+            var blockMatch = blockRegex.Match(description);
+            if (blockMatch.Success) {
+                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[1].Value);
             }
             int.TryParse(cost, out intCost);
 
@@ -158,6 +165,8 @@ namespace ProjectPumpernickle {
         Fire,
         Chest,
         Boss,
+        BossChest,
+        Unknown,
     }
     public static class NodeTypeExtensions {
         public static bool IsFight(this NodeType nodeType) {
@@ -231,6 +240,9 @@ namespace ProjectPumpernickle {
         public int missingCardCount;
         public List<string> huntingCards = new List<string>();
         public float chanceOfOutcome;
+        public bool justPickedAttack;
+        public bool justPickedBlock;
+        public bool badBottle;
 
         public PumpernickelSaveState() {
             instance = this;
@@ -340,10 +352,14 @@ namespace ProjectPumpernickle {
         }
 
         public MapNode GetCurrentNode() {
-            if (room_x < 0 || room_y < 0) {
-                var startNode = new MapNode();
-                startNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
-                return startNode;
+            if (room_x == -1 && room_y == -1) {
+                var neowNode = new MapNode();
+                neowNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
+                return neowNode;
+            }
+            if (room_x == -1) {
+                // Off the map (probabaly just fought boss)
+                return null;
             }
             var CurrentNode = map[Save.state.act_num, room_x, room_y];
             // If we're talking to neow, make up a fake node with all the starting nodes as children

@@ -28,6 +28,7 @@
             AdviceBox = new TextBox();
             PathPreview = new RichTextBox();
             PathNodeInfoBox = new RichTextBox();
+            whyButton = new Button();
             SuspendLayout();
             // 
             // pathing
@@ -41,7 +42,7 @@
             // 
             // AdviceBox
             // 
-            AdviceBox.Location = new Point(281, 442);
+            AdviceBox.Location = new Point(281, 392);
             AdviceBox.Multiline = true;
             AdviceBox.Name = "AdviceBox";
             AdviceBox.RightToLeft = RightToLeft.Yes;
@@ -65,15 +66,25 @@
             PathNodeInfoBox.Font = new Font("Courier New", 9F, FontStyle.Regular, GraphicsUnit.Point);
             PathNodeInfoBox.Location = new Point(281, 12);
             PathNodeInfoBox.Name = "PathNodeInfoBox";
-            PathNodeInfoBox.Size = new Size(243, 409);
+            PathNodeInfoBox.Size = new Size(243, 374);
             PathNodeInfoBox.TabIndex = 3;
             PathNodeInfoBox.Text = "";
+            // 
+            // whyButton
+            // 
+            whyButton.Location = new Point(281, 630);
+            whyButton.Name = "whyButton";
+            whyButton.Size = new Size(243, 53);
+            whyButton.TabIndex = 4;
+            whyButton.Text = "Why?";
+            whyButton.UseVisualStyleBackColor = true;
             // 
             // PumpernickelAdviceWindow
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(552, 707);
+            ClientSize = new Size(552, 706);
+            Controls.Add(whyButton);
             Controls.Add(PathNodeInfoBox);
             Controls.Add(PathPreview);
             Controls.Add(AdviceBox);
@@ -91,5 +102,6 @@
         private TextBox AdviceBox;
         private RichTextBox PathPreview;
         private RichTextBox PathNodeInfoBox;
+        private Button whyButton;
     }
 }

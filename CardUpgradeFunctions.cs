@@ -22,8 +22,14 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float ARMAMENTS_POWER_PER_UNUPGRADED_CARD = .2f;
         public static float Armaments(Card c, int index) {
             var value = 0f;
+            var armamentsIndex = Enumerable.Range(0, Save.state.cards.Count).Where(x => Save.state.cards[x].id.Equals("Armaments")).FirstIndexOf(x => x == index);
+            var unupgradedCards = Save.state.cards.Where(x => x.upgrades == 0).Count();
+            if (armamentsIndex == 0 && !Save.state.cards.Any(x => x.id.Equals("Armaments") && x.upgrades > 0)) {
+                value += unupgradedCards * ARMAMENTS_POWER_PER_UNUPGRADED_CARD;
+            }
             return value;
         }
         public static float BodySlam(Card c, int index) {

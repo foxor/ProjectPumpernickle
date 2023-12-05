@@ -5,24 +5,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.ComponentModel.DataAnnotations;
 
 namespace ProjectPumpernickle {
     internal class EvaluationFunctionReflection {
         protected static Dictionary<string, Func<Card, int, float>> cardCache = new Dictionary<string, Func<Card, int, float>>();
         protected static Dictionary<string, Func<Card, int, float>> upgradeCache = new Dictionary<string, Func<Card, int, float>>();
-        protected static Dictionary<string, Func<Relic, float>> relicCache = new Dictionary<string, Func<Relic, float>>();
-        protected static Dictionary<string, Func<float>> fightCache = new Dictionary<string, Func<float>>();
+        protected static Dictionary<string, Func<Relic, float>> relicEvalCache = new Dictionary<string, Func<Relic, float>>();
+        protected static Dictionary<string, Action<RewardContext>> relicPickCache = new Dictionary<string, Action<RewardContext>>();
         public static Func<Card, int, float> GetCardEvalFunctionCached(string cardId) {
             return GetFunctionCached(cardId, cardCache, CardFunctionFactory(typeof(CardFunctions), x => x.bias));
         }
-        public static Func<Card, int, float> GetUpgradeHealthPerFightFunctionCached(string cardId) {
-            return GetFunctionCached(cardId, upgradeCache, CardFunctionFactory(typeof(CardUpgradeFunctions), x => x.upgradeHealthPerFight));
+        public static Func<Card, int, float> GetUpgradePowerMultiplierFunctionCached(string cardId) {
+            return GetFunctionCached(cardId, upgradeCache, CardFunctionFactory(typeof(CardUpgradeFunctions), x => x.upgradePowerMultiplier));
         }
         public static Func<Relic, float> GetRelicEvalFunctionCached(string relicId) {
-            return GetFunctionCached(relicId, relicCache, GetRelicEvalFunction);
+            return GetFunctionCached(relicId, relicEvalCache, GetRelicEvalFunction);
         }
-        public static Func<Relic, float> GetFightEvalFunctionCached(string encounterId) {
-            return GetFunctionCached(encounterId, relicCache, GetFightEvalFunction);
+        public static Action<RewardContext> GetRelicOnPickedFunctionCached(string relicId) {
+            return GetFunctionCached(relicId, relicPickCache, GetRelicPickFunction);
         }
         private static T GetFunctionCached<T>(string id, Dictionary<string, T> cache, Func<string, T> FunctionFactory) {
             if (cache.TryGetValue(id, out var func)) {
@@ -47,7 +48,12 @@ namespace ProjectPumpernickle {
                     };
                 }
                 return (Card c, int i) => {
-                    return (float)method.Invoke(null, new object[] { c, i }) + bias(c);
+                    var value = (float)method.Invoke(null, new object[] { c, i });
+                    value += bias(c);
+                    if (c.bottled && c.tags.TryGetValue(Tags.BottleEquity.ToString(), out var bottleValue)) {
+                        value += bottleValue;
+                    }
+                    return value;
                 };
             };
         }
@@ -63,15 +69,15 @@ namespace ProjectPumpernickle {
                 return (float)method.Invoke(null, new object[] { r }) + r.bias;
             };
         }
-        protected static Func<float> GetFightEvalFunction(string encounterId) {
-            var method = typeof(FightSimulators).GetMethod(encounterId, BindingFlags.Static | BindingFlags.Public);
+        protected static Action<RewardContext> GetRelicPickFunction(string relicId) {
+            relicId = SanitizeId(relicId);
+            var method = typeof(RelicPickFunctions).GetMethod(relicId, BindingFlags.Static | BindingFlags.Public);
             if (method == null) {
-                return () => {
-                    return 0;
+                return (RewardContext r) => {
                 };
             }
-            return () => {
-                return (float)method.Invoke(null, null);
+            return (RewardContext r) => {
+                method.Invoke(null, new object[] { r });
             };
         }
     }

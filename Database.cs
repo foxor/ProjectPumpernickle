@@ -34,6 +34,15 @@ namespace ProjectPumpernickle {
         public string minHPA;
         public string maxHPA;
         public Move[] moves;
+        public float[] damage;
+
+        public float averageHealth;
+        public float maximumHealth;
+        public void OnLoad() {
+            float min = float.Parse(minHPA);
+            maximumHealth = float.Parse(maxHPA);
+            averageHealth = (min + maximumHealth) / 2f;
+        }
     }
     public class Encounter {
         public string id;
@@ -44,6 +53,16 @@ namespace ProjectPumpernickle {
         public bool special;
         public float medianExpectedHealthLoss;
         public float medianWorstCaseHealthLoss;
+
+        public NodeType NodeType {
+            get {
+                return pool switch {
+                    "elite" => NodeType.Elite,
+                    "boss" => NodeType.Boss,
+                    _ => NodeType.Fight,
+                };
+            }
+        }
     }
     public class Relic {
         public string id;
@@ -113,6 +132,7 @@ namespace ProjectPumpernickle {
         public Relic[] relics = null;
 
         public Dictionary<string, Card> cardsDict = new Dictionary<string, Card>();
+        public Dictionary<string, Monster> creatureDict = new Dictionary<string, Monster>();
         public Dictionary<string, Encounter> encounterDict = new Dictionary<string, Encounter>();
         public Dictionary<string, Relic> relicsDict = new Dictionary<string, Relic>();
 
@@ -125,6 +145,10 @@ namespace ProjectPumpernickle {
             foreach (var card in cards) {
                 cardsDict[card.id] = card;
                 card.OnLoad();
+            }
+            foreach (var creature in creatures) {
+                creatureDict[creature.id] = creature;
+                creature.OnLoad();
             }
             var easyBuilder = new List<Encounter>[] {
                 new List<Encounter>(),

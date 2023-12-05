@@ -17,7 +17,7 @@ namespace ProjectPumpernickle {
         void IGlobalRule.Apply(Evaluation evaluation) {
             var totalPunishment = 0f;
             var counts = new Dictionary<string, int>();
-            foreach (var cardId in Save.state.cards.Select(x => x.id)) {
+            foreach (var cardId in Save.state.cards.Where(x => x.cardRarity != Rarity.Basic).Select(x => x.id)) {
                 counts[cardId] = counts.GetValueOrDefault(cardId, 0) + 1;
             }
             foreach (var dupe in counts) {

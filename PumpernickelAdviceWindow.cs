@@ -8,11 +8,19 @@ namespace ProjectPumpernickle {
         protected int lastHoveredIndex = -1;
         protected string[] PathTexts = new string[0];
         protected System.Drawing.Color defaultColor;
-        protected Evaluation chosenEvaluation;
+        public Evaluation[] Evaluations = null;
+        protected PumpernickelExplanation explainForm;
 
         public PumpernickelAdviceWindow() {
             InitializeComponent();
             instance = this;
+            whyButton.Click += WhyButton_Click;
+        }
+
+        private void WhyButton_Click(object? sender, EventArgs e) {
+            explainForm = new PumpernickelExplanation();
+            explainForm.Explain(Evaluations);
+            explainForm.Show();
         }
 
         private void LoadForm(object sender, EventArgs e) {
@@ -54,6 +62,10 @@ namespace ProjectPumpernickle {
         }
 
         private void OnPathMouseMove(object? sender, MouseEventArgs e) {
+            if (Evaluations == null) {
+                return;
+            }
+            var chosenEvaluation = Evaluations.First();
             var hoveredCharIndex = PathPreview.GetCharIndexFromPosition(e.Location);
             if (hoveredCharIndex != lastHoveredIndex) {
                 var asCoord = IndexToPosition(hoveredCharIndex, out var isValid);
@@ -70,7 +82,7 @@ namespace ProjectPumpernickle {
                         var chosenNode = chosenEvaluation.Path.nodes[pathIndex];
                         if (chosenNode.nodeType == NodeType.Shop) {
                             PathNodeInfoBox.Text +=
-                                "Shop Plan: " + chosenEvaluation.Path.shopPlan.ToString();
+                                "Shop Plan: " + chosenEvaluation.Path.shortTermShopPlan.ToString();
                         }
                         if (chosenNode.nodeType == NodeType.Fire) {
                             PathNodeInfoBox.Text +=
@@ -89,18 +101,30 @@ namespace ProjectPumpernickle {
             lastHoveredIndex = -1;
         }
 
-        public void SetEvaluation(Evaluation evaluation) {
-            chosenEvaluation = evaluation;
-            instance.AdviceBox.Text = evaluation.ToString();
-            if (evaluation.Path != null) {
-                foreach (var pathNode in evaluation.Path.nodes) {
+        public void SetEvaluations(Evaluation[] evaluations) {
+            Evaluations = evaluations;
+            var chosenEvaluation = evaluations.First();
+            SetChosenEvaluation(chosenEvaluation);
+            if (explainForm != null && !explainForm.IsDisposed) {
+                explainForm.Explain(Evaluations);
+            }
+        }
+
+        public void SetChosenEvaluation(Evaluation chosenEvaluation) {
+            instance.AdviceBox.Text = chosenEvaluation.ToString();
+            UpdateAct();
+            if (chosenEvaluation.Path != null) {
+                foreach (var pathNode in chosenEvaluation.Path.nodes) {
                     var charIndex = PositionToIndex(pathNode.position);
                     PathPreview.SelectionStart = charIndex;
                     PathPreview.SelectionLength = 1;
                     PathPreview.SelectionColor = System.Drawing.Color.Red;
-                    // Does this need to get set back?
                 }
             }
+        }
+
+        public void DisplayException(Exception exception) {
+            AdviceBox.Text = exception.ToString();
         }
     }
 }

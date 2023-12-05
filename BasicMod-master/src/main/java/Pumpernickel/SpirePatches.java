@@ -1,9 +1,14 @@
 package Pumpernickel;
 
 import basicmod.BasicMod;
+
+import com.evacipated.cardcrawl.modthespire.lib.LineFinder;
+import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.CardSave;
+import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
@@ -80,7 +85,8 @@ public class SpirePatches {
                     }
                     case EMERALD_KEY: {
                         // No idea why this is listed as a rewardItem twice
-                        if (!alreadySaidGreenKey && !Settings.hasEmeraldKey) {
+                    	boolean keyIsHere = AbstractDungeon.getCurrMapNode().hasEmeraldKey;
+                        if (!alreadySaidGreenKey && !Settings.hasEmeraldKey && keyIsHere) {
                             outToServer.write("Key\n".getBytes(StandardCharsets.UTF_8));
                             outToServer.write("Green\n".getBytes(StandardCharsets.UTF_8));
                             alreadySaidGreenKey = true;
@@ -101,6 +107,7 @@ public class SpirePatches {
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
             for(ArrayList< MapRoomNode > row : AbstractDungeon.map) {
                 for(MapRoomNode node : row) {
                     if (node.hasEmeraldKey) {
@@ -164,6 +171,23 @@ public class SpirePatches {
             outToServer.write("NewDungeon\n".getBytes(StandardCharsets.UTF_8));
             outToServer.write(("CurrentHealth: " + AbstractDungeon.player.currentHealth + "\n").getBytes(StandardCharsets.UTF_8));
             outToServer.write(("FirstBoss: " + AbstractDungeon.bossKey + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write(("Cards: \n").getBytes(StandardCharsets.UTF_8));
+            for (CardSave card : AbstractDungeon.player.masterDeck.getCardDeck()) {
+                outToServer.write((card.id + ":" + card.upgrades + "\n").getBytes(StandardCharsets.UTF_8));
+            }
+            outToServer.write(("Relics: \n").getBytes(StandardCharsets.UTF_8));
+            for (AbstractRelic relic : AbstractDungeon.player.relics) {
+                outToServer.write((relic.relicId + "\n").getBytes(StandardCharsets.UTF_8));
+            }
+            outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
+            for(ArrayList< MapRoomNode > row : AbstractDungeon.map) {
+                for(MapRoomNode node : row) {
+                    if (node.hasEmeraldKey) {
+                        outToServer.write((node.x + "\n").getBytes(StandardCharsets.UTF_8));
+                        outToServer.write((node.y + "\n").getBytes(StandardCharsets.UTF_8));
+                    }
+                }
+            }
             outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
             outToServer.flush();
             clientSocket.close();
@@ -245,10 +269,6 @@ public class SpirePatches {
     @SpirePatch(clz = BossRelicSelectScreen.class, method = "open", paramtypez = { ArrayList.class })
     public static class OnBossRelicPatch {
         @SpirePostfixPatch public static void Postfix() { bossRelicReward(); }
-    }
-    @SpirePatch(clz = AbstractDungeon.class, method = "initializeCardPools", paramtypez = { })
-    public static class OnActChangePatch {
-        @SpirePostfixPatch public static void Postfix() { newDungeon(); }
     }
     @SpirePatch(clz = ShopScreen.class, method = "init", paramtypez = { ArrayList.class, ArrayList.class })
     public static class OnEnterShopPatch {
