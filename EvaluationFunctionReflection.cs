@@ -13,6 +13,7 @@ namespace ProjectPumpernickle {
         protected static Dictionary<string, Func<Card, int, float>> upgradeCache = new Dictionary<string, Func<Card, int, float>>();
         protected static Dictionary<string, Func<Relic, float>> relicEvalCache = new Dictionary<string, Func<Relic, float>>();
         protected static Dictionary<string, Action<RewardContext>> relicPickCache = new Dictionary<string, Action<RewardContext>>();
+        protected static Dictionary<string, Func<int, float>> eventValueCache = new Dictionary<string, Func<int, float>>();
         public static Func<Card, int, float> GetCardEvalFunctionCached(string cardId) {
             return GetFunctionCached(cardId, cardCache, CardFunctionFactory(typeof(CardFunctions), x => x.bias));
         }
@@ -25,6 +26,9 @@ namespace ProjectPumpernickle {
         public static Action<RewardContext> GetRelicOnPickedFunctionCached(string relicId) {
             return GetFunctionCached(relicId, relicPickCache, GetRelicPickFunction);
         }
+        public static Func<int, float> GetEventValueFunctionCached(string eventName) {
+            return GetFunctionCached(eventName, eventValueCache, GetEventValueFunction);
+        }
         private static T GetFunctionCached<T>(string id, Dictionary<string, T> cache, Func<string, T> FunctionFactory) {
             if (cache.TryGetValue(id, out var func)) {
                 return func;
@@ -34,22 +38,30 @@ namespace ProjectPumpernickle {
             return func;
         }
         public static string SanitizeId(string id) {
-            return id.Replace(" ", "").Replace("-", "").Replace(".", "").Replace("'", "");
+            return id
+                .Replace(" ", "")
+                .Replace("-", "")
+                .Replace(".", "")
+                .Replace("'", "")
+                .Replace("(", "")
+                .Replace(")", "")
+                .Replace("!", "")
+                .Replace("?", "");
         }
         protected static Func<string, Func<Card, int, float>> CardFunctionFactory(Type functionSource, Func<Card, float> bias) {
             var sourceCapture = functionSource;
             var biasCapture = bias;
             return (string cardId) => {
                 cardId = SanitizeId(cardId);
-                var method = functionSource.GetMethod(cardId, BindingFlags.Static | BindingFlags.Public);
+                var method = sourceCapture.GetMethod(cardId, BindingFlags.Static | BindingFlags.Public);
                 if (method == null) {
                     return (Card c, int i) => {
-                        return 0;
+                        return biasCapture(c);
                     };
                 }
                 return (Card c, int i) => {
                     var value = (float)method.Invoke(null, new object[] { c, i });
-                    value += bias(c);
+                    value += biasCapture(c);
                     if (c.bottled && c.tags.TryGetValue(Tags.BottleEquity.ToString(), out var bottleValue)) {
                         value += bottleValue;
                     }
@@ -62,7 +74,7 @@ namespace ProjectPumpernickle {
             var method = typeof(RelicFunctions).GetMethod(relicId, BindingFlags.Static | BindingFlags.Public);
             if (method == null) {
                 return (Relic r) => {
-                    return 0;
+                    return r.bias;
                 };
             }
             return (Relic r) => {
@@ -78,6 +90,17 @@ namespace ProjectPumpernickle {
             }
             return (RewardContext r) => {
                 method.Invoke(null, new object[] { r });
+            };
+        }
+        protected static Func<int, float> GetEventValueFunction(string eventName) {
+            eventName = SanitizeId(eventName);
+            var method = typeof(EventValueFunctions).GetMethod(eventName, BindingFlags.Static | BindingFlags.Public);
+            var @event = Database.instance.eventDict[eventName];
+            if (method == null) {
+                return (int i) => @event.bias;
+            }
+            return (int i) => {
+                return ((float)method.Invoke(null, new object[] { @event, i })) + @event.bias;
             };
         }
     }

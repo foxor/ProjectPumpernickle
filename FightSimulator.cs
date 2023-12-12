@@ -134,6 +134,9 @@ namespace ProjectPumpernickle {
             }
             estimatedDamagePerTurn *= ExpectedScalingFactor(floor, encounter.NodeType);
             var estimatedFightLength = AverageEnemyHealth(encounter) / estimatedDamagePerTurn;
+            if (encounter.id.Equals("Transient")) {
+                estimatedFightLength = Math.Min(estimatedFightLength, 6f);
+            }
             var incomingDamage = EstimateIncomingDamage(encounter, estimatedFightLength, estimatedDamagePerTurn);
             if (Save.state.justPickedBlock) {
                 incomingDamage -= 15f;

@@ -56,44 +56,37 @@ namespace ProjectPumpernickle {
                 allEvaluations = new Evaluation[] { new Evaluation(context, null) };
             }
             foreach (var eval in allEvaluations) {
-                Evaluate(eval);
+                Scoring.Score(eval);
             }
             foreach (var eval in allEvaluations) {
                 eval.MergeScoreWithOffRamp();
             }
             return allEvaluations;
         }
-
-        public static void Evaluate(Evaluation evaluation) {
-            for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
-                var card = PumpernickelSaveState.instance.cards[i];
-                evaluation.AddScore(ScoreReason.DeckQuality, EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i));
-            }
-            for (int i = 0; i < PumpernickelSaveState.instance.relics.Count; i++) {
-                var relicId = PumpernickelSaveState.instance.relics[i];
-                // TODO: fix setup relics?
-                var relic = Database.instance.relicsDict[relicId];
-                evaluation.AddScore(ScoreReason.RelicQuality, EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic));
-            }
-            Scoring.EvaluateGlobalRules(evaluation);
-            Scoring.ScorePath(evaluation);
-        }
         public static Evaluation[] AdviseOnRewards(List<RewardOption> rewardOptions) {
             var isShop = rewardOptions.Any(x => x.cost != 0);
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;
-            var evaluations = MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop).ToArray();
             var preRewardEvaluation = new Evaluation(null, null);
-            Evaluate(preRewardEvaluation);
+            Scoring.Score(preRewardEvaluation);
+            var evaluations = MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop).ToArray();
             Scoring.ApplyVariance(evaluations, preRewardEvaluation);
             var sorted = evaluations.OrderByDescending(x => x.Score).ToArray();
             return sorted;
         }
-        public static Evaluation[] AddPathingAdvice(IEnumerable<string> previousAdvice) {
+        public static Evaluation[] AdviseOnRewards(List<RewardOption> rewardOptions, IEnumerable<string> previousAdvice) {
+            var evaluations = AdviseOnRewards(rewardOptions);
+            foreach (var evaluation in evaluations) {
+                evaluation.Advice = previousAdvice.Concat(evaluation.Advice).ToList();
+            }
+            return evaluations;
+        }
+        public static Evaluation[] CreateEventEvaluations(IEnumerable<string> previousAdvice, bool NeedsMoreInfo = false) {
             var rewards = new List<RewardOption>();
             var evals = AdviseOnRewards(rewards);
             foreach(var eval in evals) {
                 eval.Advice = previousAdvice.Concat(eval.Advice).ToList();
+                eval.NeedsMoreInfo = NeedsMoreInfo;
             }
             return evals;
         }

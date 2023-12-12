@@ -23,6 +23,8 @@ namespace ProjectPumpernickle {
         Damage,
         Block,
         BottleEquity,
+        ExhaustCost,
+        Unpurgeable,
     }
     public enum Color {
         Red,
@@ -31,6 +33,8 @@ namespace ProjectPumpernickle {
         Purple,
         Colorless,
         Curse,
+        Any,
+        COUNT,
     }
     public class Card {
         public string id;
@@ -77,14 +81,21 @@ namespace ProjectPumpernickle {
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
             if (damageMatch.Success) {
-                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[1].Value);
+                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[upgrades == 0 ? 1 : 2].Value);
             }
-            var blockRegex = new Regex(@"Gain (\d+) (\((\d+)\) )?block");
+            var blockRegex = new Regex(@"Gain (\d+) (\((\d+)\) )?Block");
             var blockMatch = blockRegex.Match(description);
             if (blockMatch.Success) {
-                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[1].Value);
+                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[upgrades == 0 ? 1 : 2].Value);
             }
-            int.TryParse(cost, out intCost);
+            var costRegex = new Regex(@"(\d+) ?(\((\d+)\) )?");
+            var costMatch = costRegex.Match(cost);
+            if (costMatch.Success) {
+                intCost = int.Parse(costMatch.Groups[upgrades == 0 ? 1 : 2].Value);
+            }
+            else {
+                intCost = int.MaxValue;
+            }
 
             switch (type) {
                 case "Attack": {
@@ -229,11 +240,8 @@ namespace ProjectPumpernickle {
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, 7, 15];
         public float infiniteBlockPerCard;
-        public int infiniteRoom;
+        public float infiniteMaxSize;
         public bool infiniteDoesDamage;
-        public bool infiniteBlocks;
-        public bool infiniteDrawPositive;
-        public bool infiniteEnergyPositive;
         public int earliestInfinite;
         public bool buildingInfinite;
         public bool expectingToRedBlue;
@@ -243,6 +251,9 @@ namespace ProjectPumpernickle {
         public bool justPickedAttack;
         public bool justPickedBlock;
         public bool badBottle;
+        public float[] transformValues;
+        public string[] averageTransformValueIds;
+
 
         public PumpernickelSaveState() {
             instance = this;
@@ -386,6 +397,23 @@ namespace ProjectPumpernickle {
             if (!huntingCards.Contains(cardId)) {
                 huntingCards.Add(cardId);
             }
+        }
+
+        public float GetTransformValue(Color color, out string averageCardId, int removeIndex = -1) {
+            var index = (byte)color;
+            if (transformValues == null) {
+                transformValues = new float[(byte)Color.COUNT];
+                averageTransformValueIds = new string[transformValues.Length];
+                for (int i = 0; i < transformValues.Length; i++) {
+                    transformValues[i] = float.NaN;
+                }
+            }
+            if (float.IsNaN(transformValues[index])) {
+                transformValues[index] = Evaluators.AverageTransformValue(color, out averageCardId, removeIndex);
+                averageTransformValueIds[index] = averageCardId;
+            }
+            averageCardId = averageTransformValueIds[index];
+            return transformValues[index];
         }
     }
 }

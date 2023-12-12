@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -288,6 +289,36 @@ namespace ProjectPumpernickle {
         }
         public static float Sundial(Relic r) {
             var value = 0f;
+            if (Save.state.relics.Contains("Snecko Eye")) {
+                return 0f;
+            }
+            Save.state.buildingInfinite = true;
+            var cardDraw = Evaluators.GetCardDrawCards().Where(x => x.intCost < 2);
+            var drawCount = cardDraw.Count();
+            var twoCard = cardDraw.Where(x => x.intCost == 1 && x.tags[Tags.CardDraw.ToString()] >= 2f);
+            var oneCard = cardDraw.Where(x => x.intCost == 1 && x.tags[Tags.CardDraw.ToString()] < 2f);
+            var cantrip = cardDraw.Where(x => x.intCost == 0);
+            var cardsToAdd = 0;
+            if (!cardDraw.Any()) {
+                cardsToAdd = 2;
+            }
+            else if (twoCard.Any() && oneCard.Any()) {
+                cardsToAdd = 0;
+            }
+            else if (cantrip.Any() && (oneCard.Any() || twoCard.Any())) {
+                cardsToAdd = 0;
+            }
+            else {
+                cardsToAdd = 1;
+            }
+            Save.state.infiniteMaxSize = 10;
+            Save.state.earliestInfinite = 1;
+            Save.state.missingCardCount = cardsToAdd;
+            if (cardsToAdd > 0) {
+                throw new System.NotImplementedException("What cards complete sundial for us?");
+            }
+            Save.state.infiniteDoesDamage = cardDraw.Any(x => x.tags.ContainsKey(Tags.Damage.ToString()));
+            Save.state.infiniteBlockPerCard = cardDraw.Select(x => x.tags.GetValueOrDefault(Tags.Block.ToString())).OrderByDescending(x => x).Take(2).Sum() / 2f;
             return value;
         }
         public static float SymbioticVirus(Relic r) {

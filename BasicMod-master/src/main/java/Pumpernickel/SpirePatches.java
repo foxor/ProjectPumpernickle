@@ -7,10 +7,14 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.CardSave;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.dungeons.Exordium;
+import com.megacrit.cardcrawl.events.city.TheLibrary;
+import com.megacrit.cardcrawl.events.shrines.Designer;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
@@ -22,6 +26,7 @@ import com.megacrit.cardcrawl.rooms.TreasureRoom;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 import com.megacrit.cardcrawl.screens.CombatRewardScreen;
 import com.megacrit.cardcrawl.screens.select.BossRelicSelectScreen;
+import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
@@ -135,6 +140,17 @@ public class SpirePatches {
                 outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
                 outToServer.write(event.event.getClass().getName().getBytes(StandardCharsets.UTF_8));
                 outToServer.write("\n".getBytes(StandardCharsets.UTF_8));
+                if (Designer.class.isAssignableFrom(event.event.getClass())) {
+                	Designer d = (Designer)event.event;
+                	
+                    Field adjust = Designer.class.getDeclaredField("adjustmentUpgradesOne");
+                    adjust.setAccessible(true);
+                	outToServer.write((((boolean)adjust.get(d)) ? "True\n" : "False\n").getBytes(StandardCharsets.UTF_8));
+
+                    Field cleanup = Designer.class.getDeclaredField("cleanUpRemovesCards");
+                    cleanup.setAccessible(true);
+                	outToServer.write((((boolean)cleanup.get(d)) ? "True\n" : "False\n").getBytes(StandardCharsets.UTF_8));
+                }
                 outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
                 outToServer.flush();
                 clientSocket.close();
@@ -252,6 +268,30 @@ public class SpirePatches {
         catch (Exception e) {
         }
     }
+    public static void openGrid() {
+        try {
+            Socket clientSocket = new Socket("localhost", 13076);
+            DataOutputStream outToServer =
+                    new DataOutputStream(clientSocket.getOutputStream());
+            outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write("false\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write("Cards\n".getBytes(StandardCharsets.UTF_8));
+            for (AbstractCard card : AbstractDungeon.gridSelectScreen.targetGroup.group) {
+                if (card.upgraded) {
+                    outToServer.write((card.cardID + "+\n").getBytes(StandardCharsets.UTF_8));
+                }
+                else {
+                    outToServer.write((card.cardID + "\n").getBytes(StandardCharsets.UTF_8));
+                }
+            }
+            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.flush();
+            clientSocket.close();
+        }
+        catch (Exception e) {
+        }
+    }
     // Recompute after generating a card reward
     @SpirePatch( clz = CombatRewardScreen.class, method = "setupItemReward" )
     public static class AbstractDungeonGetRewardCardsPatch {
@@ -277,5 +317,9 @@ public class SpirePatches {
     @SpirePatch(clz = NeowEvent.class, method = "blessing", paramtypez = { })
     public static class OnNeowRewardPatch {
         @SpirePostfixPatch public static void Postfix() { neow(); }
+    }
+    @SpirePatch(clz = GridCardSelectScreen.class, method = "open", paramtypez = { CardGroup.class, int.class, String.class, boolean.class, boolean.class, boolean.class, boolean.class})
+    public static class OnLibraryPresentPatch {
+        @SpirePostfixPatch public static void Postfix() { openGrid(); }
     }
 }

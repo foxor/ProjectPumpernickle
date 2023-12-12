@@ -211,7 +211,7 @@ namespace ProjectPumpernickle {
                     return NodeType.Boss;
                 }
                 case 16: {
-                    return NodeType.BossChest;
+                    return NodeType.Boss;
                 }
                 default: {
                     throw new NotImplementedException("Unexpected next act index: " + localFloor);

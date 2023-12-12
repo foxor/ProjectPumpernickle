@@ -216,8 +216,16 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float VALUE_PER_THREAT_STATUS = .3f;
         public static float SecondWind(Card c, int index) {
             var value = 0f;
+            var targetsInDeck = 2f;
+            value += targetsInDeck * VALUE_PER_THREAT_STATUS;
+            foreach(var threat in Evaluation.Active.Path.Threats) {
+                var encounter = Database.instance.encounterDict[threat.Key];
+                var addedStatuses = encounter.expectedStatuses;
+                value += threat.Value * addedStatuses * VALUE_PER_THREAT_STATUS;
+            }
             return value;
         }
         public static float SeeingRed(Card c, int index) {
@@ -1186,16 +1194,15 @@ namespace ProjectPumpernickle {
                 return 0f;
             }
             if (Save.state.cards.Any(x => x.id.Equals("Meditate")) && firstEstablishment) {
-                value += 15f;
                 Save.state.buildingInfinite = true;
                 Save.state.expectingToRedBlue = false;
-                var cardDraw = Save.state.cards.Where(x => x.tags.ContainsKey(Tags.CardDraw.ToString()) && (x.intCost != -1));
+                Save.state.infiniteMaxSize = 11;
+                var cardDraw = Evaluators.GetCardDrawCards();
                 var drawCount = cardDraw.Count();
                 var cardsToAdd = 0;
                 if (drawCount < 2) {
                     cardsToAdd += 2 - drawCount;
                 }
-                Save.state.infiniteRoom = 11 - Evaluators.PermanentDeckSize() - cardsToAdd;
                 var cardDrawCost = Save.state.cards.Where(x => x.tags.ContainsKey(Tags.CardDraw.ToString()) && x.intCost != -1).OrderBy(x => x.intCost).Take(2).Select(x => x.intCost).Sum();
                 if (cardsToAdd > 0) {
                     cardDrawCost += cardsToAdd * 1;
@@ -1224,11 +1231,10 @@ namespace ProjectPumpernickle {
                     Save.state.HuntForCard("Pray");
                 }
                 else {
-                    Save.state.infiniteDrawPositive = cardDraw.Select(x => x.tags[Tags.CardDraw.ToString()] - 1).Sum() > 0;
-                    Save.state.infiniteDoesDamage = Save.state.infiniteDrawPositive || cardDraw.Any(x => x.tags.ContainsKey(Tags.Damage.ToString()));
-                    Save.state.infiniteBlocks = Save.state.infiniteDrawPositive;
+                    var drawPositive = cardDraw.Select(x => x.tags[Tags.CardDraw.ToString()] - 1).Sum() > 0;
+                    Save.state.infiniteDoesDamage = drawPositive || cardDraw.Any(x => x.tags.ContainsKey(Tags.Damage.ToString()));
+                    Save.state.infiniteBlockPerCard = 8f;
                 }
-                Save.state.infiniteEnergyPositive = true;
             }
             return value;
         }

@@ -15,7 +15,32 @@ namespace ProjectPumpernickle {
         Relic,
         Key,
         CardRemove,
-        Neow,
+        Event,
+    }
+    public enum EventRewardElement {
+        None,
+        RANDOM_COLORLESS_2,
+        THREE_CARDS,
+        ONE_RANDOM_RARE_CARD,
+        REMOVE_CARD,
+        UPGRADE_CARD,
+        RANDOM_COLORLESS,
+        TRANSFORM_CARD,
+        THREE_SMALL_POTIONS,
+        RANDOM_COMMON_RELIC,
+        TEN_PERCENT_HP_BONUS,
+        HUNDRED_GOLD,
+        THREE_ENEMY_KILL,
+        REMOVE_TWO,
+        TRANSFORM_TWO_CARDS,
+        ONE_RARE_RELIC,
+        THREE_RARE_CARDS,
+        TWO_FIFTY_GOLD,
+        TWENTY_PERCENT_HP_BONUS,
+        BOSS_RELIC,
+        RANDOM_UPGRADE,
+        REMOVE_AND_UPGRADE,
+        TWO_RANDOM_UPGRADES,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
@@ -165,10 +190,12 @@ namespace ProjectPumpernickle {
             int y = int.Parse(floorCoordinate.Skip(1).Single());
             PumpernickelSaveState.instance.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
         }
-        protected static void ParseEventMessage(IEnumerable<string> eventClassName) {
-            var javaClassPath = eventClassName.Single();
+        protected static void ParseEventMessage(IEnumerable<string> eventArguments) {
+            var javaClassPath = eventArguments.First();
             var eventName = javaClassPath.Substring(javaClassPath.LastIndexOf('.') + 1);
-            var evaluations = (Evaluation[])typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Invoke(null, null);
+            var eventFn = typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            var eventFnArguments = new object[] { eventArguments.Skip(1) };
+            var evaluations = (Evaluation[])eventFn.Invoke(null, eventFnArguments);
             PumpernickelAdviceWindow.instance.SetEvaluations(evaluations);
         }
         protected static void GivePathingAdvice() {
@@ -223,9 +250,9 @@ namespace ProjectPumpernickle {
             }
             List<RewardOption> rewardOptions = new List<RewardOption>() {
                 new RewardOption() {
-                    neowCost = neowCost.ToArray(),
+                    eventCost = neowCost.ToArray(),
                     values = neowRewards.ToArray(),
-                    rewardType = RewardType.Neow,
+                    rewardType = RewardType.Event,
                     skippable = false,
                 },
             };

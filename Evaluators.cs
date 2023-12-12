@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,19 +37,63 @@ namespace ProjectPumpernickle {
             return 1f / 6f * (1f / RareRelicsAvailable()) * 300f;
         }
 
-        public static int PermanentDeckSize() {
+        public static bool CardRemovesSkills(Card card) {
+            return card.id switch {
+                "Second Wind" => true,
+                _ => false,
+            };
+        }
+        public static float PermanentDeckSize() {
+            var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
             return Save.state.cards.Select(x => {
                 if (x.cardType == CardType.Power) {
-                    return 0;
+                    return 0f;
                 }
                 if (x.id == "Purity") {
-                    return x.upgrades > 0 ? -5 : -3;
+                    return x.upgrades > 0 ? -5f : -3f;
                 }
-                if (x.tags?.ContainsKey(Tags.NonPermanent.ToString()) == true) {
-                    return 0;
+                if (x.tags.TryGetValue(Tags.NonPermanent.ToString(), out var value)) {
+                    return 1 - value;
                 }
-                return 1;
+                if (x.cardType == CardType.Skill && hasSkillRemover && !CardRemovesSkills(x)) {
+                    return 0f;
+                }
+                return 1f;
             }).Sum();
+        }
+
+        public static float CostOfNonPermanent() {
+            var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
+            return Save.state.cards.Select(x => {
+                if (x.cardType == CardType.Power) {
+                    return x.intCost;
+                }
+                if (x.id == "Purity") {
+                    return -3f;
+                }
+                if (x.tags.TryGetValue(Tags.NonPermanent.ToString(), out var value)) {
+                    if (x.tags.TryGetValue(Tags.ExhaustCost.ToString(), out var cost)) {
+                        return cost;
+                    }
+                    return x.intCost;
+                }
+                if (hasSkillRemover && CardRemovesSkills(x)) {
+                    return x.intCost * 2.5f;
+                }
+                return 0f;
+            }).Sum();
+        }
+
+        public static float ExtraPerFightEnergy() {
+            return 0f;
+        }
+
+        public static float PerTurnEnergy() {
+            return 3f;
+        }
+
+        public static IEnumerable<Card> GetCardDrawCards() {
+            return Save.state.cards.Where(x => x.tags.ContainsKey(Tags.CardDraw.ToString()) && (x.intCost != -1));
         }
 
         public static bool HasCalmEnter() {
@@ -93,19 +138,30 @@ namespace ProjectPumpernickle {
             return effectiveHealth;
         }
 
-        public static string ChooseBestUpgrade(out float bestPowerMultiplier, Path path = null, int index = -1) {
+        public static string ChooseBestUpgrade(out float bestValue, Path path = null, int index = -1) {
             var numPriorUpgrades = path == null ? 0 : (int)path.expectedUpgrades.Take(index).Sum();
-            var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0).Select(x => {
+            ChooseBestAndWorstUpgrade(numPriorUpgrades, out var bestId, out bestValue, out var worstId, out var worstValue);
+            return bestId;
+        }
+
+        public static void ChooseBestAndWorstUpgrade(int numPriorUpgrades, out string bestId, out float bestValue, out string worstId, out float worstValue) {
+            var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0 && x.Card.cardType != CardType.Curse).Select(x => {
                 var upgradeValue = EvaluationFunctionReflection.GetUpgradePowerMultiplierFunctionCached(x.Card.id)(x.Card, x.Index);
                 return (Card: x.Card, Val: upgradeValue);
             }).OrderByDescending(x => x.Val);
             if (numPriorUpgrades >= unupgradedCards.Count()) {
-                bestPowerMultiplier = 0f;
-                return null;
+                bestId = null;
+                bestValue = 0f;
+                worstId = null;
+                worstValue = 0f;
+                return;
             }
             var anticipatedSelection = unupgradedCards.Skip(numPriorUpgrades).First();
-            bestPowerMultiplier = anticipatedSelection.Val;
-            return anticipatedSelection.Card.id;
+            var worstSelection = unupgradedCards.LastOrDefault();
+            bestId = anticipatedSelection.Card.id;
+            bestValue = anticipatedSelection.Val;
+            worstId = worstSelection.Card.id;
+            worstValue = worstSelection.Val;
         }
 
         public static int FloorToAct(int floorNum) {
@@ -245,30 +301,14 @@ namespace ProjectPumpernickle {
             return true;
         }
 
-        public static int CardRemoveTarget() {
-            var basics = Save.state.cards.Where(x => x.cardRarity == Rarity.Basic && x.upgrades == 0);
-            if (basics.Any()) {
-                var toRemove = ShouldRemoveStrikeBeforeDefend() ? "Strike" : "Defend";
-                var firstRemoves = basics.Where(x => x.name.Equals(toRemove));
-                if (firstRemoves.Any()) {
-                    return Save.state.cards.IndexOf(firstRemoves.First());
-                }
-                else {
-                    return Save.state.cards.IndexOf(basics.First());
-                }
-            }
-            var upgradedBasics = Save.state.cards.Where(x => x.cardRarity == Rarity.Basic);
-            if (upgradedBasics.Any()) {
-                var toRemove = ShouldRemoveStrikeBeforeDefend() ? "Strike" : "Defend";
-                var firstRemoves = upgradedBasics.Where(x => x.name.Equals(toRemove));
-                if (firstRemoves.Any()) {
-                    return Save.state.cards.IndexOf(firstRemoves.First());
-                }
-                else {
-                    return Save.state.cards.IndexOf(upgradedBasics.First());
-                }
-            }
-            throw new System.NotImplementedException("Card remove too complex");
+        public static int CardRemoveTarget(Color color = Color.Any) {
+            var validIndicies = Enumerable.Range(0, Save.state.cards.Count)
+                .Where(x => Save.state.cards[x].cardColor.Is(color) &&
+                    !Save.state.cards[x].tags.ContainsKey(Tags.Unpurgeable.ToString()));
+            var bestIndex = validIndicies.OrderBy(i => {
+                return EvaluationFunctionReflection.GetCardEvalFunctionCached(Save.state.cards[i].id)(Save.state.cards[i], i);
+            }).First();
+            return bestIndex;
         }
         public static float ExpectedFightsInFutureActs() {
             var actFourFights = 2f;
@@ -334,22 +374,38 @@ namespace ProjectPumpernickle {
             return Math.Max(0, 3 - Save.state.act_num);
         }
 
-        public static float InfiniteQuality() {
-            return MathF.Min(1f, MathF.Max(0f,
-                (Save.state.infiniteDoesDamage ? .6f : 0f) +
-                (Save.state.infiniteBlocks ? .2f : 0f) +
+        public static float CurrentInfiniteQuality() {
+            var abilityScore =
+                (Save.state.infiniteDoesDamage ? .3f : 0f) +
                 (Save.state.infiniteBlockPerCard > 2f ? .5f : 0f) +
-                (Save.state.infiniteDrawPositive ? .1f : 0f) +
-                (Save.state.infiniteEnergyPositive ? .1f : 0f) +
-                (Save.state.earliestInfinite * -.3f)
-            ));
+                (Save.state.infiniteBlockPerCard > 0f ? .2f : 0f);
+            var energyToClear = CostOfNonPermanent() - ExtraPerFightEnergy();
+            var clearCostPenalty = .5f * (1f - (1f / (1f + (energyToClear / PerTurnEnergy() * 2f))));
+            var speedPenalty = Save.state.earliestInfinite switch {
+                1 => 0f,
+                2 => 0.02f,
+                3 => 0.1f,
+                4 => 0.3f,
+                _ => 0.5f,
+            };
+            var drawsAfterClear = Save.state.infiniteMaxSize - 5;
+            var redrawPenalty = .2f * (1f - (1f / (1f + (drawsAfterClear / 8))));
+            var clogPenalty = .3f * (1f - (1f / (1f + ((Save.state.cards.Count() - 12) / 15f))));
+            var practicality = (1f - speedPenalty) *
+                (1f - clearCostPenalty) *
+                (1f - redrawPenalty) *
+                (1f - clogPenalty);
+            return abilityScore * practicality;
         }
         public static string BestCopyTarget() {
             return "Adaptation";
         }
 
         public static bool Is(this Color a, Color b) {
-            return (a == b);
+            if (a == Color.Any || b == Color.Any) {
+                return true;
+            }
+            return a == b;
         }
         public static bool IsRandomable(this Rarity r) {
             return r switch {
@@ -366,7 +422,7 @@ namespace ProjectPumpernickle {
             return (a == b) || (a == PlayerCharacter.Any || b == PlayerCharacter.Any);
         }
 
-        public static void RandomCardValue(Color color, out Card bestCard, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
+        public static void BestAndWorstRewardResults(Color color, out Card bestCard, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
             bestValue = float.MinValue;
             worstValue = float.MaxValue;
             bestCard = null;
@@ -529,6 +585,58 @@ namespace ProjectPumpernickle {
             }
             damage = 0;
             cost = 0;
+        }
+
+        public static IEnumerable<string> GetEligibleEventNames(Path path, int i) {
+            return Database.instance.events.Where(x => x.eligible).Select(x => x.name);
+        }
+        public static float AverageTransformValue(out string averageCardId) {
+            var bestRemoveOfColor = CardRemoveTarget();
+            return Save.state.GetTransformValue(Save.state.cards[bestRemoveOfColor].cardColor, out averageCardId, bestRemoveOfColor);
+        }
+        public static float AverageTransformValue(Color color, out string averageCardId, int removeIndex = -1) {
+            averageCardId = "";
+            if (removeIndex == -1) {
+                removeIndex = CardRemoveTarget(color);
+            }
+            var removeTarget = Save.state.cards[removeIndex];
+            Save.state.cards.RemoveAt(removeIndex);
+
+            var validTransforms = Database.instance.cards.Where(x => x.cardColor == color).ToArray();
+            var cardValues = new float[validTransforms.Count()];
+            for (int i = 0; i < validTransforms.Length; i++) {
+                var added = Save.state.AddCardById(validTransforms[i].id);
+                cardValues[i] = EvaluationFunctionReflection.GetCardEvalFunctionCached(validTransforms[i].id)(Save.state.cards[added], added);
+                Save.state.cards.RemoveAt(added);
+            }
+            var average = cardValues.Average();
+            var bestDelta = float.MaxValue;
+            for (int i = 0; i < validTransforms.Length; i++) {
+                var localDelta = Math.Abs(cardValues[i] - average);
+                if (localDelta < bestDelta) {
+                    bestDelta = localDelta;
+                    averageCardId = validTransforms[i].id;
+                }
+            }
+
+            Save.state.cards.Insert(removeIndex, removeTarget);
+            return average;
+        }
+        public static float EstimateFutureAddedCards() {
+            var floorsLeft = 55f - Save.state.floor_num;
+            return 17f * (floorsLeft / 55f);
+        }
+        public static float PercentAllGreen(Evaluation evaluation) {
+            var projectedCardAdds = Evaluators.EstimateFutureAddedCards();
+            var cardsByUpgradeWeight = Save.state.cards.Select(x => x.upgradePowerMultiplier).Concat(Enumerable.Range(0, (int)projectedCardAdds).Select(x => 1.3f)).OrderByDescending(x => x);
+            var totalWeight = cardsByUpgradeWeight.Sum();
+            var futureUpgrades = evaluation.Path.expectedUpgrades[^1];
+            var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
+            var fullUpgrades = (int)futureUpgrades + presentUpgrades;
+            var partialUpgrades = futureUpgrades - (int)futureUpgrades;
+            var realizedWeight = cardsByUpgradeWeight.Take(fullUpgrades).Sum();
+            realizedWeight += partialUpgrades * cardsByUpgradeWeight.Skip(fullUpgrades).First();
+            return realizedWeight / totalWeight;
         }
     }
 }

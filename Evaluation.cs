@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ProjectPumpernickle {
     public enum ScoreReason : byte {
         ActSurvival,
-        UpgradeCount,
+        Upgrades,
         RelicCount,
         CardReward,
         Key,
@@ -18,7 +18,6 @@ namespace ProjectPumpernickle {
         RelicQuality,
         AvoidCard,
         AvoidDuplicateCards,
-        DeckSizeLimit,
         MissingCards,
         MissingComboPieces,
         SmallDeck,
@@ -26,6 +25,62 @@ namespace ProjectPumpernickle {
         Variance,
         BadBottle,
         EarlyMegaElite,
+        InfiniteNow,
+        InfiniteByHeart,
+        InfiniteNemesis,
+        EVENT_SUM,
+        EVENT_BEGIN,
+        OminousForge,
+        PleadingVagrant,
+        AncientWriting,
+        OldBeggar,
+        BigFish,
+        BonfireSpirits,
+        DeadAdventurer,
+        Augmenter,
+        Duplicator,
+        Falling,
+        ForgottenAltar,
+        TheDivineFountain,
+        CouncilofGhosts,
+        GoldenIdol,
+        GoldenShrine,
+        WingStatue,
+        KnowingSkull,
+        Lab,
+        TheSsssserpent,
+        LivingWall,
+        MaskedBandits,
+        MatchandKeep,
+        Mushrooms,
+        MysteriousSphere,
+        Nloth,
+        Purifier,
+        ScrapOoze,
+        SecretPortal,
+        SensoryStone,
+        ShiningLight,
+        TheCleric,
+        TheJoust,
+        TheLibrary,
+        TheMausoleum,
+        TheMoaiHead,
+        TheWomaninBlue,
+        TombofLordRedMask,
+        Transmogrifier,
+        UpgradeShrine,
+        Vampires,
+        WheelofChange,
+        WindingHalls,
+        WorldofGoop,
+        MindBloom,
+        Nest,
+        FaceTrader,
+        ANoteForYourself,
+        WeMeetAgain,
+        Designer,
+        TheColosseum,
+        EVENT_END,
         COUNT,
     }
     public class Evaluation {
@@ -90,7 +145,7 @@ namespace ProjectPumpernickle {
 
         public float Score {
             get {
-                return Scores.Sum();
+                return Enum.GetValues<ScoreReason>().Where(x => x != ScoreReason.EVENT_SUM && x != ScoreReason.COUNT).Select(x => Scores[(byte)x]).Sum();
             }
         }
         public static string DescribeOffMapPathing(NodeType nodeType) {
@@ -113,7 +168,7 @@ namespace ProjectPumpernickle {
             var i = 0;
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
             while (!NeedsMoreInfo && Path.remainingFloors > i) {
-                var nodeType = Path.GetNodeType(i);
+                var nodeType = Path.nodeTypes[i];
                 if (i < Path.nodes.Length) {
                     Advice.Add(DescribePathing(currentNode?.position, Path.nodes[i..]));
                 }

@@ -53,6 +53,7 @@ namespace ProjectPumpernickle {
         public bool special;
         public float medianExpectedHealthLoss;
         public float medianWorstCaseHealthLoss;
+        public float expectedStatuses;
 
         public NodeType NodeType {
             get {
@@ -124,17 +125,35 @@ namespace ProjectPumpernickle {
             }
         }
     }
+    public class Event {
+        public string name;
+        public int[] acts;
+        public bool shrine;
+        public float bias;
+        public ScoreReason reason;
+        public bool eligible {
+            get {
+                return acts.Contains(Save.state.act_num);
+            }
+        }
+        public void OnLoad() {
+            name = EvaluationFunctionReflection.SanitizeId(name);
+            reason = Enum.GetValues<ScoreReason>().Where(x => x.ToString().Equals(name)).Single();
+        }
+    }
     internal class Database {
         public static Database instance;
         public Card[] cards = null;
         public Monster[] creatures = null;
         public Encounter[] encounters = null;
         public Relic[] relics = null;
+        public Event[] events = null;
 
         public Dictionary<string, Card> cardsDict = new Dictionary<string, Card>();
         public Dictionary<string, Monster> creatureDict = new Dictionary<string, Monster>();
         public Dictionary<string, Encounter> encounterDict = new Dictionary<string, Encounter>();
         public Dictionary<string, Relic> relicsDict = new Dictionary<string, Relic>();
+        public Dictionary<string, Event> eventDict = new Dictionary<string, Event>();
 
         public Encounter[][] EasyPools = new Encounter[4][];
         public Encounter[][] HardPools = new Encounter[4][];
@@ -215,6 +234,10 @@ namespace ProjectPumpernickle {
                         move.OnLoad();
                     }
                 }
+            }
+            foreach (var @event in events) {
+                @event.OnLoad();
+                eventDict[@event.name] = @event;
             }
         }
     }

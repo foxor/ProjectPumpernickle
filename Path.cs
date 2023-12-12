@@ -25,7 +25,6 @@ namespace ProjectPumpernickle {
         public float[] expectedGold = null;
         public int[] minPlanningGold = null;
         public float expectedHealthLoss;
-        public int shopCount;
         public PathShopPlan shortTermShopPlan;
         public Dictionary<string, float> Threats = new Dictionary<string, float>();
         public float[] expectedCardRewards = null;
@@ -42,6 +41,7 @@ namespace ProjectPumpernickle {
         public int remainingFloors;
         public bool EndOfActPath;
         public float chanceToSurvive;
+        public NodeType[] nodeTypes = null;
         public static Path[] BuildAllPaths(MapNode root, int startingCardRewards) {
             var skipFirstNode = true;
             var nodeSequences = IterateNodeSequences(root, skipFirstNode);
@@ -53,6 +53,7 @@ namespace ProjectPumpernickle {
             path.nodes = nodeSequence;
 
             path.InitArrays();
+            path.InitNodeTypes();
             path.InitializePossibleThreats();
             path.FindBasicProperties();
             path.ExpectGoldProgression();
@@ -70,7 +71,6 @@ namespace ProjectPumpernickle {
             r.elites = path.elites;
             r.hasMegaElite = path.hasMegaElite;
             r.expectedHealthLoss = path.expectedHealthLoss;
-            r.shopCount = path.shopCount;
             r.shortTermShopPlan = path.shortTermShopPlan;
             r.remainingFloors = path.remainingFloors;
             r.EndOfActPath = path.EndOfActPath;
@@ -90,6 +90,7 @@ namespace ProjectPumpernickle {
             r.expectedShops = path.expectedShops.ToArray();
             r.fightChance = path.fightChance.ToArray();
             r.chanceOfDeath = path.chanceOfDeath.ToArray();
+            r.nodeTypes = path.nodeTypes.ToArray();
 
             return r;
         }
@@ -99,9 +100,7 @@ namespace ProjectPumpernickle {
         }
 
         public void InitArrays() {
-            var firstFloorNextAct = Evaluators.ActToFirstFloor(Save.state.act_num + 1);
-            var futureActFloors = 55 - firstFloorNextAct;
-            remainingFloors = nodes.Length + futureActFloors;
+            remainingFloors = 55 - Save.state.floor_num;
             expectedGold = new float[remainingFloors];
             plannedCardRemove = new bool[remainingFloors];
             minPlanningGold = new int[remainingFloors];
@@ -115,6 +114,13 @@ namespace ProjectPumpernickle {
             expectedShops = new float[remainingFloors];
             fightChance = new float[remainingFloors];
             chanceOfDeath = new float[remainingFloors];
+            nodeTypes = new NodeType[remainingFloors];
+        }
+
+        public void InitNodeTypes() {
+            for (int i = 0; i < nodeTypes.Length; i++) {
+                nodeTypes[i] = GetNodeType(i);
+            }
         }
 
         public NodeType GetNodeType(int i) {
@@ -215,7 +221,7 @@ namespace ProjectPumpernickle {
                     hasSeenElite = false;
                     lastAct = act;
                 }
-                switch (GetNodeType(i)) {
+                switch (nodeTypes[i]) {
                     case NodeType.Shop:
                     case NodeType.Fire:
                     case NodeType.BossChest:
@@ -329,16 +335,13 @@ namespace ProjectPumpernickle {
         public void FindBasicProperties() {
             var elites = 0;
             int minGold = Save.state.gold;
-            var index = 0;
-            foreach (var node in nodes) {
-                if (node.nodeType == NodeType.Elite || node.nodeType == NodeType.MegaElite) {
+            for (var i = 0; i < nodeTypes.Length; i++) {
+                if (nodeTypes[i] == NodeType.Elite || nodeTypes[i] == NodeType.MegaElite) {
                     elites++;
                 }
-                hasMegaElite |= node.nodeType == NodeType.MegaElite;
-                shopCount += (node.nodeType == NodeType.Shop) ? 1 : 0;
-                minGold += MinPlanningGoldFrom(index);
-                minPlanningGold[index] = minGold;
-                index++;
+                hasMegaElite |= nodeTypes[i] == NodeType.MegaElite;
+                minGold += MinPlanningGoldFrom(i);
+                minPlanningGold[i] = minGold;
             }
         }
 
@@ -354,8 +357,7 @@ namespace ProjectPumpernickle {
 
             for (int i = 0; i < expectedCardRewards.Length; i++) {
                 fightChance[i] = 0f;
-                var nodeType = GetNodeType(i);
-                switch (nodeType) {
+                switch (nodeTypes[i]) {
                     case NodeType.MegaElite:
                     case NodeType.Elite: {
                         fightsSoFar++;
@@ -407,7 +409,7 @@ namespace ProjectPumpernickle {
         public void ExpectShopProgression() {
             var totalSpent = 0f;
             for (int i = 0; i < expectedGold.Length; i++) {
-                var nodeType = GetNodeType(i);
+                var nodeType = nodeTypes[i];
                 if (nodeType == NodeType.Shop) {
                     totalSpent += ExpectedGoldSpend(i);
                     // Simulate getting stronger by buying things
@@ -438,7 +440,7 @@ namespace ProjectPumpernickle {
 
         public bool ShouldRest(int index) {
             for (int i = index + 1; i < expectedHealth.Length; i++) {
-                var nodeType = GetNodeType(i);
+                var nodeType = nodeTypes[i];
                 if (nodeType == NodeType.Fire) {
                     return false;
                 }
@@ -459,7 +461,7 @@ namespace ProjectPumpernickle {
         public void PlanFires() {
             var upgrades = 0f;
             for (int i = 0; i < fireChoices.Length; i++) {
-                var nodeType = GetNodeType(i);
+                var nodeType = nodeTypes[i];
                 if (nodeType != NodeType.Fire) {
                     fireChoices[i] = FireChoice.None;
                     if (Save.state.cards.Any(x => x.id.Equals("LessonLearned"))) {
@@ -541,15 +543,25 @@ namespace ProjectPumpernickle {
         public void FinalThreatAnalysis() {
             // Could we fight gremlin nob by the time we get there?
             SimulateHealthEvolution();
+            NormalizeThreat();
         }
-
+        public void NormalizeThreat() {
+            var totalThreat = Threats.Select(x => x.Value).Sum();
+            foreach (var threatKey in Threats.Keys) {
+                Threats[threatKey] /= totalThreat;
+            }
+        }
+        public static readonly float UPCOMING_THREAT_BONUS = 5f;
+        public static readonly float UPCOMING_THREAT_FALLOFF = 14f;
+        public static readonly float UPCOMING_DEATH_THREAT_MULTIPLIER = 8f;
         protected void AssessThreat(Encounter threat, int floorIndex, float expectedDamage, float worstCaseDamage, float expectedHealth, float chanceOfThis) {
             Threats.TryAdd(threat.id, 0f);
+            var soonMultiplier = Lerp.Inverse(0, UPCOMING_THREAT_FALLOFF, UPCOMING_THREAT_FALLOFF - floorIndex) + 1;
+            var upcomingBonus = UPCOMING_THREAT_BONUS * soonMultiplier;
             var healthFraction = expectedDamage / Save.state.max_health;
-            Threats[threat.id] += healthFraction * chanceOfThis;
-            var worstCaseHealth = expectedHealth - worstCaseDamage;
+            Threats[threat.id] += healthFraction * chanceOfThis * upcomingBonus;
             if (worstCaseDamage <= expectedDamage) {
-                Threats[threat.id] += chanceOfThis;
+                Threats[threat.id] += chanceOfThis * upcomingBonus;
                 chanceOfDeath[floorIndex] += chanceOfThis;
             }
             else {
@@ -560,7 +572,8 @@ namespace ProjectPumpernickle {
                 var deathParam = Lerp.InverseUncapped(worstCaseResidualHealth, bestCaseResidualHealth, deathHealth);
                 var sigmoidX = Lerp.FromUncapped(MULTIPLIER_FOR_TWENTY_PERCENT, MULTIPLIER_FOR_EIGHTY_PERCENT, deathParam);
                 var deathLikelihood = PumpernickelMath.Sigmoid(sigmoidX);
-                Threats[threat.id] += deathLikelihood * chanceOfThis;
+                var upcomingDeathMultiplier = ((soonMultiplier - 1) * UPCOMING_DEATH_THREAT_MULTIPLIER) + 1f;
+                Threats[threat.id] += deathLikelihood * chanceOfThis * upcomingBonus * upcomingDeathMultiplier;
                 chanceOfDeath[floorIndex] += deathLikelihood * chanceOfThis;
             }
         }
@@ -612,8 +625,7 @@ namespace ProjectPumpernickle {
         protected int MinPlanningGoldFrom(int index) {
             // The point of this is to plan probabilities for having enough gold to do X.
             // We don't want to plan our shops around getting old coin or winning a joust.
-            var type = nodes[index].nodeType;
-            switch (type) {
+            switch (nodeTypes[index]) {
                 case NodeType.Fight: {
                     return 10;
                 }
@@ -635,7 +647,7 @@ namespace ProjectPumpernickle {
             return 0;
         }
         public float ExpectedGoldGain(int index) {
-            var nodeType = GetNodeType(index);
+            var nodeType = nodeTypes[index];
             switch (nodeType) {
                 case NodeType.Fight: {
                     return 15f;
@@ -837,6 +849,36 @@ namespace ProjectPumpernickle {
         }
         public bool ContainsGuaranteedChest() {
             return nodes.Any(x => x.nodeType == NodeType.Chest);
+        }
+        public void AddEventScore(Evaluation evaluation) {
+            for (int i = 0; i < remainingFloors; i++) {
+                var nodeType = nodeTypes[i];
+                if (nodeType == NodeType.Question) {
+                    var eligibleEvents = Evaluators.GetEligibleEventNames(this, i).Select(x => Database.instance.eventDict[x]).Where(x => x.eligible).ToArray();
+                    var eventPoolWeight = eligibleEvents.Where(x => !x.shrine).Count();
+                    var shrinePoolWeight = eligibleEvents.Where(x => x.shrine).Count();
+                    var eventChance = .75f / eventPoolWeight;
+                    var shrineChance = .25f / shrinePoolWeight;
+                    foreach (var eligibleEvent in eligibleEvents) {
+                        var value = EvaluationFunctionReflection.GetEventValueFunctionCached(eligibleEvent.name)(i);
+                        var chanceOfThis = eligibleEvent.shrine ? shrineChance : eventChance;
+                        evaluation.AddScore(eligibleEvent.reason, value * chanceOfThis);
+                    }
+                }
+            }
+        }
+        public float ChanceToSurviveAct(int act) {
+            if (Save.state.act_num > act) {
+                return 1f;
+            }
+            float totalChance = 1f;
+            for (int i = 0; i < remainingFloors; i++) {
+                if (Evaluators.FloorToAct(PathIndexToFloorNum(i)) == act) {
+                    return totalChance;
+                }
+                totalChance *= (1f - chanceOfDeath[i]);
+            }
+            return totalChance;
         }
     }
     public struct Vector2Int {

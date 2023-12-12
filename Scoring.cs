@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,53 +38,26 @@ namespace ProjectPumpernickle {
                 var worstCaseScore = defaultScore;
                 var worstCaseEstimatedScore = Lerp.From(worstCaseScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
                 var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
-                var failureChance = 1f - evaluation.RewardVariance;
-                var variancePenalty = maxScoreLoss * failureChance * availableSafetyFactor;
-                evaluation.AddScore(ScoreReason.Variance, variancePenalty);
+                if (evaluation.RewardVariance != 0f) {
+                    var failureChance = 1f - evaluation.RewardVariance;
+                    var variancePenalty = maxScoreLoss * failureChance * availableSafetyFactor;
+                    evaluation.AddScore(ScoreReason.Variance, variancePenalty);
+                    evaluation.NeedsMoreInfo = true;
+                }
             }
         }
 
         public static void ScorePath(Evaluation evaluation) {
-            // Things to think about:
-            // - How many elites can I do this act? 
-            // ✔ What is the largest number of elites available?
-            // ✔ Can I dodge all elites?
-            // - Will this path kill me?
-            // - Do we need to go to a shop?
-            // - Do we have tiny chest / serpent head?
-            // - Do we need green key?
-            // - Does this path have an off-ramp?
-            // - Are we looking for any events? (golden idol considerations etc)
-            // - Do we have fight metascaling (ritual dagger, genetic algorithm, etc)
-            // - What is our expected health loss per fight / elite
-
-            // ROUGH Rules:
-            //  - you get ~10 points for surviving acts 1, 2 and 3
-            //  - you get 2 points for the first 4 upgrades, then 1 for the next 6
-            //  - 1 point per relic up to 15
-            //  - .5 points per card reward
-            //  - card removes?
-            //  - 1 point per key
-            //  - 1 point per 10 health
-            //  - points for bringing gold to shops
-            //  - -5 point if you made a bad bottle
             var path = evaluation.Path;
 
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.chanceToSurvive);
+            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(1));
+            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(2));
+            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(3));
 
-            var futureUpgrades = path.expectedUpgrades[^1];
-            var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
-            var upgrades = futureUpgrades + presentUpgrades;
-            if (upgrades <= 4) {
-                evaluation.AddScore(ScoreReason.UpgradeCount, upgrades * 2f);
-            }
-            else {
-                evaluation.AddScore(ScoreReason.UpgradeCount, 8 + MathF.Min(upgrades - 4, 6));
-            }
+            evaluation.AddScore(ScoreReason.Upgrades, 5f * Evaluators.PercentAllGreen(evaluation));
 
-            var expectedRelics = (float)Save.state.relics.Count;
-            expectedRelics += path.expectedRewardRelics[^1];
-            evaluation.AddScore(ScoreReason.RelicCount, MathF.Min(expectedRelics, 15f));
+            var expectedRelics = path.expectedRewardRelics[^1];
+            evaluation.AddScore(ScoreReason.RelicCount, expectedRelics);
 
             var expectedCardRewards = path.expectedCardRewards[^1];
             evaluation.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards);
@@ -95,8 +69,11 @@ namespace ProjectPumpernickle {
             var effectiveHealth = Evaluators.GetEffectiveHealth();
             evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 10f);
 
+            // this is too high
             var goldBrought = path.ExpectedGoldBroughtToShops();
             evaluation.AddScore(ScoreReason.BringGoldToShop, goldBrought / GOLD_AT_SHOP_PER_POINT);
+
+            path.AddEventScore(evaluation);
 
             if (Save.state.act_num < 3 && (Save.state.has_emerald_key || path.hasMegaElite)) {
                 evaluation.AddScore(ScoreReason.EarlyMegaElite, 2f);
@@ -112,6 +89,20 @@ namespace ProjectPumpernickle {
             if (Save.state.badBottle) {
                 evaluation.AddScore(ScoreReason.BadBottle, -5f);
             }
+        }
+        public static void Score(Evaluation evaluation) {
+            for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
+                var card = PumpernickelSaveState.instance.cards[i];
+                evaluation.AddScore(ScoreReason.DeckQuality, EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i));
+            }
+            for (int i = 0; i < PumpernickelSaveState.instance.relics.Count; i++) {
+                var relicId = PumpernickelSaveState.instance.relics[i];
+                // TODO: fix setup relics?
+                var relic = Database.instance.relicsDict[relicId];
+                evaluation.AddScore(ScoreReason.RelicQuality, EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic));
+            }
+            EvaluateGlobalRules(evaluation);
+            ScorePath(evaluation);
         }
     }
 }
