@@ -107,26 +107,26 @@ public class SpirePatches {
         }
     }
     public static void emeraldSet() {
-        try {
-            Socket clientSocket = new Socket("localhost",13076);
-            DataOutputStream outToServer =
-                    new DataOutputStream(clientSocket.getOutputStream());
-            outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
-            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
-            for(ArrayList< MapRoomNode > row : AbstractDungeon.map) {
-                for(MapRoomNode node : row) {
-                    if (node.hasEmeraldKey) {
-                        outToServer.write((node.x + "\n").getBytes(StandardCharsets.UTF_8));
-                        outToServer.write((node.y + "\n").getBytes(StandardCharsets.UTF_8));
-                    }
-                }
-            }
-            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
-            outToServer.flush();
-            clientSocket.close();
-        }
-        catch (Exception e) {
-        }
+    	for(ArrayList< MapRoomNode > row : AbstractDungeon.map) {
+	        for(MapRoomNode node : row) {
+	            if (node.hasEmeraldKey) {
+			        try {
+			            Socket clientSocket = new Socket("localhost",13076);
+			            DataOutputStream outToServer =
+			                    new DataOutputStream(clientSocket.getOutputStream());
+			            outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
+			            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+		                outToServer.write((node.x + "\n").getBytes(StandardCharsets.UTF_8));
+		                outToServer.write((node.y + "\n").getBytes(StandardCharsets.UTF_8));
+			            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+			            outToServer.flush();
+			            clientSocket.close();
+			        }
+			        catch (Exception e) {
+			        }
+	            }
+	        }
+	    }
     }
     public static void eventRolled() {
         AbstractRoom room = AbstractDungeon.getCurrRoom();
@@ -269,6 +269,12 @@ public class SpirePatches {
         }
     }
     public static void openGrid() {
+    	if (AbstractDungeon.gridSelectScreen.forPurge) {
+    		return;
+    	}
+    	if (AbstractDungeon.gridSelectScreen.forUpgrade) {
+    		return;
+    	}
         try {
             Socket clientSocket = new Socket("localhost", 13076);
             DataOutputStream outToServer =

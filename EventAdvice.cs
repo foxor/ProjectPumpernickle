@@ -159,8 +159,10 @@ namespace ProjectPumpernickle {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
-        public static Evaluation[] TombofLordRedMask(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+        public static Evaluation[] TombRedMask(IEnumerable<string> arguments) {
+            var existingAdvice = new List<string>(){
+                "Leave",
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] Transmogrifier(IEnumerable<string> arguments) {
@@ -182,7 +184,9 @@ namespace ProjectPumpernickle {
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] WindingHalls(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+            var existingAdvice = new List<string>(){
+                "Retrace your steps",
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] WorldofGoop(IEnumerable<string> arguments) {

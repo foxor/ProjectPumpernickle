@@ -17,24 +17,27 @@ namespace ProjectPumpernickle {
                 return Save.state.buildingInfinite;
             }
         }
+        public static float CurrentInfiniteRoom() {
+            return Save.state.infiniteMaxSize - Evaluators.PermanentDeckSize() - Save.state.missingCardCount;
+        }
 
         void IGlobalRule.Apply(Evaluation evaluation) {
-            var room = Save.state.infiniteMaxSize - Evaluators.PermanentDeckSize() - Save.state.missingCardCount;
+            var room = CurrentInfiniteRoom();
             var expectedCardRemoves = evaluation.Path.EndOfActPath ? Path.ExpectedFutureActCardRemoves() : evaluation.Path.ExpectedPossibleCardRemoves();
             var expectedPreNemesisRemoves = evaluation.Path.EndOfActPath ? Path.ExpectedFutureActCardRemovesBeforeNemesis() : evaluation.Path.ExpectedPossibleCardRemovesBeforeNemesis();
             var finalRoom = room + expectedCardRemoves;
             var nemesisRoom = room + expectedPreNemesisRemoves;
-            var infiniteNow = room >= 0;
-            var infiniteEnd = finalRoom >= 2f;
-            var infiniteNemesis = nemesisRoom >= 5f;
+            var infiniteNow = Lerp.Inverse(-4f, 0f, room);
+            var infiniteEnd = Lerp.Inverse(-4f, 0f, finalRoom - 2f);
+            var infiniteNemesis = Lerp.Inverse(-4f, 0f, nemesisRoom - 5f);
             var infiniteQuality = Evaluators.CurrentInfiniteQuality();
             if (Save.state.relics.Contains("Medical Kit")) {
-                infiniteEnd = finalRoom >= 0;
-                infiniteNemesis = nemesisRoom >= 0;
+                infiniteEnd = Lerp.Inverse(-4f, 0f, finalRoom);
+                infiniteNemesis = Lerp.Inverse(-4f, 0f, nemesisRoom);
             }
-            evaluation.AddScore(ScoreReason.InfiniteNow, (infiniteNow ? 1 : -1) * NOW_POINTS * infiniteQuality);
-            evaluation.AddScore(ScoreReason.InfiniteByHeart, (infiniteEnd ? 1 : -1) * END_OF_GAME_POINTS * infiniteQuality);
-            evaluation.AddScore(ScoreReason.InfiniteNemesis, (infiniteNemesis ? 1 : -1) * NEMESIS_POINTS * infiniteQuality);
+            evaluation.AddScore(ScoreReason.InfiniteNow, infiniteNow * NOW_POINTS * infiniteQuality);
+            evaluation.AddScore(ScoreReason.InfiniteByHeart, infiniteEnd * END_OF_GAME_POINTS * infiniteQuality);
+            evaluation.AddScore(ScoreReason.InfiniteNemesis, infiniteNemesis * NEMESIS_POINTS * infiniteQuality);
         }
     }
 }

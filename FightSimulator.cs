@@ -100,9 +100,7 @@ namespace ProjectPumpernickle {
                 totalSignificance += significance;
                 totalDamagePerTurn += damagePerTurn * significance;
             }
-            if (Save.state.justPickedAttack) {
-                totalDamagePerTurn += 5f;
-            }
+            totalDamagePerTurn += Save.state.addedDamagePerTurn;
             if (totalDamagePerTurn < BEGINNING_OF_GAME_DAMAGE) {
                 // If it's act one, this is a somewhat reasonable estimate
                 // If you stalled for a magnetism hand of greed or something, this is a nice BS preventor
@@ -138,9 +136,7 @@ namespace ProjectPumpernickle {
                 estimatedFightLength = Math.Min(estimatedFightLength, 6f);
             }
             var incomingDamage = EstimateIncomingDamage(encounter, estimatedFightLength, estimatedDamagePerTurn);
-            if (Save.state.justPickedBlock) {
-                incomingDamage -= 15f;
-            }
+            incomingDamage -= Save.state.addedBlockPerTurn * estimatedFightLength;
             if (MathF.Abs(incomingDamage) < 0.2f) {
                 return 0f;
             }

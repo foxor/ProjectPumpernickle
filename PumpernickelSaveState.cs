@@ -47,6 +47,7 @@ namespace ProjectPumpernickle {
         public string description;
         public float bias;
         public float upgradePowerMultiplier;
+        public float upgradeBias;
         public string rarity;
         public string color;
         public bool bottled;
@@ -64,6 +65,7 @@ namespace ProjectPumpernickle {
             this.description = other.description;
             this.bias = other.bias;
             this.upgradePowerMultiplier = other.upgradePowerMultiplier;
+            this.upgradeBias = other.upgradeBias;
             this.rarity = other.rarity;
             this.color = other.color;
 
@@ -108,6 +110,7 @@ namespace ProjectPumpernickle {
                 }
                 case "Power": {
                     cardType = CardType.Power;
+                    tags[Tags.NonPermanent.ToString()] = 1f;
                     break;
                 }
                 case "Curse": {
@@ -248,8 +251,8 @@ namespace ProjectPumpernickle {
         public int missingCardCount;
         public List<string> huntingCards = new List<string>();
         public float chanceOfOutcome;
-        public bool justPickedAttack;
-        public bool justPickedBlock;
+        public float addedDamagePerTurn;
+        public float addedBlockPerTurn;
         public bool badBottle;
         public float[] transformValues;
         public string[] averageTransformValueIds;

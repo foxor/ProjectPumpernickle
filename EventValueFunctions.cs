@@ -114,7 +114,7 @@ namespace ProjectPumpernickle {
         public static float TheWomaninBlue(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float TombofLordRedMask(Event e, int floorsFromNow) {
+        public static float TombRedMask(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float Transmogrifier(Event e, int floorsFromNow) {

@@ -221,10 +221,12 @@ namespace ProjectPumpernickle {
             var value = 0f;
             var targetsInDeck = 2f;
             value += targetsInDeck * VALUE_PER_THREAT_STATUS;
-            foreach(var threat in Evaluation.Active.Path.Threats) {
-                var encounter = Database.instance.encounterDict[threat.Key];
-                var addedStatuses = encounter.expectedStatuses;
-                value += threat.Value * addedStatuses * VALUE_PER_THREAT_STATUS;
+            if (Evaluation.Active.Path != null) {
+                foreach (var threat in Evaluation.Active.Path.Threats) {
+                    var encounter = Database.instance.encounterDict[threat.Key];
+                    var addedStatuses = encounter.expectedStatuses;
+                    value += threat.Value * addedStatuses * VALUE_PER_THREAT_STATUS;
+                }
             }
             return value;
         }

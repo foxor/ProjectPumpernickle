@@ -10,6 +10,7 @@ namespace ProjectPumpernickle {
         protected System.Drawing.Color defaultColor;
         public Evaluation[] Evaluations = null;
         protected PumpernickelExplanation explainForm;
+        protected Evaluation ChosenEvaluation;
 
         public PumpernickelAdviceWindow() {
             InitializeComponent();
@@ -65,28 +66,27 @@ namespace ProjectPumpernickle {
             if (Evaluations == null) {
                 return;
             }
-            var chosenEvaluation = Evaluations.First();
             var hoveredCharIndex = PathPreview.GetCharIndexFromPosition(e.Location);
             if (hoveredCharIndex != lastHoveredIndex) {
                 var asCoord = IndexToPosition(hoveredCharIndex, out var isValid);
                 isValid &= PathPreview.Text[hoveredCharIndex] != ' ';
-                if (isValid && chosenEvaluation?.Path != null) {
+                if (isValid && ChosenEvaluation?.Path != null) {
                     lastHoveredIndex = hoveredCharIndex;
-                    var pathIndex = chosenEvaluation.Path.nodes.FirstIndexOf(x => x.position.Equals(asCoord));
+                    var pathIndex = ChosenEvaluation.Path.nodes.FirstIndexOf(x => x.position.Equals(asCoord));
                     if (pathIndex != -1) {
                         PathNodeInfoBox.Text =
-                            "Expected Health: " + chosenEvaluation.Path.expectedHealth[pathIndex] + "\n" +
-                            "Worst Case Health: " + chosenEvaluation.Path.worstCaseHealth[pathIndex] + "\n" +
-                            "Expected Gold: " + chosenEvaluation.Path.expectedGold[pathIndex] + "\n"
+                            "Expected Health: " + ChosenEvaluation.Path.expectedHealth[pathIndex] + "\n" +
+                            "Worst Case Health: " + ChosenEvaluation.Path.worstCaseHealth[pathIndex] + "\n" +
+                            "Expected Gold: " + ChosenEvaluation.Path.expectedGold[pathIndex] + "\n"
                         ;
-                        var chosenNode = chosenEvaluation.Path.nodes[pathIndex];
+                        var chosenNode = ChosenEvaluation.Path.nodes[pathIndex];
                         if (chosenNode.nodeType == NodeType.Shop) {
                             PathNodeInfoBox.Text +=
-                                "Shop Plan: " + chosenEvaluation.Path.shortTermShopPlan.ToString();
+                                "Shop Plan: " + ChosenEvaluation.Path.shortTermShopPlan.ToString();
                         }
                         if (chosenNode.nodeType == NodeType.Fire) {
                             PathNodeInfoBox.Text +=
-                                "Fire Choice: " + chosenEvaluation.Path.fireChoices[pathIndex].ToString();
+                                "Fire Choice: " + ChosenEvaluation.Path.fireChoices[pathIndex].ToString();
                         }
                     }
                 }
@@ -103,14 +103,14 @@ namespace ProjectPumpernickle {
 
         public void SetEvaluations(Evaluation[] evaluations) {
             Evaluations = evaluations;
-            var chosenEvaluation = evaluations.First();
-            SetChosenEvaluation(chosenEvaluation);
+            SetChosenEvaluation(evaluations.First());
             if (explainForm != null && !explainForm.IsDisposed) {
                 explainForm.Explain(Evaluations);
             }
         }
 
         public void SetChosenEvaluation(Evaluation chosenEvaluation) {
+            ChosenEvaluation = chosenEvaluation;
             instance.AdviceBox.Text = chosenEvaluation.ToString();
             UpdateAct();
             if (chosenEvaluation.Path != null) {

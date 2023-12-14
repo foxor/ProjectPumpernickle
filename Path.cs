@@ -13,12 +13,6 @@ using System.Xml.Linq;
 
 namespace ProjectPumpernickle {
     public class Path {
-
-        public static readonly float CHANCE_OF_WORST_CASE = 0.2f;
-        // Just eyeballed sigmoid on wolfram alpha
-        public static readonly float MULTIPLIER_FOR_TWENTY_PERCENT = -1.4f;
-        public static readonly float MULTIPLIER_FOR_EIGHTY_PERCENT = -MULTIPLIER_FOR_TWENTY_PERCENT;
-
         public int elites;
         public bool hasMegaElite;
         public MapNode[] nodes = null;
@@ -42,6 +36,7 @@ namespace ProjectPumpernickle {
         public bool EndOfActPath;
         public float chanceToSurvive;
         public NodeType[] nodeTypes = null;
+        public float[] expectedMaxHealth = null;
         public static Path[] BuildAllPaths(MapNode root, int startingCardRewards) {
             var skipFirstNode = true;
             var nodeSequences = IterateNodeSequences(root, skipFirstNode);
@@ -91,6 +86,7 @@ namespace ProjectPumpernickle {
             r.fightChance = path.fightChance.ToArray();
             r.chanceOfDeath = path.chanceOfDeath.ToArray();
             r.nodeTypes = path.nodeTypes.ToArray();
+            r.expectedMaxHealth = path.expectedMaxHealth.ToArray();
 
             return r;
         }
@@ -115,6 +111,7 @@ namespace ProjectPumpernickle {
             fightChance = new float[remainingFloors];
             chanceOfDeath = new float[remainingFloors];
             nodeTypes = new NodeType[remainingFloors];
+            expectedMaxHealth = new float[remainingFloors];
         }
 
         public void InitNodeTypes() {
@@ -183,31 +180,6 @@ namespace ProjectPumpernickle {
             var beforeElite = true;
             return ExpectedCardRemovesInternal(beforeElite);
         }
-
-        public void ChooseShortTermShopPlan() {
-            var removeValue = Evaluators.CardRemovePoints(this);
-            var fixValue = FixShopPoint();
-            var normalValue = NormalShopPoint();
-            var huntValue = HuntForShopRelicPoint();
-            var saveValue = SaveGoldPoint();
-            var highest = new float[] {removeValue, fixValue, normalValue, huntValue, saveValue}.Max();
-            if (removeValue == highest) {
-                shortTermShopPlan = PathShopPlan.MaxRemove;
-            }
-            else if (fixValue == highest) {
-                shortTermShopPlan = PathShopPlan.FixFight;
-            }
-            else if (normalValue == highest) {
-                shortTermShopPlan = PathShopPlan.NormalShop;
-            }
-            else if (huntValue == highest) {
-                shortTermShopPlan = PathShopPlan.HuntForShopRelic;
-            }
-            else if (saveValue == highest) {
-                shortTermShopPlan = PathShopPlan.SaveGold;
-            }
-        }
-
         protected void InitializePossibleThreats() {
             var hasSeenElite = false;
             var easyPoolLeft = Save.state.act_num == 1 ? 3 : 2;
@@ -344,7 +316,8 @@ namespace ProjectPumpernickle {
                 minPlanningGold[i] = minGold;
             }
         }
-
+        public static readonly float CARD_PICK_RATE_OVER_BOWL = .3f;
+        public static readonly float FEED_HIT_RATE = .8f;
         public void ExpectBasicProgression(int startingCardRewards) {
             // Early in the run, every card reward is a huge impact on the deck quality.
             // We need this so that we know a floor 10 elite won't kill us
@@ -354,6 +327,20 @@ namespace ProjectPumpernickle {
             float floorFightChance = Save.state.event_chances[1];
             float shopChance = Save.state.event_chances[2];
             float shopsSoFar = 0f;
+            var hasSingingBowl = Save.state.relics.Contains("Singing Bowl");
+            var feed = Save.state.cards.Where(x => x.id.Equals("Feed"));
+            var hasFeed = feed.Any();
+            var feedHealth = feed.Select(x => x.upgrades > 0 ? 5f : 3f).Max();
+            if (Save.state.cards.Any(x => x.id.Equals("Armaments")) && feedHealth == 3f) {
+                feedHealth = 4f; // 50% chance to upgrade
+            }
+            if (Save.state.cards.Any(x => x.id.Equals("Apotheosis")) && feedHealth == 3f) {
+                feedHealth = 4.8f;
+            }
+            var maxHp = (float)Save.state.max_health;
+            if (hasSingingBowl) {
+                maxHp += startingCardRewards * (1f - CARD_PICK_RATE_OVER_BOWL);
+            }
 
             for (int i = 0; i < expectedCardRewards.Length; i++) {
                 fightChance[i] = 0f;
@@ -364,6 +351,9 @@ namespace ProjectPumpernickle {
                         relicsSoFar++;
                         cardRewardsSoFar++;
                         fightChance[i] = 1f;
+                        if (hasFeed) {
+                            maxHp += FEED_HIT_RATE * feedHealth;
+                        }
                         break;
                     }
                     case NodeType.Boss:
@@ -371,6 +361,9 @@ namespace ProjectPumpernickle {
                         fightsSoFar++;
                         cardRewardsSoFar++;
                         fightChance[i] = 1f;
+                        if (hasFeed) {
+                            maxHp += FEED_HIT_RATE * feedHealth;
+                        }
                         break;
                     }
                     case NodeType.Shop: {
@@ -379,6 +372,9 @@ namespace ProjectPumpernickle {
                     }
                     case NodeType.Question: {
                         fightsSoFar += floorFightChance;
+                        if (hasFeed) {
+                            maxHp += FEED_HIT_RATE * feedHealth * floorFightChance;
+                        }
                         shopsSoFar += shopChance;
                         cardRewardsSoFar += floorFightChance;
                         fightChance[i] = floorFightChance;
@@ -395,6 +391,7 @@ namespace ProjectPumpernickle {
                 expectedCardRewards[i] = cardRewardsSoFar;
                 expectedRewardRelics[i] = relicsSoFar;
                 expectedShops[i] = shopsSoFar;
+                expectedMaxHealth[i] = maxHp;
             }
         }
 
@@ -424,18 +421,17 @@ namespace ProjectPumpernickle {
             }
             var fireNodes = Enumerable.Range(0, nodes.Length).Where(x => nodes[x].nodeType == NodeType.Fire);
             var fireCount = fireNodes.Count();
-            if (fireCount == 1) {
+            if (fireCount <= 1) {
                 return true;
             }
             return fireNodes.Skip(fireCount - 2).First() == index;
         }
-
+        public static float UNACCEPTABLE_RISK = 0.05f;
         public bool HealthTooLow(int index) {
             if (index < 0) {
                 return false;
             }
-            // TODO: this better
-            return worstCaseHealth[index] <= 0;
+            return chanceOfDeath[index] >= UNACCEPTABLE_RISK;
         }
 
         public bool ShouldRest(int index) {
@@ -551,6 +547,11 @@ namespace ProjectPumpernickle {
                 Threats[threatKey] /= totalThreat;
             }
         }
+        public static readonly float CHANCE_OF_WORST_CASE = 0.01f;
+        // From wolfram alpha
+        public static readonly float MULTIPLIER_FOR_TWENTY_PERCENT = -4.59512f;
+        public static readonly float MULTIPLIER_FOR_EIGHTY_PERCENT = -MULTIPLIER_FOR_TWENTY_PERCENT;
+
         public static readonly float UPCOMING_THREAT_BONUS = 5f;
         public static readonly float UPCOMING_THREAT_FALLOFF = 14f;
         public static readonly float UPCOMING_DEATH_THREAT_MULTIPLIER = 8f;
@@ -599,12 +600,14 @@ namespace ProjectPumpernickle {
         }
 
         protected float ExpectedGoldSpend(int index) {
+            var expectedGoldForFloor = index > 0 ? expectedGold[index - 1] : Save.state.gold;
+            var minGoldForFloor = index > 0 ? minPlanningGold[index - 1] : Save.state.gold;
             switch (shortTermShopPlan) {
                 case PathShopPlan.MaxRemove: {
                     var removeCost = Save.state.purgeCost;
                     var previousRemoves = index == 0 ? 0 : plannedCardRemove.Take(index).Select(b => b ? 1 : 0).Aggregate((acc, x) => acc + x);
                     removeCost += 25 * previousRemoves;
-                    if (minPlanningGold[index] >= removeCost) {
+                    if (minGoldForFloor >= removeCost) {
                         plannedCardRemove[index] = true;
                         return removeCost;
                     }
@@ -613,12 +616,22 @@ namespace ProjectPumpernickle {
                 case PathShopPlan.HuntForShopRelic: {
                     return 0;
                 }
+                case PathShopPlan.NormalShop: {
+                    var remainingShops = nodeTypes.Skip(index).Where(x => x == NodeType.Shop).Count();
+                    if (remainingShops <= 1) {
+                        return expectedGoldForFloor;
+                    }
+                    else if (remainingShops == 2) {
+                        var lastShopIndex = Enumerable.Range(0, nodeTypes.Length).Where(x => nodeTypes[x] == NodeType.Shop).Last();
+                        var totalGold = expectedGold[lastShopIndex];
+                        return totalGold / 2f;
+                    }
+                    else {
+                        return Math.Min(expectedGoldForFloor - 15f, 400f);
+                    }
+                }
                 default: {
-                    //TODO: hack
-                    var currentGold = expectedGold[index];
-                    var residualGold = 15f;
-                    var spend = MathF.Min(currentGold - residualGold, 400f);
-                    return spend;
+                    throw new NotImplementedException();
                 }
             }
         }
@@ -676,8 +689,9 @@ namespace ProjectPumpernickle {
             //if (fightsBeforeElite == 
             //}
         }
+        public static readonly float NORMAL_SHOP_BASELINE = 100f;
         public float NormalShopPoint() {
-            return 0f;
+            return NORMAL_SHOP_BASELINE;
         }
         public float HuntForShopRelicPoint() {
             return 0f;
@@ -685,35 +699,35 @@ namespace ProjectPumpernickle {
         public float SaveGoldPoint() {
             return 0f;
         }
-        public static float ExpectedGoldBroughtToShopsNextAct(float goldNextAct) {
-            var chanceOfTwoShops = Lerp.Inverse(300f, 600f, goldNextAct);
-            var goldBeforeShop = 120f;
-            var goldForSecondShop = 300f;
-            return goldNextAct + goldBeforeShop + (goldForSecondShop * chanceOfTwoShops);
+        public void ChooseShortTermShopPlan() {
+            var removeValue = Evaluators.CardRemovePoints(this);
+            var fixValue = FixShopPoint();
+            var normalValue = NormalShopPoint();
+            var huntValue = HuntForShopRelicPoint();
+            var saveValue = SaveGoldPoint();
+            var highest = new float[] {removeValue, fixValue, normalValue, huntValue, saveValue}.Max();
+            if (removeValue == highest) {
+                shortTermShopPlan = PathShopPlan.MaxRemove;
+            }
+            else if (fixValue == highest) {
+                shortTermShopPlan = PathShopPlan.FixFight;
+            }
+            else if (normalValue == highest) {
+                shortTermShopPlan = PathShopPlan.NormalShop;
+            }
+            else if (huntValue == highest) {
+                shortTermShopPlan = PathShopPlan.HuntForShopRelic;
+            }
+            else if (saveValue == highest) {
+                shortTermShopPlan = PathShopPlan.SaveGold;
+            }
         }
-        public float ExpectedGoldBroughtToShops() {
-            var goldBrought = 0f;
-            for (int i = 0; i < nodes.Length; i++) {
-                if (nodes[i].nodeType == NodeType.Shop) {
-                    goldBrought += expectedGold[i];
+        public IEnumerable<float> ExpectedGoldBroughtToShops() {
+            for (int i = 0; i < nodeTypes.Length; i++) {
+                if (nodeTypes[i] == NodeType.Shop) {
+                    yield return expectedGold[i];
                 }
             }
-            // Should this use the simulated nodes?
-            var actThreeGoldToShop = 250;
-            var actFourGoldToShop = 250;
-            if (Save.state.act_num == 1) {
-                goldBrought += ExpectedGoldBroughtToShopsNextAct(expectedGold[^1]);
-                goldBrought += actThreeGoldToShop;
-                goldBrought += actFourGoldToShop;
-            }
-            if (Save.state.act_num == 2) {
-                goldBrought += ExpectedGoldBroughtToShopsNextAct(expectedGold[^1]);
-                goldBrought += actFourGoldToShop;
-            }
-            if (Save.state.act_num == 3) {
-                goldBrought += expectedGold[^1];
-            }
-            return goldBrought;
         }
         public static float ExpectedFutureActCardRewards() {
             return 8.5f;

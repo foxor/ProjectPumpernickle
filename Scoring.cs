@@ -11,8 +11,6 @@ namespace ProjectPumpernickle {
         public void Apply(Evaluation evaluation);
     }
     internal class Scoring {
-        public static readonly float GOLD_AT_SHOP_PER_POINT = 150f;
-
         protected static IGlobalRule[] GlobalRules;
         static Scoring() {
             var globalRuleTypes = typeof(Scoring).Assembly.GetTypes().Where(x => typeof(IGlobalRule).IsAssignableFrom(x) && typeof(IGlobalRule) != x);
@@ -46,13 +44,20 @@ namespace ProjectPumpernickle {
                 }
             }
         }
-
+        public static readonly float MAX_SHOP_VALUE = 5f;
+        public static float PointsForShop(float goldBrought) {
+            if (goldBrought < 180f) {
+                return 0f;
+            }
+            var shopValue = Math.Pow(1f - (1f / (1 + ((goldBrought - 180f) / 50f))), 1f);
+            return (float)shopValue * MAX_SHOP_VALUE;
+        }
         public static void ScorePath(Evaluation evaluation) {
             var path = evaluation.Path;
 
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(1));
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(2));
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(3));
+            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(1));
+            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(2));
+            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(3));
 
             evaluation.AddScore(ScoreReason.Upgrades, 5f * Evaluators.PercentAllGreen(evaluation));
 
@@ -60,7 +65,8 @@ namespace ProjectPumpernickle {
             evaluation.AddScore(ScoreReason.RelicCount, expectedRelics);
 
             var expectedCardRewards = path.expectedCardRewards[^1];
-            evaluation.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards);
+            var cardRewardValue = 1f - (Lerp.Inverse(0f, 40f, Save.state.floor_num) * .8f);
+            evaluation.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards * cardRewardValue);
 
             evaluation.AddScore(ScoreReason.Key, Save.state.has_emerald_key ? .1f : 0);
             evaluation.AddScore(ScoreReason.Key, Save.state.has_ruby_key ? .1f : 0);
@@ -69,9 +75,8 @@ namespace ProjectPumpernickle {
             var effectiveHealth = Evaluators.GetEffectiveHealth();
             evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 10f);
 
-            // this is too high
             var goldBrought = path.ExpectedGoldBroughtToShops();
-            evaluation.AddScore(ScoreReason.BringGoldToShop, goldBrought / GOLD_AT_SHOP_PER_POINT);
+            evaluation.AddScore(ScoreReason.BringGoldToShop, goldBrought.Select(PointsForShop).Sum());
 
             path.AddEventScore(evaluation);
 

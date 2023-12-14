@@ -66,7 +66,7 @@ namespace ProjectPumpernickle {
         TheMausoleum,
         TheMoaiHead,
         TheWomaninBlue,
-        TombofLordRedMask,
+        TombRedMask,
         Transmogrifier,
         UpgradeShrine,
         Vampires,

@@ -48,7 +48,12 @@ namespace ProjectPumpernickle {
                         tookBlueKey = true;
                     }
                     else if (!isShop) {
-                        description.Add("Skip the " + rewardGroup.rewardType);
+                        if (rewardGroup.rewardType == RewardType.Cards && Save.state.relics.Contains("Singing Bowl")) {
+                            description.Add("Take the +2 max hp");
+                        }
+                        else {
+                            description.Add("Skip the " + rewardGroup.rewardType);
+                        }
                     }
                     if (!rewardGroup.skippable) {
                         isInvalid = true;
@@ -58,21 +63,21 @@ namespace ProjectPumpernickle {
                 var chosen = rewardGroup.values[index];
                 var chosenId = chosen.Replace("+", "");
                 Save.state.gold -= rewardGroup.cost;
-                Save.state.current_health -= rewardGroup.hpCost[index];
-                healthLost += rewardGroup.hpCost[index];
+                Save.state.current_health -= rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
+                healthLost += rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
                 goldAdded -= rewardGroup.cost;
-                if (!string.IsNullOrEmpty(rewardGroup.advice[index])) {
+                if (rewardGroup.advice != null && !string.IsNullOrEmpty(rewardGroup.advice[index])) {
                     description.Add(rewardGroup.advice[index]);
                 }
                 switch (rewardGroup.rewardType) {
                     case RewardType.Cards: {
                         var cardData = Database.instance.cardsDict[chosenId];
                         addedCardIndicies.Add(PumpernickelSaveState.instance.AddCardById(chosenId));
-                        if (cardData.tags.ContainsKey(Tags.Damage.ToString())) {
-                            Save.state.justPickedAttack = true;
+                        if (cardData.tags.TryGetValue(Tags.Damage.ToString(), out var damage)) {
+                            Save.state.addedDamagePerTurn = damage / Save.state.cards.Count() * Evaluators.AverageCardsPerTurn();
                         }
-                        if (cardData.tags.ContainsKey(Tags.Block.ToString())) {
-                            Save.state.justPickedBlock = true;
+                        if (cardData.tags.TryGetValue(Tags.Block.ToString(), out var block)) {
+                            Save.state.addedBlockPerTurn = block / Save.state.cards.Count() * Evaluators.AverageCardsPerTurn();
                         }
                         description.Add("Take the " + cardData.name);
                         break;
@@ -410,8 +415,8 @@ namespace ProjectPumpernickle {
             if (relicRemoved != null) {
                 Save.state.relics.Insert(relicRemoveIndex, relicRemoved);
             }
-            Save.state.justPickedAttack = false;
-            Save.state.justPickedBlock = false;
+            Save.state.addedBlockPerTurn = 0f;
+            Save.state.addedDamagePerTurn = 0f;
             if (bottled != null) {
                 bottled.bottled = false;
             }

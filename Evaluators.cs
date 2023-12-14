@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -146,8 +147,10 @@ namespace ProjectPumpernickle {
 
         public static void ChooseBestAndWorstUpgrade(int numPriorUpgrades, out string bestId, out float bestValue, out string worstId, out float worstValue) {
             var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0 && x.Card.cardType != CardType.Curse).Select(x => {
-                var upgradeValue = EvaluationFunctionReflection.GetUpgradePowerMultiplierFunctionCached(x.Card.id)(x.Card, x.Index);
-                return (Card: x.Card, Val: upgradeValue);
+                var currentValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(x.Card.id)(x.Card, x.Index);
+                var upgradeMultiplier = EvaluationFunctionReflection.GetUpgradeFunctionCached(x.Card.id)(x.Card, x.Index, currentValue);
+                var estimatedUsesPerFight = Evaluators.EstimateUsesPerFight(x.Card);
+                return (Card: x.Card, Val: currentValue * estimatedUsesPerFight * upgradeMultiplier);
             }).OrderByDescending(x => x.Val);
             if (numPriorUpgrades >= unupgradedCards.Count()) {
                 bestId = null;
@@ -367,7 +370,7 @@ namespace ProjectPumpernickle {
             //if (chance of gain health elsewhere) {
             //    healthGained *= 1 - chance rest unecessary;
             //}
-            return healthGained;
+            return ((int)healthGained);
         }
 
         public static int NormalFutureActsLeft() {
@@ -544,7 +547,7 @@ namespace ProjectPumpernickle {
 
         public static float DesiredShops(float estimatedBeginningGold) {
             return estimatedBeginningGold switch {
-                > 380f => 2f,
+                > 450f => 2f,
                 < 80f => 0f,
                 _ => 1f,
             };
@@ -637,6 +640,43 @@ namespace ProjectPumpernickle {
             var realizedWeight = cardsByUpgradeWeight.Take(fullUpgrades).Sum();
             realizedWeight += partialUpgrades * cardsByUpgradeWeight.Skip(fullUpgrades).First();
             return realizedWeight / totalWeight;
+        }
+        public static float AverageCardsPerTurn() {
+            return 5f;
+        }
+        public static readonly float LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY = .3f;
+        public static readonly float NEED_BIAS = 0.5f;
+        public static float ExtraCardValue(Card c, float value, int index) {
+            if (c.bottled && c.tags.TryGetValue(Tags.BottleEquity.ToString(), out var bottleValue)) {
+                value += bottleValue;
+            }
+            if (Save.state.potions.Any(x => x.Equals("LiquidMemories")) && c.intCost != int.MaxValue && !c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
+                var extraCost = c.intCost - 1;
+                value += LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY * extraCost;
+            }
+            var needFactor = CardNeedFitFactor(c);
+            value += needFactor * NEED_BIAS;
+            value += c.bias;
+            if (c.upgrades > 0) {
+                value = EvaluationFunctionReflection.GetUpgradeFunctionCached(c.id)(c, index, value);
+            }
+            return value;
+        }
+        public static float ExtraCardUpgradeValue(Card c, float value) {
+            value *= c.upgradePowerMultiplier;
+            value += c.upgradeBias;
+            return value;
+        }
+        public static float EstimateUsesPerFight(Card c) {
+            if (c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
+                return .8f;
+            }
+            return 2.2f;
+        }
+        public static float CardNeedFitFactor(Card c) {
+            var deckWeakness = new Weakness();
+            var cardAddressesWeakness = new Weakness(c);
+            return deckWeakness * cardAddressesWeakness;
         }
     }
 }
