@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class EventAdvice {
-        public static Evaluation[] OminousForge(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+        public static Evaluation[] AccursedBlacksmith(IEnumerable<string> arguments) {
+            var existingAdvice = new List<string>(){
+                "Rummage around in the forge",
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] PleadingVagrant(IEnumerable<string> arguments) {

@@ -52,18 +52,18 @@ namespace ProjectPumpernickle {
             return (float)shopValue * MAX_SHOP_VALUE;
         }
         public static void ScorePath(Evaluation evaluation) {
+            // This doesn't ever award points for future acts to avoid perverse incentives
             var path = evaluation.Path;
+            var lastFloorThisAct = Evaluators.LastFloorThisAct(Save.state.act_num);
 
-            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(1));
-            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(2));
-            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(3));
+            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(Save.state.act_num));
 
             evaluation.AddScore(ScoreReason.Upgrades, 5f * Evaluators.PercentAllGreen(evaluation));
 
-            var expectedRelics = path.expectedRewardRelics[^1];
+            var expectedRelics = path.expectedRewardRelics[lastFloorThisAct];
             evaluation.AddScore(ScoreReason.RelicCount, expectedRelics);
 
-            var expectedCardRewards = path.expectedCardRewards[^1];
+            var expectedCardRewards = path.expectedCardRewards[lastFloorThisAct];
             var cardRewardValue = 1f - (Lerp.Inverse(0f, 40f, Save.state.floor_num) * .8f);
             evaluation.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards * cardRewardValue);
 
@@ -74,6 +74,7 @@ namespace ProjectPumpernickle {
             var effectiveHealth = Evaluators.GetEffectiveHealth();
             evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 10f);
 
+            // This does incorporate future act points, because otherwise we might misbehave
             var goldBrought = path.ExpectedGoldBroughtToShops();
             evaluation.AddScore(ScoreReason.BringGoldToShop, goldBrought.Select(PointsForShop).Sum());
 
@@ -86,7 +87,7 @@ namespace ProjectPumpernickle {
             if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path.hasMegaElite != true) {
                 evaluation.AddScore(ScoreReason.MissingKey, float.MinValue);
             }
-            if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && path.ContainsGuaranteedChest()) {
+            if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && !path.ContainsGuaranteedChest()) {
                 evaluation.AddScore(ScoreReason.MissingKey, float.MinValue);
             }
 
@@ -104,9 +105,6 @@ namespace ProjectPumpernickle {
                 // TODO: fix setup relics?
                 var relic = Database.instance.relicsDict[relicId];
                 evaluation.AddScore(ScoreReason.RelicQuality, EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic));
-            }
-            if (evaluation.Scores[(byte)ScoreReason.RelicQuality] == 11f) {
-                Console.WriteLine("");
             }
             EvaluateGlobalRules(evaluation);
             ScorePath(evaluation);

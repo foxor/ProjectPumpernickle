@@ -177,6 +177,12 @@ namespace ProjectPumpernickle {
             var actStart = ActToFirstFloor(act);
             return floorNum - actStart;
         }
+        public static int LastFloorThisAct(int actNum) {
+            return actNum switch {
+                4 => 55,
+                _ => ActToFirstFloor(actNum + 1) - 1
+            };
+        }
 
         public static readonly int BASE_RARE_CHANCE = 3;
         public static readonly int BASE_UNCOMMON_CHANCE = 37;

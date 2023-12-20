@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class EventValueFunctions {
-        public static float OminousForge(Event e, int floorsFromNow) {
+        public static float AccursedBlacksmith(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float PleadingVagrant(Event e, int floorsFromNow) {

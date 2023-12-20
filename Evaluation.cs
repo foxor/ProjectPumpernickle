@@ -30,7 +30,7 @@ namespace ProjectPumpernickle {
         InfiniteNemesis,
         EVENT_SUM,
         EVENT_BEGIN,
-        OminousForge,
+        AccursedBlacksmith,
         PleadingVagrant,
         AncientWriting,
         OldBeggar,
@@ -161,7 +161,7 @@ namespace ProjectPumpernickle {
             var moveFromPos = currentNode.Value;
             var direction = moveFromPos.x > moveToPos.x ? "left" :
                 (moveFromPos.x < moveToPos.x ? "right" : "up");
-            if (moveFromPos.y < Evaluators.ActToFirstFloor(Save.state.act_num)) {
+            if (moveFromPos.y < Evaluators.ActToFirstFloor(Save.state.act_num) - 1) {
                 direction = "as marked";
             }
             var destination = pathNodes[0].nodeType.ToString();
