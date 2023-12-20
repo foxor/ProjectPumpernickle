@@ -689,7 +689,7 @@ namespace ProjectPumpernickle {
             Threats[threat.id] += deathLikelihood * chanceOfThis * upcomingBonus * upcomingDeathMultiplier;
             chanceOfDeath[floorIndex] += deathLikelihood * chanceOfThis;
             if (chanceOfDeath[floorIndex] > .99f) {
-                throw new Exception("Bot thinks it's 100% chance to die.  This causes problems usually");
+                //throw new Exception("Bot thinks it's 100% chance to die.  This causes problems usually");
             }
         }
 

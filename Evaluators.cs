@@ -691,5 +691,13 @@ namespace ProjectPumpernickle {
         public static float MaxHealing() {
             return 0f;
         }
+        public static void ReorderOptions(List<RewardOption> rewardOptions) {
+            var cardIndex = rewardOptions.FirstIndexOf(x => x.values.Contains("Membership Card"));
+            if (cardIndex != -1) {
+                var cardOption = rewardOptions[cardIndex];
+                rewardOptions.RemoveAt(cardIndex);
+                rewardOptions.Insert(0, cardOption);
+            }
+        }
     }
 }

@@ -71,6 +71,7 @@ namespace ProjectPumpernickle {
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;
             var preRewardEvaluation = new Evaluation();
             Scoring.Score(preRewardEvaluation);
+            Evaluators.ReorderOptions(rewardOptions);
             var evaluations = MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop).ToArray();
             Scoring.ApplyVariance(evaluations, preRewardEvaluation);
             var sorted = evaluations.OrderByDescending(x => x.Score).ToArray();

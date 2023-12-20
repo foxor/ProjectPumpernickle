@@ -36,6 +36,7 @@ namespace ProjectPumpernickle {
         public int relicRemoveIndex = -1;
         public bool isInvalid;
         public Card bottled;
+        public bool gainedMembershipCard;
         public RewardContext(List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop) {
             for (int i = 0; i < rewardIndicies.Count; i++) {
                 var rewardGroup = rewardOptions[i];
@@ -62,10 +63,14 @@ namespace ProjectPumpernickle {
                 }
                 var chosen = rewardGroup.values[index];
                 var chosenId = chosen.Replace("+", "");
-                Save.state.gold -= rewardGroup.cost;
+                var cost = rewardGroup.cost;
+                if (gainedMembershipCard) {
+                    cost -= (rewardGroup.cost / 2);
+                }
+                Save.state.gold -= cost;
+                goldAdded -= cost;
                 Save.state.current_health -= rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
                 healthLost += rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
-                goldAdded -= rewardGroup.cost;
                 if (rewardGroup.advice != null && !string.IsNullOrEmpty(rewardGroup.advice[index])) {
                     description.Add(rewardGroup.advice[index]);
                 }
@@ -95,6 +100,9 @@ namespace ProjectPumpernickle {
                         Save.state.relics.Add(chosen);
                         description.Add("Take the " + chosen);
                         pickAdviceFn(this);
+                        if (chosen.Equals("Membership Card")) {
+                            gainedMembershipCard = true;
+                        }
                         break;
                     }
                     case RewardType.Potion: {
@@ -125,8 +133,8 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case RewardType.Event: {
-                        var cost = rewardGroup.eventCost[index];
-                        HandleEvent(Enum.GetValues<EventRewardElement>().Where(x => x.ToString().Equals(chosen)).Single(), cost);
+                        var eventCost = rewardGroup.eventCost[index];
+                        HandleEvent(Enum.GetValues<EventRewardElement>().Where(x => x.ToString().Equals(chosen)).Single(), eventCost);
                         break;
                     }
                     default: {
