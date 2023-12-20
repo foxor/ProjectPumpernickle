@@ -56,7 +56,7 @@ namespace ProjectPumpernickle {
             var path = evaluation.Path;
             var lastFloorThisAct = Evaluators.LastFloorThisAct(Save.state.act_num);
 
-            evaluation.AddScore(ScoreReason.ActSurvival, 5f * path.ChanceToSurviveAct(Save.state.act_num));
+            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(Save.state.act_num));
 
             evaluation.AddScore(ScoreReason.Upgrades, 5f * Evaluators.PercentAllGreen(evaluation));
 

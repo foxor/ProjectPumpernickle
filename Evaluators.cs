@@ -367,9 +367,11 @@ namespace ProjectPumpernickle {
             if (bestUpgrade == null) {
                 return 1f;
             }
+            // This view of deck power is intended to capture the positive things the deck can do, and how they can change
+            // The points we get are for scoring, so we massage them a bit
             var deckPower = Enumerable.Range(0, Save.state.cards.Count).Select(x =>
                 EvaluationFunctionReflection.GetCardEvalFunctionCached(Save.state.cards[x].id)(Save.state.cards[x], x)
-            ).Sum();
+            ).Where(x => x > 0).Sum() + 1f;
             var expectedCardRewards = path.expectedCardRewards[floorIndex];
             var upgradeHits = CHANCE_OF_HIGH_VALUE_UPGRADE_PER_REWARD * expectedCardRewards;
             var newCardUpgradeValue = Lerp.From(LOW_VALUE_UPGRADE, HIGH_VALUE_UPGRADE, upgradeHits / (upgradeHits + 1f));

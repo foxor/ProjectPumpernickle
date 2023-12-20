@@ -68,7 +68,7 @@ namespace ProjectPumpernickle {
             path.ProjectDefensivePower();
 
             // Estimate how much damage we really take when we get stronger
-            path.SimulateHealthEvolution();
+            path.SimulateHealthEvolution(healthFloor: 1);
 
             // Figure out if we absolutely need to rest
             path.PlanFires();
@@ -637,10 +637,11 @@ namespace ProjectPumpernickle {
                     var chanceOfThis = (possibleEncounter.weight * 1f / totalWeight) * fightChance[i];
                     averageExpectedHealthLoss += expectedHealthLoss * chanceOfThis;
                     AssessThreat(possibleEncounter, i, expectedHealthLoss, possibleEncounter.medianWorstCaseHealthLoss, lastExpectedHealth, chanceOfThis);
+                    worstWorstCaseHealthLoss = Math.Max(worstWorstCaseHealthLoss, possibleEncounter.medianWorstCaseHealthLoss);
                 }
                 expectedHealthLoss[i] = averageExpectedHealthLoss;
                 expectedHealth[i] = Math.Max(lastExpectedHealth - averageExpectedHealthLoss, healthFloor);
-                worstCaseHealth[i] = Math.Max(lastWorstCaseHealth - worstWorstCaseHealthLoss, healthFloor);
+                worstCaseHealth[i] = lastWorstCaseHealth - worstWorstCaseHealthLoss;
             }
             chanceToWin = Evaluators.EstimateChanceToWin(chanceOfDeath);
         }
@@ -1004,7 +1005,7 @@ namespace ProjectPumpernickle {
             }
             float totalChance = 1f;
             for (int i = 0; i < remainingFloors; i++) {
-                if (Evaluators.FloorToAct(PathIndexToFloorNum(i)) == act) {
+                if (Evaluators.FloorToAct(PathIndexToFloorNum(i)) == act + 1) {
                     return totalChance;
                 }
                 totalChance *= (1f - chanceOfDeath[i]);

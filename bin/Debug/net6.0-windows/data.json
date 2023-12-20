@@ -938,7 +938,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Gain 4 (7) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.5,
       },
       {
          "id":"Dodge and Roll",
@@ -1123,7 +1124,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Double (Triple) the enemy's Poison.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"Choke",
