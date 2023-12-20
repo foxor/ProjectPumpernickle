@@ -39,9 +39,11 @@ namespace ProjectPumpernickle {
             if (root != null) {
                 foreach (var child in root.children) {
                     var pathsThatGoThisWay = evaluations.Where(x => x.Path.nodes[0] == child);
-                    var safestPathThisWay = pathsThatGoThisWay.OrderByDescending(x => x.Path.chanceToSurvive).First();
-                    foreach (var path in pathsThatGoThisWay) {
-                        path.OffRamp = safestPathThisWay;
+                    if (pathsThatGoThisWay.Any()) {
+                        var safestPathThisWay = pathsThatGoThisWay.OrderByDescending(x => x.Path.chanceToWin).First();
+                        foreach (var path in pathsThatGoThisWay) {
+                            path.OffRamp = safestPathThisWay;
+                        }
                     }
                 }
             }
@@ -49,11 +51,11 @@ namespace ProjectPumpernickle {
 
         public static IEnumerable<Evaluation> GenerateEvaluationsWithinContext(RewardContext context) {
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
-            var allPaths = Path.BuildAllPaths(currentNode, context.bonusCardRewards);
-            var allEvaluations = allPaths.Select(x => new Evaluation(context, x)).ToArray();
+            var allPaths = Path.BuildAllPaths(currentNode, context.bonusCardRewards).ToArray();
+            var allEvaluations = Enumerable.Range(0, allPaths.Length).Select(x => new Evaluation(context, allPaths[x])).ToArray();
             SetEvaluationOffRamps(currentNode, allEvaluations);
             if (!allPaths.Any()) {
-                allEvaluations = new Evaluation[] { new Evaluation(context, null) };
+                allEvaluations = new Evaluation[] { new Evaluation(context) };
             }
             foreach (var eval in allEvaluations) {
                 Scoring.Score(eval);
@@ -67,7 +69,7 @@ namespace ProjectPumpernickle {
             var isShop = rewardOptions.Any(x => x.cost != 0);
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;
-            var preRewardEvaluation = new Evaluation(null, null);
+            var preRewardEvaluation = new Evaluation();
             Scoring.Score(preRewardEvaluation);
             var evaluations = MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop).ToArray();
             Scoring.ApplyVariance(evaluations, preRewardEvaluation);

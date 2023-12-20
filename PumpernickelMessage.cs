@@ -101,12 +101,15 @@ namespace ProjectPumpernickle {
                             deckIndex++;
                         }
                         var greenKeyHeaderIndex = lines.FirstIndexOf(x => x.Equals("GreenKey"));
+                        var relicEndIndex = greenKeyHeaderIndex >= 0 ? greenKeyHeaderIndex : lines.Length - 2;
                         for (int i = relicHeaderIndex + 1 + Save.state.relics.Count; i < greenKeyHeaderIndex; i++) {
                             var relicId = lines[i];
                             Save.state.relics.Add(relicId);
                         }
                         PumpernickelAdviceWindow.instance.UpdateAct();
-                        ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..^2]);
+                        if (greenKeyHeaderIndex >= 0) {
+                            ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..(greenKeyHeaderIndex + 3)]);
+                        }
                         GivePathingAdvice();
                         break;
                     }

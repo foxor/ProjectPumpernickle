@@ -141,7 +141,7 @@ namespace ProjectPumpernickle {
                 return 0f;
             }
             var estimatedMedianBlock = incomingDamage - encounter.medianExpectedHealthLoss;
-            if (MathF.Abs(estimatedMedianBlock) < 0.2f) {
+            if (estimatedMedianBlock < 0.2f) {
                 return incomingDamage / defensivePower;
             }
             var medianBlockRatio = estimatedMedianBlock / incomingDamage;

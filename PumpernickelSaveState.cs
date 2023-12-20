@@ -366,7 +366,7 @@ namespace ProjectPumpernickle {
         }
 
         public MapNode GetCurrentNode() {
-            if (room_x == -1 && room_y == -1) {
+            if (room_x == 0 && room_y == -1) {
                 var neowNode = new MapNode();
                 neowNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
                 return neowNode;

@@ -195,10 +195,10 @@ public class SpirePatches {
             for (AbstractRelic relic : AbstractDungeon.player.relics) {
                 outToServer.write((relic.relicId + "\n").getBytes(StandardCharsets.UTF_8));
             }
-            outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
             for(ArrayList< MapRoomNode > row : AbstractDungeon.map) {
                 for(MapRoomNode node : row) {
                     if (node.hasEmeraldKey) {
+                        outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
                         outToServer.write((node.x + "\n").getBytes(StandardCharsets.UTF_8));
                         outToServer.write((node.y + "\n").getBytes(StandardCharsets.UTF_8));
                     }

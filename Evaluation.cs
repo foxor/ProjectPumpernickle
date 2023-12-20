@@ -91,7 +91,7 @@ namespace ProjectPumpernickle {
         public float[] Scores = new float[(byte)ScoreReason.COUNT];
         public List<string> Advice = new List<string>();
         public Path Path = null;
-        public float RewardVariance;
+        public float Likelihood;
         public float WorstCaseRewardFactor;
         public int BonusCardRewards;
         public Evaluation OffRamp;
@@ -99,18 +99,18 @@ namespace ProjectPumpernickle {
 
         protected bool hasDescribedPathing;
 
-        public Evaluation(RewardContext context, Path path) {
+        public Evaluation(RewardContext context = null, Path path = null) {
             Active = this;
 
             if (context != null) {
                 Advice = context.description.ToList();
-                RewardVariance = context.chanceOfOutcome;
+                Likelihood = context.chanceOfOutcome;
                 WorstCaseRewardFactor = context.worstCaseValueProportion;
                 BonusCardRewards = context.bonusCardRewards;
             }
             this.Path = path;
             if (path == null) {
-                Path = Path.BuildPath(new MapNode[] { });
+                Path = Path.BuildPath(new MapNode[] { }, -1);
             }
 
             Save.state.earliestInfinite = 0;
@@ -122,8 +122,8 @@ namespace ProjectPumpernickle {
             if (OffRamp == null) {
                 return;
             }
-            float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - Path.chanceToSurvive);
-            float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToSurvive);
+            float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - Path.chanceToWin);
+            float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToWin);
             riskT = (riskT * MathF.E * 2) - MathF.E;
             offRampRiskT = (offRampRiskT * MathF.E * 2) - MathF.E;
             float riskRelevance = PumpernickelMath.Sigmoid(riskT - offRampRiskT);
@@ -161,6 +161,9 @@ namespace ProjectPumpernickle {
             var moveFromPos = currentNode.Value;
             var direction = moveFromPos.x > moveToPos.x ? "left" :
                 (moveFromPos.x < moveToPos.x ? "right" : "up");
+            if (moveFromPos.y < Evaluators.ActToFirstFloor(Save.state.act_num)) {
+                direction = "as marked";
+            }
             var destination = pathNodes[0].nodeType.ToString();
             return string.Format("Go {0} to the {1}", direction, destination);
         }

@@ -338,6 +338,7 @@ namespace ProjectPumpernickle {
                     relics.Add(bestRelic.id);
                     relicRemoved = Save.state.relics[0];
                     relicRemoveIndex = 0;
+                    Save.state.relics.RemoveAt(0);
                     Save.state.relics.Add(bestRelic.id);
                     chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Boss);
                     worstCaseValueProportion = worstCaseValue / bestValue;

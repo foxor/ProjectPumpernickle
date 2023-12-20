@@ -29,15 +29,14 @@ namespace ProjectPumpernickle {
             // Normally, we want to punish overly optimistic evaluations,
             // however, if all the evaluations are risky, we want to pick 
             // evaluations that actually have a shot
-            var defaultChanceToSurvive = preRewardScore.Path.chanceToSurvive;
+            var defaultChanceToSurvive = preRewardScore.Path.chanceToWin;
             var defaultScore = preRewardScore.Score;
-            var availableSafetyFactor = Lerp.Inverse(0.5f, 1f, defaultChanceToSurvive);
+            var availableSafetyFactor = defaultChanceToSurvive;
             foreach (var evaluation in evaluations) {
-                var worstCaseScore = defaultScore;
-                var worstCaseEstimatedScore = Lerp.From(worstCaseScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
+                var worstCaseEstimatedScore = Lerp.FromUncapped(defaultScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
                 var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
-                if (evaluation.RewardVariance != 0f) {
-                    var failureChance = 1f - evaluation.RewardVariance;
+                if (evaluation.Likelihood != 0f) {
+                    var failureChance = 1f - evaluation.Likelihood;
                     var variancePenalty = maxScoreLoss * failureChance * availableSafetyFactor;
                     evaluation.AddScore(ScoreReason.Variance, variancePenalty);
                     evaluation.NeedsMoreInfo = true;
@@ -105,6 +104,9 @@ namespace ProjectPumpernickle {
                 // TODO: fix setup relics?
                 var relic = Database.instance.relicsDict[relicId];
                 evaluation.AddScore(ScoreReason.RelicQuality, EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic));
+            }
+            if (evaluation.Scores[(byte)ScoreReason.RelicQuality] == 11f) {
+                Console.WriteLine("");
             }
             EvaluateGlobalRules(evaluation);
             ScorePath(evaluation);

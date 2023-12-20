@@ -97,18 +97,18 @@ namespace ProjectPumpernickle {
             return scoreReason > EVENT_BEGIN && scoreReason <= EVENT_BEGIN + EVENT_NUM;
         }
 
-        public static void AddScoreExplanation(RichTextBuilder rtb, Evaluation evaluation, float[] winningScore) {
+        public static void AddScoreExplanation(RichTextBuilder rtb, Evaluation evaluation, float[] winningScore, int evaluationIndex) {
             foreach (var reasonIndex in Enumerable.Range(0, (byte)ScoreReason.COUNT).OrderByDescending(x => evaluation.Scores[x] - winningScore[x])) {
                 var isBest = evaluation.Equals(PumpernickelAdviceWindow.instance.Evaluations[0]);
-                if (evaluation.Scores[reasonIndex] == 0f) {
-                    continue;
-                }
+                var score = evaluation.Scores[reasonIndex];
+                var delta = score - winningScore[reasonIndex];
                 if (IsEvent(reasonIndex)) {
                     continue;
                 }
-                var score = evaluation.Scores[reasonIndex];
-                var delta = score - winningScore[reasonIndex];
                 if (delta == 0 && !isBest) {
+                    continue;
+                }
+                if (score == 0 && isBest) {
                     continue;
                 }
                 var ReasonString = ScoreReasonToStringCache[reasonIndex];
@@ -144,6 +144,7 @@ namespace ProjectPumpernickle {
                 rtb.explanationText.Append(") ");
             }
             rtb.explanationText.Append("\n");
+            rtb.explanationText.Append("PID: " + evaluation.Path.pathIndex + "\n");
 
             var advice = evaluation.ToString().Replace("\r", "");
             rtb.explanationText.Append(advice + "\n\n");
@@ -151,7 +152,7 @@ namespace ProjectPumpernickle {
             rtb.AddSection("Score explanation", FontStyle.Italic, SysColor.Black);
             rtb.explanationText.Append(":\n");
 
-            AddScoreExplanation(rtb, evaluation, winningScore);
+            AddScoreExplanation(rtb, evaluation, winningScore, index);
 
             rtb.explanationText.Append("\n\n\n");
             return rtb;

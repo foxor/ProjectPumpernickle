@@ -148,9 +148,8 @@ namespace ProjectPumpernickle {
         public static void ChooseBestAndWorstUpgrade(int numPriorUpgrades, out string bestId, out float bestValue, out string worstId, out float worstValue) {
             var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0 && x.Card.cardType != CardType.Curse).Select(x => {
                 var currentValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(x.Card.id)(x.Card, x.Index);
-                var upgradeMultiplier = EvaluationFunctionReflection.GetUpgradeFunctionCached(x.Card.id)(x.Card, x.Index, currentValue);
-                var estimatedUsesPerFight = Evaluators.EstimateUsesPerFight(x.Card);
-                return (Card: x.Card, Val: currentValue * estimatedUsesPerFight * upgradeMultiplier);
+                var upgradeValue = EvaluationFunctionReflection.GetUpgradeFunctionCached(x.Card.id)(x.Card, x.Index, currentValue);
+                return (Card: x.Card, Val: upgradeValue - currentValue);
             }).OrderByDescending(x => x.Val);
             if (numPriorUpgrades >= unupgradedCards.Count()) {
                 bestId = null;
@@ -171,12 +170,7 @@ namespace ProjectPumpernickle {
             return floorNum <= 17 ? 1 : (floorNum <= 34 ? 2 : (floorNum <= 51 ? 3 : 4));
         }
         public static int ActToFirstFloor(int actNum) {
-            return actNum switch {
-                1 => 0,
-                2 => 18,
-                3 => 35,
-                4 => 52
-            };
+            return 1 + ((actNum - 1) * 17);
         }
         public static int FloorsIntoAct(int floorNum) {
             var act = FloorToAct(floorNum);
@@ -336,24 +330,32 @@ namespace ProjectPumpernickle {
             }
             return fights + ExpectedFightsInFutureActs();
         }
+        public static readonly float LOW_VALUE_UPGRADE = 0.5f;
+        public static readonly float HIGH_VALUE_UPGRADE = 1.2f;
+        public static readonly float CHANCE_OF_HIGH_VALUE_UPGRADE_PER_REWARD = .2f;
+        public static float UpgradePowerMultiplier(Path path, int floorIndex) {
+            var bestUpgrade = ChooseBestUpgrade(out var deltaValue, path, floorIndex);
+            if (bestUpgrade == null) {
+                return 1f;
+            }
+            var deckPower = Enumerable.Range(0, Save.state.cards.Count).Select(x =>
+                EvaluationFunctionReflection.GetCardEvalFunctionCached(Save.state.cards[x].id)(Save.state.cards[x], x)
+            ).Sum();
+            var expectedCardRewards = path.expectedCardRewards[floorIndex];
+            var upgradeHits = CHANCE_OF_HIGH_VALUE_UPGRADE_PER_REWARD * expectedCardRewards;
+            var newCardUpgradeValue = Lerp.From(LOW_VALUE_UPGRADE, HIGH_VALUE_UPGRADE, upgradeHits / (upgradeHits + 1f));
+            var availableValueFraction = deltaValue / deckPower;
+            var newValueFraction = newCardUpgradeValue / deckPower;
+            return 1f + MathF.Max(availableValueFraction, newValueFraction);
+        }
 
         public static float UpgradeHealthSaved(Path path, int floorIndex) {
-            var bestUpgrade = ChooseBestUpgrade(out var powerMultiplier, path, floorIndex);
-            if (bestUpgrade == null) {
-                return 0f;
-            }
-            var cardCount = Save.state.cards.Count;
-            var deckPowerMultiplierForCard = (cardCount - 1f + powerMultiplier) / cardCount;
-            var upgradePath = Path.Copy(path);
-            upgradePath.SimulateHealthEvolution(deckPowerMultiplierForCard, floorIndex);
-            var totalHealthSaved = 0f;
-            for (int i = 1; i < upgradePath.expectedHealth.Length; i++) {
-                var loss = path.expectedHealth[i - 1] - path.expectedHealth[i];
-                var lossWithUpgrade = upgradePath.expectedHealth[i - 1] - upgradePath.expectedHealth[i];
-                if (loss > 0f) {
-                    totalHealthSaved += (loss - lossWithUpgrade);
-                }
-            }
+            var deckPowerMultiplierForCard = UpgradePowerMultiplier(path, floorIndex);
+            var nonUpgradePath = Path.Copy(path);
+            // The path passed in already forces an upgrade here, so we're simulating no upgrade here
+            nonUpgradePath.fireChoices[floorIndex] = FireChoice.None;
+            nonUpgradePath.SimulateHealthEvolution(1f / deckPowerMultiplierForCard, floorIndex);
+            var totalHealthSaved = nonUpgradePath.expectedHealthLoss.Sum() - path.expectedHealthLoss.Sum();
             return totalHealthSaved;
         }
 
@@ -552,44 +554,9 @@ namespace ProjectPumpernickle {
                 _ => 1f,
             };
         }
-
         public static bool WantsEarlyShop(float estimatedBeginningGold) {
             return estimatedBeginningGold > 250f;
         }
-
-
-        public static float ExpectedCardRemovesAvailable(Path path) {
-            // TODO
-            return 5f;
-        }
-
-        public static float CardRemovePoints(Path path) {
-            if (Save.state.character == PlayerCharacter.Watcher) {
-                var anticipatedEndGameDeckSize = Evaluators.PermanentDeckSize() - ExpectedCardRemovesAvailable(path) + (Evaluators.HasCalmEnter() ? 0 : 1);
-                if (anticipatedEndGameDeckSize > 8) {
-                    return .2f;
-                }
-                // Allocate 20 pumpernickel points to getting 5 removes on watcher going for infinite
-                return path.ExpectedPossibleCardRemoves() / 5f * 20f;
-            }
-            // TODO
-            return .2f;
-        }
-
-        public static void DamageStatsPerCardReward(int byTurn, float cardsInDeck, out float damage, out float cost) {
-            // Assumes unupgraded
-            switch (Save.state.character) {
-                case PlayerCharacter.Watcher: {
-                    break;
-                }
-                default: {
-                    throw new NotImplementedException();
-                }
-            }
-            damage = 0;
-            cost = 0;
-        }
-
         public static IEnumerable<string> GetEligibleEventNames(Path path, int i) {
             return Database.instance.events.Where(x => x.eligible).Select(x => x.name);
         }
@@ -677,6 +644,46 @@ namespace ProjectPumpernickle {
             var deckWeakness = new Weakness();
             var cardAddressesWeakness = new Weakness(c);
             return deckWeakness * cardAddressesWeakness;
+        }
+        public static readonly float TARGET_WIN_RATE = .5f;
+        public static readonly float ESTIMATE_ACCURACY_WINDOW = 15;
+        // https://www.wolframalpha.com/input?i=sigmoid%28x*.3%29+from+0+to+30
+        public static readonly float FUTURE_FLOOR_SIGMOID_FACTOR = 0.3f;
+        public static float AdjustChanceOfDeath(float chance, int floorsInFuture, float defaultDeathChance) {
+            var sigmoidFactor = floorsInFuture * FUTURE_FLOOR_SIGMOID_FACTOR;
+            var t = PumpernickelMath.Sigmoid(sigmoidFactor);
+            return Lerp.From(chance, defaultDeathChance, t);
+        }
+        public static float DefaultChanceOfDeath(int floorsLeft) {
+            return 1f - MathF.Pow(TARGET_WIN_RATE, 1f / floorsLeft);
+        }
+        public static float EstimateChanceToWin(float[] ChanceOfDeath) {
+            var defaultChanceOfDeath = DefaultChanceOfDeath(ChanceOfDeath.Length);
+            var adjustedChances = Enumerable.Range(0, ChanceOfDeath.Length).Select(i => AdjustChanceOfDeath(ChanceOfDeath[i], i, defaultChanceOfDeath));
+            return adjustedChances.Aggregate(1f, (s, d) => s * (1f - d));
+        }
+        public static int PoolBegins(NodeType pool, bool easyPool, int act) {
+            var firstFloor = ActToFirstFloor(act);
+            switch (pool) {
+                case NodeType.Fight: {
+                    return easyPool ? firstFloor : firstFloor + (act == 1 ? 4 : 3); 
+                }
+                case NodeType.Elite:
+                case NodeType.MegaElite: {
+                    return firstFloor + 5;
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
+        }
+        public static float PoolAge(NodeType pool, bool easyPool, int floor) {
+            var poolStartFloor = PoolBegins(pool, easyPool, FloorToAct(floor));
+            var gameFraction = (floor - poolStartFloor) / floor;
+            return 1f + gameFraction;
+        }
+        public static float MaxHealing() {
+            return 0f;
         }
     }
 }

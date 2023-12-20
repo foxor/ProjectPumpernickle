@@ -77,7 +77,8 @@ namespace ProjectPumpernickle {
                         PathNodeInfoBox.Text =
                             "Expected Health: " + ChosenEvaluation.Path.expectedHealth[pathIndex] + "\n" +
                             "Worst Case Health: " + ChosenEvaluation.Path.worstCaseHealth[pathIndex] + "\n" +
-                            "Expected Gold: " + ChosenEvaluation.Path.expectedGold[pathIndex] + "\n"
+                            "Expected Gold: " + ChosenEvaluation.Path.expectedGold[pathIndex] + "\n" +
+                            "Defensive Power: " + ChosenEvaluation.Path.projectedDefensivePower[pathIndex] + "\n"
                         ;
                         var chosenNode = ChosenEvaluation.Path.nodes[pathIndex];
                         if (chosenNode.nodeType == NodeType.Shop) {
