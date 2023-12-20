@@ -51,7 +51,7 @@ namespace ProjectPumpernickle {
         public static float GoldenShrine(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float WingStatue(Event e, int floorsFromNow) {
+        public static float GoldenWing(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float KnowingSkull(Event e, int floorsFromNow) {

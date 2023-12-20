@@ -72,8 +72,14 @@ namespace ProjectPumpernickle {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
-        public static Evaluation[] WingStatue(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+        public static Evaluation[] GoldenWing(IEnumerable<string> arguments) {
+            var preRewardEvaluation = new Evaluation();
+            Scoring.Score(preRewardEvaluation);
+            var cardRemoveIndex = Evaluators.CardRemoveTarget();
+            var existingAdvice = new List<string>(){
+                "Pray, removing " + Save.state.cards[cardRemoveIndex].name,
+            };
+            Save.state.current_health -= 7;
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] KnowingSkull(IEnumerable<string> arguments) {

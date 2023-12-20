@@ -303,13 +303,36 @@ namespace ProjectPumpernickle {
             }
             return true;
         }
-
+        public static readonly float NOB_REMOVE_BIAS = 1f;
+        public static readonly float GUARDIAN_REMOVE_BIAS = .3f;
+        public static float ThreatRemoveBias(Card card) {
+            foreach (var threat in Evaluation.Active.Path.Threats) {
+                switch (threat.Key) {
+                    case "Gremlin Nob": {
+                        if (card.type.Equals("Skill")) {
+                            return NOB_REMOVE_BIAS * threat.Value;
+                        }
+                        break;
+                    }
+                    case "The Guardian": {
+                        if (card.type.Equals("Attack")) {
+                            return GUARDIAN_REMOVE_BIAS * threat.Value;
+                        }
+                        break;
+                    }
+                }
+            }
+            return 0f;
+        }
         public static int CardRemoveTarget(Color color = Color.Any) {
             var validIndicies = Enumerable.Range(0, Save.state.cards.Count)
                 .Where(x => Save.state.cards[x].cardColor.Is(color) &&
                     !Save.state.cards[x].tags.ContainsKey(Tags.Unpurgeable.ToString()));
             var bestIndex = validIndicies.OrderBy(i => {
-                return EvaluationFunctionReflection.GetCardEvalFunctionCached(Save.state.cards[i].id)(Save.state.cards[i], i);
+                var card = Save.state.cards[i];
+                var value = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
+                value -= ThreatRemoveBias(card);
+                return value;
             }).First();
             return bestIndex;
         }
@@ -697,6 +720,28 @@ namespace ProjectPumpernickle {
                 var cardOption = rewardOptions[cardIndex];
                 rewardOptions.RemoveAt(cardIndex);
                 rewardOptions.Insert(0, cardOption);
+            }
+        }
+        public static bool ShouldConsiderSkippingGold() {
+            return false;
+        }
+        public static bool ShouldConsiderSkippingRelic() {
+            return false;
+        }
+        public static void SkipUnpalatableOptions(List<RewardOption> rewardOptions) {
+            if (!ShouldConsiderSkippingGold()) {
+                foreach (var option in rewardOptions) {
+                    if (option.rewardType == RewardType.Gold) {
+                        option.skippable = false;
+                    }
+                }
+            }
+            if (!ShouldConsiderSkippingRelic()) {
+                foreach (var option in rewardOptions) {
+                    if (option.rewardType == RewardType.Relic) {
+                        option.skippable = false;
+                    }
+                }
             }
         }
     }

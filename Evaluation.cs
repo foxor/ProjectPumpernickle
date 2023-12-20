@@ -45,7 +45,7 @@ namespace ProjectPumpernickle {
         CouncilofGhosts,
         GoldenIdol,
         GoldenShrine,
-        WingStatue,
+        GoldenWing,
         KnowingSkull,
         Lab,
         TheSsssserpent,

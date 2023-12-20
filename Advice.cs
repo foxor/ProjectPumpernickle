@@ -72,6 +72,7 @@ namespace ProjectPumpernickle {
             var preRewardEvaluation = new Evaluation();
             Scoring.Score(preRewardEvaluation);
             Evaluators.ReorderOptions(rewardOptions);
+            Evaluators.SkipUnpalatableOptions(rewardOptions);
             var evaluations = MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop).ToArray();
             Scoring.ApplyVariance(evaluations, preRewardEvaluation);
             var sorted = evaluations.OrderByDescending(x => x.Score).ToArray();
