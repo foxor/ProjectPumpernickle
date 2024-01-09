@@ -40,8 +40,10 @@ namespace ProjectPumpernickle {
         public static float AnalyzeWeakness(WeaknessAxis axis) {
             switch (axis) {
                 case WeaknessAxis.Lethality: {
+                    // You start out very far behind on damage
+                    var earlyBonus = 5f / (Save.state.floor_num + 1);
                     var observed = FightSimulator.EstimateDamagePerTurn();
-                    var projected = FightSimulator.NormalDamageForFloor(Save.state.floor_num);
+                    var projected = FightSimulator.NormalDamageForFloor(Save.state.floor_num) * earlyBonus;
                     var minExpected = projected * .8f;
                     var maxExpected = projected / .8f;
                     return 1f - Lerp.Inverse(minExpected, maxExpected, observed);

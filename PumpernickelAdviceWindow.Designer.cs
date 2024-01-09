@@ -23,7 +23,6 @@
         ///  the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
-            var resources = new System.ComponentModel.ComponentResourceManager(typeof(PumpernickelAdviceWindow));
             pathing = new TextBox();
             AdviceBox = new TextBox();
             PathPreview = new RichTextBox();
@@ -57,9 +56,10 @@
             PathPreview.ForeColor = SystemColors.GrayText;
             PathPreview.Location = new Point(12, 12);
             PathPreview.Name = "PathPreview";
+            PathPreview.ReadOnly = true;
             PathPreview.Size = new Size(263, 671);
             PathPreview.TabIndex = 2;
-            PathPreview.Text = resources.GetString("PathPreview.Text");
+            PathPreview.Text = "Path goes here";
             // 
             // PathNodeInfoBox
             // 

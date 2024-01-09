@@ -181,6 +181,7 @@ namespace ProjectPumpernickle {
         Boss,
         BossChest,
         Unknown,
+        Animation,
     }
     public static class NodeTypeExtensions {
         public static bool IsFight(this NodeType nodeType) {
@@ -364,19 +365,46 @@ namespace ProjectPumpernickle {
                 card.CopyFrom(Database.instance.cardsDict[card.id]);
             }
         }
-
+        public MapNode[] Act4() {
+            var heart = new MapNode() {
+                nodeType = NodeType.Boss,
+                position = new Vector2Int(3, 3),
+            };
+            var elite = new MapNode() {
+                nodeType = NodeType.Elite,
+                position = new Vector2Int(3, 2),
+                children = new List<MapNode>() { heart },
+            };
+            var shop = new MapNode() {
+                nodeType = NodeType.Shop,
+                position = new Vector2Int(3, 1),
+                children = new List<MapNode>() { elite },
+            };
+            var fire = new MapNode() {
+                nodeType = NodeType.Fire,
+                position = new Vector2Int(3, 0),
+                children = new List<MapNode>() { shop },
+            };
+            return new MapNode[] {
+                fire, shop, elite, heart
+            };
+        }
         public MapNode GetCurrentNode() {
-            if (room_x == 0 && room_y == -1) {
-                var neowNode = new MapNode();
-                neowNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
-                return neowNode;
+            var talkingToNeow = (room_x == 0 && room_y == -1);
+            var newAct = (room_x == -1 && room_y == -1);
+            var bossChest = (room_x == -1 && room_y > 10);
+            if (talkingToNeow || newAct) {
+                var fakeNode = new MapNode();
+                fakeNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
+                return fakeNode;
             }
-            if (room_x == -1) {
-                // Off the map (probabaly just fought boss)
+            if (bossChest) {
                 return null;
             }
+            if (Save.state.act_num == 4) {
+                return Act4()[room_y];
+            }
             var CurrentNode = map[Save.state.act_num, room_x, room_y];
-            // If we're talking to neow, make up a fake node with all the starting nodes as children
             return CurrentNode;
         }
 
@@ -391,6 +419,9 @@ namespace ProjectPumpernickle {
         }
         public void RemovePotion(int potionIndex) {
             potions[potionIndex] = "Potion Slot";
+        }
+        public int EmptyPotionSlots() {
+            return potions.Where(x => x.Equals("Potion Slot")).Count();
         }
 
         public void HuntForCard(string cardId) {

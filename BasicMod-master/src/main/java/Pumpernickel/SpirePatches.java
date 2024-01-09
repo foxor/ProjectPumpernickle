@@ -252,7 +252,7 @@ public class SpirePatches {
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("Neow\n".getBytes(StandardCharsets.UTF_8));
-            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write((Settings.seed + "\n").getBytes(StandardCharsets.UTF_8));
             NeowEvent event = (NeowEvent)AbstractDungeon.getCurrRoom().event;
             
             Field rewardField = NeowEvent.class.getDeclaredField("rewards");

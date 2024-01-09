@@ -27,7 +27,7 @@ namespace ProjectPumpernickle {
             // - 0-2 shops
             // - 2-5 hallway fights
             // - Rest ? marks
-            var floor = Save.state.floor_num + i + 1;
+            var floor = Path.PathIndexToFloorNum(i);
             var act = Evaluators.FloorToAct(floor);
             var floorIntoAct = Evaluators.FloorsIntoAct(floor);
             var overallPower = Evaluators.EstimateOverallPower();
@@ -44,38 +44,41 @@ namespace ProjectPumpernickle {
                 fights = 5;
             }
             switch (floorIntoAct) {
-                case 2: {
+                case 1: {
                     return wantsEarlyShop ? NodeType.Shop : NodeType.Question;
                 }
-                case 3: {
+                case 2: {
                     return NodeType.Fight;
                 }
+                case 3: {
+                    return fights >= 4 ? NodeType.Fight : NodeType.Question;
+                }
                 case 4: {
-                    return fights > 4 ? NodeType.Fight : NodeType.Question;
+                    return fights >= 2 ? NodeType.Fight : NodeType.Question;
                 }
                 case 5: {
                     return NodeType.Fire;
                 }
                 case 6: {
-                    return elites > 1 ? NodeType.Elite : NodeType.Fight;
+                    return elites >= 1 ? NodeType.Elite : NodeType.Fight;
                 }
                 case 7: {
-                    return fights > 2 ? NodeType.Fight : NodeType.Question;
+                    return fights >= 3 ? NodeType.Fight : NodeType.Question;
                 }
                 case 9: {
-                    return fights > 3 ? NodeType.Fight : NodeType.Question;
+                    return elites >= 2 ? NodeType.Elite : NodeType.Question;
                 }
                 case 10: {
-                    return elites > 2 ? NodeType.Elite : NodeType.Question;
-                }
-                case 11: {
                     return wantsLateShop ? NodeType.Shop : NodeType.Fight;
                 }
-                case 12: {
+                case 11: {
                     return NodeType.Fire;
                 }
-                case 13: {
+                case 12: {
                     return NodeType.Elite;
+                }
+                case 13: {
+                    return fights >= 5 ? NodeType.Fight : NodeType.Question;
                 }
                 default: {
                     throw new NotImplementedException("Floor " + floorIntoAct + " not expected to be unknown");
@@ -268,6 +271,9 @@ namespace ProjectPumpernickle {
 
         protected static NodeType Act4(int localFloor) {
             switch (localFloor) {
+                case -1: {
+                    return NodeType.Animation;
+                }
                 case 0: {
                     return NodeType.Fire;
                 }

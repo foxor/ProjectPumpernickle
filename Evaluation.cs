@@ -32,12 +32,12 @@ namespace ProjectPumpernickle {
         EVENT_BEGIN,
         AccursedBlacksmith,
         PleadingVagrant,
-        AncientWriting,
+        BackToBasics,
         OldBeggar,
         BigFish,
         BonfireSpirits,
         DeadAdventurer,
-        Augmenter,
+        DrugDealer,
         Duplicator,
         Falling,
         ForgottenAltar,
@@ -93,9 +93,11 @@ namespace ProjectPumpernickle {
         public Path Path = null;
         public float Likelihood;
         public float WorstCaseRewardFactor;
+        public float AverageCaseRewardFactor;
         public int BonusCardRewards;
         public Evaluation OffRamp;
         public bool NeedsMoreInfo = false;
+        public int RewardIndex;
 
         protected bool hasDescribedPathing;
 
@@ -106,8 +108,10 @@ namespace ProjectPumpernickle {
                 Advice = context.description.ToList();
                 Likelihood = context.chanceOfOutcome;
                 WorstCaseRewardFactor = context.worstCaseValueProportion;
+                AverageCaseRewardFactor = context.averageCaseValueProportion;
                 BonusCardRewards = context.bonusCardRewards;
             }
+            RewardIndex = RewardContext.ActiveRewardIndex;
             this.Path = path;
             if (path == null) {
                 Path = Path.BuildPath(new MapNode[] { }, -1);
@@ -124,9 +128,9 @@ namespace ProjectPumpernickle {
             }
             float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - Path.chanceToWin);
             float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToWin);
-            riskT = (riskT * MathF.E * 2) - MathF.E;
-            offRampRiskT = (offRampRiskT * MathF.E * 2) - MathF.E;
-            float riskRelevance = PumpernickelMath.Sigmoid(riskT - offRampRiskT);
+            var dT = riskT - offRampRiskT;
+            var sigmoidX = -5f + dT * 10f;
+            float riskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
             for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
                 Scores[i] = Lerp.From(Scores[i], OffRamp.Scores[i], riskRelevance);
             }
@@ -153,6 +157,8 @@ namespace ProjectPumpernickle {
                 NodeType.Boss => "Fight " + Save.state.boss,
                 NodeType.BossChest => "Open the boss chest",
                 NodeType.Fight => "Go to next act",
+                NodeType.Fire => "Go to act 4",
+                NodeType.Shop => "Go to the shop",
                 _ => throw new NotImplementedException("Node type " + nodeType + " not expected to appear off map"),
             };
         }

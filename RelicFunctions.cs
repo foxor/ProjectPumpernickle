@@ -315,7 +315,8 @@ namespace ProjectPumpernickle {
             Save.state.earliestInfinite = 1;
             Save.state.missingCardCount = cardsToAdd;
             if (cardsToAdd > 0) {
-                throw new System.NotImplementedException("What cards complete sundial for us?");
+                Save.state.HuntForCard("Shrug It Off");
+                Save.state.HuntForCard("Pommel Strike");
             }
             Save.state.infiniteDoesDamage = cardDraw.Any(x => x.tags.ContainsKey(Tags.Damage.ToString()));
             Save.state.infiniteBlockPerCard = cardDraw.Select(x => x.tags.GetValueOrDefault(Tags.Block.ToString())).OrderByDescending(x => x).Take(2).Sum() / 2f;

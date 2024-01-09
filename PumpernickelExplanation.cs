@@ -78,7 +78,12 @@ namespace ProjectPumpernickle {
             }
             if (evaluationIndex != lastMouseOver) {
                 lastMouseOver = evaluationIndex;
-                PumpernickelAdviceWindow.instance.SetChosenEvaluation(PumpernickelAdviceWindow.instance.Evaluations[evaluationIndex]);
+                var mousedOver = PumpernickelAdviceWindow.instance.Evaluations[0];
+                if (evaluationIndex > 0) {
+                    var prepended = PumpernickelAdviceWindow.instance.FilteredEvaluations[0] != mousedOver;
+                    mousedOver = PumpernickelAdviceWindow.instance.FilteredEvaluations[evaluationIndex - (prepended ? 1 : 0)];
+                }
+                PumpernickelAdviceWindow.instance.SetChosenEvaluation(mousedOver);
             }
         }
 
@@ -95,6 +100,13 @@ namespace ProjectPumpernickle {
 
         public static bool IsEvent(int scoreReason) {
             return scoreReason > EVENT_BEGIN && scoreReason <= EVENT_BEGIN + EVENT_NUM;
+        }
+
+        public void ScrollToIndex(int index) {
+            var searchText = IndexToComparative(index);
+            var scrollPos = explanation.Text.IndexOf(searchText);
+            // This doesn't work
+            explanation.Select(scrollPos, 0);
         }
 
         public static void AddScoreExplanation(RichTextBuilder rtb, Evaluation evaluation, float[] winningScore, int evaluationIndex) {
@@ -126,13 +138,15 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public RichTextBuilder BuildEvaluationString(Evaluation evaluation, int index, float[] winningScore) {
+        public RichTextBuilder BuildEvaluationString(Evaluation evaluation, float[] winningScore) {
             var rtb = new RichTextBuilder();
             rtb.explanationText = new StringBuilder();
             rtb.sectionBegin = new List<int>();
             rtb.sectionLength = new List<int>();
             rtb.sectionFontStyle = new List<FontStyle>();
             rtb.sectionColor = new List<SysColor>();
+
+            var index = PumpernickelAdviceWindow.instance.Evaluations.FirstIndexOf(x => x == evaluation);
 
             var name = IndexToComparative(index);
             rtb.AddSection(name, FontStyle.Bold, SysColor.Black);
@@ -144,7 +158,7 @@ namespace ProjectPumpernickle {
                 rtb.explanationText.Append(") ");
             }
             rtb.explanationText.Append("\n");
-            rtb.explanationText.Append("PID: " + evaluation.Path.pathIndex + "\n");
+            rtb.explanationText.Append("PID: " + evaluation.Path.pathIndex + " Reward Index: " + evaluation.RewardIndex + "\n");
 
             var advice = evaluation.ToString().Replace("\r", "");
             rtb.explanationText.Append(advice + "\n\n");
@@ -163,13 +177,17 @@ namespace ProjectPumpernickle {
             if (evaluations == null) {
                 return;
             }
+            var actualBest = PumpernickelAdviceWindow.instance.Evaluations[0];
+            if (evaluations[0] != actualBest) {
+                evaluations = evaluations.Prepend(actualBest).ToArray();
+            }
             explanation.Text = Preamble;
             var eventReasons = Enumerable.Range((byte)ScoreReason.EVENT_BEGIN + 1, EVENT_NUM).ToArray();
             foreach (Evaluation evaluation in evaluations) {
                 evaluation.Scores[(int)ScoreReason.EVENT_SUM] = eventReasons.Select(x => evaluation.Scores[x]).Sum();
             }
             EvaluationLengths.Clear();
-            var explanationBuilders = Enumerable.Range(0, evaluations.Length).Select(x => BuildEvaluationString(evaluations[x], x, evaluations[0].Scores)).ToArray();
+            var explanationBuilders = Enumerable.Range(0, evaluations.Length).Select(x => BuildEvaluationString(evaluations[x], evaluations[0].Scores)).ToArray();
             for (var i = 0; i < explanationBuilders.Length; i++) {
                 explanationBuilders[i].startIndex = explanation.Text.Length;
                 var explanationText = explanationBuilders[i].explanationText;

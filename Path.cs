@@ -39,10 +39,10 @@ namespace ProjectPumpernickle {
         public float[] expectedMaxHealth = null;
         public float[] projectedDefensivePower = null;
         public float[] expectedHealthLoss = null;
-        public static Path[] BuildAllPaths(MapNode root, int startingCardRewards) {
+        public static IEnumerable<Path> BuildAllPaths(MapNode root, int startingCardRewards) {
             var skipFirstNode = true;
             var nodeSequences = IterateNodeSequences(root, skipFirstNode).ToArray();
-            var paths = Enumerable.Range(0, nodeSequences.Length).Select(x => BuildPath(nodeSequences[x].ToArray(), x, startingCardRewards)).ToArray();
+            var paths = Enumerable.Range(0, nodeSequences.Length).Select(x => BuildPath(nodeSequences[x].ToArray(), x, startingCardRewards));
             return paths;
         }
         public static Path BuildPath(MapNode[] nodeSequence, int pathIndex, int startingCardRewards = 0) {
@@ -72,6 +72,7 @@ namespace ProjectPumpernickle {
 
             // Figure out if we absolutely need to rest
             path.PlanFires();
+            path.ProjectDefensivePower();
 
             // Final health estimation for risk etc.
             path.FinalThreatAnalysis();
@@ -116,7 +117,7 @@ namespace ProjectPumpernickle {
         }
 
         public void InitArrays() {
-            remainingFloors = 55 - Save.state.floor_num;
+            remainingFloors = 56 - Save.state.floor_num;
             expectedGold = new float[remainingFloors];
             plannedCardRemove = new bool[remainingFloors];
             minPlanningGold = new int[remainingFloors];
@@ -220,6 +221,7 @@ namespace ProjectPumpernickle {
                     case NodeType.Shop:
                     case NodeType.Fire:
                     case NodeType.BossChest:
+                    case NodeType.Animation:
                     case NodeType.Chest: {
                         possibleThreats[i] = new Encounter[0];
                         continue;
@@ -306,16 +308,16 @@ namespace ProjectPumpernickle {
                 case "Time Eater": {
                     return new string[] {
                         "Awakened One",
-                        "Donu Deca",
+                        "Donu and Deca",
                     }.Select(x => Database.instance.encounterDict[x]);
                 }
                 case "Awakened One": {
                     return new string[] {
                         "Time Eater",
-                        "Donu Deca",
+                        "Donu and Deca",
                     }.Select(x => Database.instance.encounterDict[x]);
                 }
-                case "Donu Deca": {
+                case "Donu and Deca": {
                     return new string[] {
                         "Awakened One",
                         "Time Eater",
@@ -531,12 +533,14 @@ namespace ProjectPumpernickle {
             }
         }
         public static readonly float MAX_NORMAL_SHOP_POWER_SPIKE = 1.3f;
+        public static readonly float MAX_FIX_SHOP_POWER_SPIKE = 1.5f;
         public float ShopPowerSpike(int index) {
             var startingGold = index == 0 ? Save.state.gold : expectedGold[index - 1];
-            var goldSpent = expectedGold[index] - startingGold;
+            // You don't get almost any value until you bring at least 50 gold
+            var goldSpent = startingGold - expectedGold[index] - 50f;
             return shortTermShopPlan switch {
-                PathShopPlan.NormalShop => Lerp.From(0, MAX_NORMAL_SHOP_POWER_SPIKE, goldSpent / 300f),
-                PathShopPlan.FixFight => 1.5f,
+                PathShopPlan.NormalShop => Lerp.From(1f, MAX_NORMAL_SHOP_POWER_SPIKE, goldSpent / 250f),
+                PathShopPlan.FixFight => Lerp.From(1f, MAX_FIX_SHOP_POWER_SPIKE, goldSpent / 70f),
                 _ => 1.05f,
             };
         }
@@ -601,6 +605,9 @@ namespace ProjectPumpernickle {
                 else {
                     AdjustDefensivePowerForNodeType(residualPower, nodeTypes[i], i, easyPoolLeft, out projectedDefensivePower[i], out residualPower);
                 }
+                if (nodeTypes[i] == NodeType.Fight) {
+                    easyPoolLeft--;
+                }
             }
         }
 
@@ -659,8 +666,8 @@ namespace ProjectPumpernickle {
         }
         public static readonly float CHANCE_OF_WORST_CASE = 0.01f;
         // From wolfram alpha
-        public static readonly float MULTIPLIER_FOR_ONE_PERCENT = -4.59512f;
-        public static readonly float MULTIPLIER_FOR_NINTEY_NINE_PERCENT = -MULTIPLIER_FOR_ONE_PERCENT;
+        public static readonly float MULTIPLIER_FOR_FIVE_PERCENT = -2.94444f;
+        public static readonly float MULTIPLIER_FOR_NINTEY_FIVE_PERCENT = -MULTIPLIER_FOR_FIVE_PERCENT;
 
         public static readonly float UPCOMING_THREAT_BONUS = 5f;
         public static readonly float UPCOMING_THREAT_FALLOFF = 14f;
@@ -684,7 +691,7 @@ namespace ProjectPumpernickle {
             var bestCaseResidualHealth = expectedHealth - (expectedDamage - damageRange);
             var deathHealth = 0f;
             var deathParam = Lerp.InverseUncapped(worstCaseResidualHealth, bestCaseResidualHealth, deathHealth);
-            var sigmoidX = Lerp.FromUncapped(MULTIPLIER_FOR_ONE_PERCENT, MULTIPLIER_FOR_NINTEY_NINE_PERCENT, deathParam);
+            var sigmoidX = Lerp.FromUncapped(MULTIPLIER_FOR_FIVE_PERCENT, MULTIPLIER_FOR_NINTEY_FIVE_PERCENT, deathParam);
             var deathLikelihood = PumpernickelMath.Sigmoid(sigmoidX);
             var upcomingDeathMultiplier = ((soonMultiplier - 1) * UPCOMING_DEATH_THREAT_MULTIPLIER) + 1f;
             Threats[threat.id] += deathLikelihood * chanceOfThis * upcomingBonus * upcomingDeathMultiplier;

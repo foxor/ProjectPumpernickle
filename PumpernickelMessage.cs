@@ -121,9 +121,12 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case "Neow": {
-                        var floor = int.Parse(lines[1]);
-                        var didFight = false;
-                        Program.ParseNewFile(floor, didFight);
+                        var seed = long.Parse(lines[1]);
+                        if (Save.state == null) {
+                            PumpernickelSaveState.instance = new PumpernickelSaveState();
+                        }
+                        Save.state.seed = seed;
+                        Program.GenerateMap();
                         ParseNeowMessage(lines.Skip(2).Take(lines.Length - 4));
                         break;
                     }
@@ -211,6 +214,7 @@ namespace ProjectPumpernickle {
                 rewardType = RewardType.CardRemove,
                 cost = Save.state.purgeCost,
                 values = new string[] { "CardRemove" },
+                skippable = true,
             });
             foreach (var line in shopOptionLines) {
                 switch (line) {
@@ -235,6 +239,7 @@ namespace ProjectPumpernickle {
                             values = new string[] {
                                 id,
                             },
+                            skippable = true,
                         });
                         break;
                     }

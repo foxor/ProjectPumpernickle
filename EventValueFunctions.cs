@@ -12,7 +12,7 @@ namespace ProjectPumpernickle {
         public static float PleadingVagrant(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float AncientWriting(Event e, int floorsFromNow) {
+        public static float BackToBasics(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float OldBeggar(Event e, int floorsFromNow) {
@@ -27,7 +27,7 @@ namespace ProjectPumpernickle {
         public static float DeadAdventurer(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float Augmenter(Event e, int floorsFromNow) {
+        public static float DrugDealer(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float Duplicator(Event e, int floorsFromNow) {

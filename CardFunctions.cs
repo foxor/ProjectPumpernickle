@@ -902,7 +902,7 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
-        public static float Multi_Cast(Card c, int index) {
+        public static float MultiCast(Card c, int index) {
             var value = 0f;
             return value;
         }

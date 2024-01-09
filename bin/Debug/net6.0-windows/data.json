@@ -824,6 +824,7 @@
          "description":"Deal 3 (4) damage.\nApply 1 (2) Weak.",
          "mod":"Slay the Spire",
          "upgradePowerMultiplier": 1.5,
+         "bias": 0,
       },
       {
          "id":"Strike_G",
@@ -846,6 +847,7 @@
          "description":"Gain 8 (11) Block.\nDiscard 1 card.",
          "mod":"Slay the Spire",
          "upgradePowerMultiplier": 1.3,
+         "bias": 0.2,
       },
       {
          "id":"Acrobatics",
@@ -866,7 +868,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Gain 5 (8) Block.\nDraw 2 cards.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
       },
       {
          "id":"Bane",
@@ -887,7 +890,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Add 3 (4) Shivs into your hand.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
       },
       {
          "id":"Cloak And Dagger",
@@ -908,7 +912,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 4 (6) damage to ALL enemies twice.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Dagger Throw",
@@ -918,7 +923,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 9 (12) damage.\nDraw 1 card.\nDiscard 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Deadly Poison",
@@ -928,7 +934,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Apply 5 (7) Poison.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Deflect",
@@ -949,7 +956,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Gain 4 (6) Block.\nNext turn, gain 4 (6) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0,
       },
       {
          "id":"Flying Knee",
@@ -959,7 +967,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 8 (11) damage.\nNext turn, gain [G].",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Outmaneuver",
@@ -969,7 +978,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Next turn,\ngain [G] [G] ([G]).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
       },
       {
          "id":"PiercingWail",
@@ -979,7 +989,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"ALL enemies lose 6 (8) Strength this turn.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Poisoned Stab",
@@ -989,7 +1000,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 6 (8) damage.\nApply 3 (4) Poison.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Prepared",
@@ -999,7 +1011,9 @@
          "type":"Skill",
          "cost":"0",
          "description":"Draw 1 (2) card (cards).\nDiscard 1 (2) card (cards).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0,
+         "upgradeBias": 1.5,
       },
       {
          "id":"Quick Slash",
@@ -1009,7 +1023,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 8 (12) damage.\nDraw 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.6,
       },
       {
          "id":"Slice",
@@ -1019,7 +1034,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Deal 6 (9) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
       },
       {
          "id":"Underhanded Strike",
@@ -1029,7 +1045,8 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 12 (16) damage.\nIf you have discarded a card this turn,\ngain [G] [G].",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.5,
       },
       {
          "id":"Sucker Punch",
@@ -1053,7 +1070,8 @@
          "type":"Power",
          "cost":"1",
          "description":"*Shivs deal 4 (6) additional damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.6,
       },
       {
          "id":"All Out Attack",
@@ -1063,7 +1081,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 10 (14) damage to ALL enemies.\nDiscard 1 card at random.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Backstab",
@@ -1073,7 +1092,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Innate.\nDeal 11 (15) damage.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1,
       },
       {
          "id":"Blur",
@@ -1083,7 +1103,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Gain 5 (8) Block.\nBlock is not removed at the start of your next turn.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
       },
       {
          "id":"Bouncing Flask",
@@ -1104,7 +1125,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Discard your hand,\nthen draw that many cards.\n~~- Exhaust. -~~ ",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.8,
       },
       {
          "id":"Caltrops",
@@ -1114,7 +1136,8 @@
          "type":"Power",
          "cost":"1",
          "description":"Whenever you are attacked, deal 3 (5) damage back.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Catalyst",
@@ -1126,6 +1149,7 @@
          "description":"Double (Triple) the enemy's Poison.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 2.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Choke",
@@ -1135,7 +1159,8 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 12 damage.\nWhenever you play a card this turn, the enemy loses 3 (5) HP.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"Concentrate",
@@ -1145,7 +1170,11 @@
          "type":"Skill",
          "cost":"0",
          "description":"Discard 3 (2) cards.\nGain [G] [G].",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1,
+         "tags": {
+            "greed": 1
+         },
       },
       {
          "id":"Crippling Poison",
@@ -1155,7 +1184,8 @@
          "type":"Skill",
          "cost":"2",
          "description":"Apply 4 (7) Poison and 2 Weak to ALL enemies.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Dash",
@@ -1165,7 +1195,8 @@
          "type":"Attack",
          "cost":"2",
          "description":"Gain 10 (13) Block.\nDeal 10 (13) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Distraction",
@@ -1175,7 +1206,8 @@
          "type":"Skill",
          "cost":"1 (0)",
          "description":"Add a random Skill into your hand.\nIt costs 0 this turn.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
       },
       {
          "id":"Endless Agony",
@@ -1185,7 +1217,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Deal 4 (6) damage.\nWhenever you draw this card, add a copy of it into your hand.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Escape Plan",
@@ -1195,7 +1228,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Draw 1 card.\nIf you draw a Skill, gain 3 (5) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Eviscerate",
@@ -1205,7 +1239,8 @@
          "type":"Attack",
          "cost":"3",
          "description":"Costs 1 less [G]\nfor each card discarded this turn.\nDeal 7 (9) damage 3 times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.2,
       },
       {
          "id":"Expertise",
@@ -1215,7 +1250,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Draw cards until you have 6 (7) in your hand.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"Finisher",
@@ -1225,7 +1261,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 6 (8) damage for each Attack played this turn.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
       },
       {
          "id":"Flechettes",
@@ -1235,7 +1272,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 4 (6) damage for each Skill in your hand.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
       },
       {
          "id":"Footwork",
@@ -1245,7 +1283,8 @@
          "type":"Power",
          "cost":"1",
          "description":"Gain 2 (3) Dexterity.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"Heel Hook",
@@ -1255,7 +1294,8 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 5 (8) damage.\nIf the enemy has Weak,\ngain [G] and\ndraw 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Infinite Blades",
@@ -1265,7 +1305,8 @@
          "type":"Power",
          "cost":"1",
          "description":" (Innate.)\nAt the start of your turn, add a Shiv into your hand.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Leg Sweep",
@@ -1275,7 +1316,8 @@
          "type":"Skill",
          "cost":"2",
          "description":"Apply 2 (3) Weak.\nGain 11 (14) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.4,
       },
       {
          "id":"Masterful Stab",
@@ -1285,7 +1327,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Costs 1 additional [G]\nfor each time you lose HP this combat.\nDeal 12 (16) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Noxious Fumes",
@@ -1295,7 +1338,8 @@
          "type":"Power",
          "cost":"1",
          "description":"At the start of your turn, apply 2 (3) Poison to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Predator",
@@ -1305,7 +1349,8 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 15 (20) damage.\nNext turn, draw 2 additional cards.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Reflex",
@@ -1315,7 +1360,8 @@
          "type":"Skill",
          "cost":"",
          "description":"Unplayable.\nIf this card is discarded from your hand, draw 2 (3) cards.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.1,
       },
       {
          "id":"Riddle With Holes",
@@ -1325,7 +1371,8 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 3 (4) damage 5 times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"Setup",
@@ -1335,7 +1382,8 @@
          "type":"Skill",
          "cost":"1 (0)",
          "description":"Put a card from your hand on top of your draw pile.\nIt costs 0 until played.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"Skewer",
@@ -1345,7 +1393,8 @@
          "type":"Attack",
          "cost":"X",
          "description":"Deal 7 (10) damage X times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.4,
       },
       {
          "id":"Tactician",
@@ -1355,7 +1404,8 @@
          "type":"Skill",
          "cost":"",
          "description":"Unplayable.\nIf this card is discarded from your hand, gain [G] ([G]).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Terror",
@@ -1376,7 +1426,8 @@
          "type":"Power",
          "cost":"1",
          "description":"At the end of your turn, Retain up to 1 (2) card (cards).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.3,
       },
       {
          "id":"A Thousand Cuts",
@@ -1420,7 +1471,7 @@
          "cost":"1 (0)",
          "description":"Obtain a random potion.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 3.0,
+         "bias": 5.0,
       },
       {
          "id":"Bullet Time",
@@ -1486,7 +1537,7 @@
          "cost":"2 (1)",
          "description":"Whenever an Attack deals unblocked damage, apply 1 Poison.",
          "mod":"Slay the Spire",
-         "bias": -2,
+         "bias": -1,
          "upgradeBias": 2.5,
       },
       {
@@ -1511,7 +1562,7 @@
          "cost":"0",
          "description":"Can only be played if there are no cards in your draw pile.\nDeal 50 (60) damage to ALL enemies.",
          "mod":"Slay the Spire",
-         "bias": -1.5,
+         "bias": 0.5,
          "upgradePowerMultiplier": 1,
          "upgradeBias": 0.3,
       },
@@ -1537,7 +1588,7 @@
          "cost":"3 (2)",
          "description":"Choose a card.\nNext turn, add 3 copies of that card into your hand. Exhaust.",
          "mod":"Slay the Spire",
-         "bias": 0.6,
+         "bias": 2.1,
          "upgradePowerMultiplier": 1.3,
          "upgradeBias": 0,
       },
@@ -1550,7 +1601,7 @@
          "cost":"1 (0)",
          "description":"Next turn, your Attacks deal double damage.",
          "mod":"Slay the Spire",
-         "bias": 1.1,
+         "bias": 2.7,
          "upgradePowerMultiplier": 1.5,
          "upgradeBias": 0,
       },
@@ -1563,7 +1614,7 @@
          "cost":"1",
          "description":"Discard your hand.\nAdd 1 Shiv (+) into your hand for each card discarded.",
          "mod":"Slay the Spire",
-         "bias": -1,
+         "bias": -0.5,
          "upgradePowerMultiplier": 1,
          "upgradeBias": 0.4,
       },
@@ -1576,7 +1627,7 @@
          "cost":"1 (0)",
          "description":"At the start of your turn, draw 1 card and discard 1 card.",
          "mod":"Slay the Spire",
-         "bias": -0.5,
+         "bias": 0.5,
          "upgradePowerMultiplier": 1,
          "upgradeBias": 0.8,
       },
@@ -1602,7 +1653,7 @@
          "cost":"3",
          "description":"Gain 2 (3) Intangible.\nAt the end of your turn, lose 1 Dexterity.",
          "mod":"Slay the Spire",
-         "bias": 2.7,
+         "bias": 4.1,
          "upgradePowerMultiplier": 1.5,
          "upgradeBias": 0,
       },
@@ -8465,12 +8516,12 @@
          "bias": 0.3,
       },
       {
-         "name":"Ancient Writing",
+         "name":"BackToBasics",
          "acts":[
             2
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:Ancient Writing",
+         "id":"slaythespire:BackToBasics",
          "description":"[Elegance] Remove a card from your deck.\n[Simplicity] Upgrade all Strikes and Defends.\n[Unification (automaton only)] All Strikes and Defends gain Encode.\n[Intuition (champ only)] Add 'trigger Skill Bonus.' to all Strikes and Defends.\n[Caprice (gremlins only)] Replace all Strikes and Defends with Shivs and Wards.\n[Endurance (guardian only)] Add Brace 2 to all Strikes and Defends.\n[Wistfulness (hexaghost only)] Add Ethereal to all Strikes and Defends.\n[Inspiration (slime boss only)] Add Command to all Strikes and Defends.\n[Improvisation (snecko only)] Replace all Strikes and Defends with random Unidentified cards.",
          "colouredDesc":"\u001b[2;37m[Elegance\u001b[2;37m] \u001b[2;32mRemove a card from your deck.\n\u001b[2;37m[Simplicity\u001b[2;37m] \u001b[2;32mUpgrade all Strikes and Defends.\n\u001b[2;37m[Unification \u001b[0;2m(automaton only)\u001b[2;37m] All \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends \u001b[0;2mgain \u001b[2;32mEncode.\n\u001b[2;37m[Intuition \u001b[0;2m(champ only)\u001b[2;37m] \u001b[2;32mAdd \u001b[2;33m'trigger Skill Bonus.' \u001b[0;2mto all \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends.\n\u001b[2;37m[Caprice \u001b[0;2m(gremlins only)\u001b[2;37m] \u001b[2;32mReplace \u001b[0;2mall \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends \u001b[0;2mwith \u001b[2;32mShivs \u001b[0;2mand \u001b[2;32mWards.\n\u001b[2;37m[Endurance \u001b[0;2m(guardian only)\u001b[2;37m] \u001b[2;32mAdd Brace 2 \u001b[0;2mto all \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends.\n\u001b[2;37m[Wistfulness \u001b[0;2m(hexaghost only)\u001b[2;37m] \u001b[2;32mAdd Ethereal \u001b[0;2mto all \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends.\n\u001b[2;37m[Inspiration \u001b[0;2m(slime boss only)\u001b[2;37m] \u001b[2;32mAdd Command \u001b[0;2mto all \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends.\n\u001b[2;37m[Improvisation \u001b[0;2m(snecko only)\u001b[2;37m] \u001b[2;32mReplace \u001b[0;2mall \u001b[2;32mStrikes \u001b[0;2mand \u001b[2;32mDefends \u001b[0;2mwith random \u001b[2;32mUnidentified \u001b[0;2mcards.",
          "character":"",
@@ -8537,12 +8588,12 @@
          "bias": 0.3,
       },
       {
-         "name":"Augmenter",
+         "name":"Drug Dealer",
          "acts":[
             2
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:Augmenter",
+         "id":"slaythespire:DrugDealer",
          "description":"[Test J.A.X.] Get JAXXED.\n[Become Test Subject] Transform 2 cards.\n[Ingest Mutagens] Gain Mutagenic Strength.\n[Punch (downfall only)] Fight. Take Everything.",
          "colouredDesc":"\u001b[2;37m[Test J.A.X.\u001b[2;37m] \u001b[2;32mGet JAXXED.\n\u001b[2;37m[Become Test Subject\u001b[2;37m] \u001b[2;32mTransform 2 cards.\n\u001b[2;37m[Ingest Mutagens\u001b[2;37m] \u001b[2;32mGain Mutagenic Strength.\n\u001b[2;37m[Punch \u001b[0;2m(downfall only)\u001b[2;37m] \u001b[2;31mFight. \u001b[2;32mTake Everything.",
          "character":"",
@@ -9250,7 +9301,7 @@
          "medianWorstCaseHealthLoss": 20, 
       },
       {
-         "id": "GangOfSlimes",
+         "id": "Lots of Slimes",
          "characters": [
             "SpikeSlime_S",
             "SpikeSlime_S",
@@ -9287,7 +9338,7 @@
          "medianWorstCaseHealthLoss": 30,
       },
       {
-         "id": "TripleLouse",
+         "id": "3 Louse",
          "characters": [
             "FuzzyLouseNormal",
             "FuzzyLouseNormal",
@@ -9312,7 +9363,7 @@
          "medianWorstCaseHealthLoss": 25, 
       },
       {
-         "id": "Thugs",
+         "id": "Exordium Thugs",
          "characters": [
             "AcidSlime_M",
             "SlaverRed"
@@ -9406,7 +9457,7 @@
          "medianWorstCaseHealthLoss": 25,
       },
       {
-         "id": "ChosenBird",
+         "id": "Chosen and Byrds",
          "characters": [
             "Chosen",
             "Byrd"
@@ -9476,7 +9527,7 @@
          "medianWorstCaseHealthLoss": 17,
       },
       {
-         "id": "TripleCultist",
+         "id": "3 Cultists",
          "characters": [
             "Cultist",
             "Cultist",
@@ -9722,7 +9773,7 @@
          "medianWorstCaseHealthLoss": 30,
       },
       {
-         "id": "Spire Elites",
+         "id": "Shield and Spear",
          "characters": [
             "SpireShield",
             "SpireSpear",
@@ -9756,7 +9807,7 @@
          "medianWorstCaseHealthLoss": 42,
       },
       {
-         "id": "SlimeBoss",
+         "id": "Slime Boss",
          "characters": [
             "SlimeBoss",
          ],
@@ -9789,7 +9840,7 @@
          "medianWorstCaseHealthLoss": 35,
       },
       {
-         "id": "The Collector",
+         "id": "Collector",
          "characters": [
             "TheCollector",
          ],
@@ -9824,7 +9875,7 @@
          "medianWorstCaseHealthLoss": 30,
       },
       {
-         "id": "Donu Deca",
+         "id": "Donu and Deca",
          "characters": [
             "Donu",
             "Deca",
@@ -9836,7 +9887,7 @@
          "medianWorstCaseHealthLoss": 38,
       },
       {
-         "id": "Corrupt Heart",
+         "id": "The Heart",
          "characters": [
             "CorruptHeart",
          ],
@@ -9851,6 +9902,18 @@
          "id": "Mind Bloom Boss Battle",
          "characters": [
             "Hexaghost",
+         ],
+         "pool": "event",
+         "weight": 1,
+         "act": 3,
+         "medianExpectedHealthLoss": 0,
+         "medianWorstCaseHealthLoss": 10,
+      },
+      {
+         "id": "2 Orb Walkers",
+         "characters": [
+            "Orb Walker",
+            "Orb Walker",
          ],
          "pool": "event",
          "weight": 1,

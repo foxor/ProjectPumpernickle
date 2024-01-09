@@ -36,8 +36,9 @@ namespace ProjectPumpernickle {
                 var worstCaseEstimatedScore = Lerp.FromUncapped(defaultScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
                 var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
                 if (evaluation.Likelihood != 0f) {
-                    var failureChance = 1f - evaluation.Likelihood;
-                    var variancePenalty = maxScoreLoss * failureChance * availableSafetyFactor;
+                    // best case value proportion is bestValue / bestValue
+                    var failureProportion = Lerp.Inverse(evaluation.WorstCaseRewardFactor, 1f, evaluation.AverageCaseRewardFactor);
+                    var variancePenalty = maxScoreLoss * failureProportion * availableSafetyFactor;
                     evaluation.AddScore(ScoreReason.Variance, variancePenalty);
                     evaluation.NeedsMoreInfo = true;
                 }
@@ -54,16 +55,16 @@ namespace ProjectPumpernickle {
         public static void ScorePath(Evaluation evaluation) {
             // This doesn't ever award points for future acts to avoid perverse incentives
             var path = evaluation.Path;
-            var lastFloorThisAct = Evaluators.LastFloorThisAct(Save.state.act_num);
+            var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
             evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(Save.state.act_num));
 
-            evaluation.AddScore(ScoreReason.Upgrades, 5f * Evaluators.PercentAllGreen(evaluation));
+            evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.PercentAllGreen(evaluation));
 
-            var expectedRelics = path.expectedRewardRelics[lastFloorThisAct];
+            var expectedRelics = path.expectedRewardRelics[floorsTillEndOfAct];
             evaluation.AddScore(ScoreReason.RelicCount, expectedRelics);
 
-            var expectedCardRewards = path.expectedCardRewards[lastFloorThisAct];
+            var expectedCardRewards = path.expectedCardRewards[floorsTillEndOfAct];
             var cardRewardValue = 1f - (Lerp.Inverse(0f, 40f, Save.state.floor_num) * .8f);
             evaluation.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards * cardRewardValue);
 
@@ -72,7 +73,7 @@ namespace ProjectPumpernickle {
             evaluation.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? .1f : 0);
 
             var effectiveHealth = Evaluators.GetEffectiveHealth();
-            evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 10f);
+            evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 30f);
 
             // This does incorporate future act points, because otherwise we might misbehave
             var goldBrought = path.ExpectedGoldBroughtToShops();

@@ -16,7 +16,7 @@ namespace ProjectPumpernickle {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
-        public static Evaluation[] AncientWriting(IEnumerable<string> arguments) {
+        public static Evaluation[] BackToBasics(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
@@ -36,7 +36,7 @@ namespace ProjectPumpernickle {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
-        public static Evaluation[] Augmenter(IEnumerable<string> arguments) {
+        public static Evaluation[] DrugDealer(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }

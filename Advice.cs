@@ -16,6 +16,7 @@ namespace ProjectPumpernickle {
             var totalOptions = rewardOptions.Select(x => x.values.Length + 1).Aggregate(1, (a, x) => a * x);
             List<int> rewardIndicies = new List<int>();
             for (int i = 0; i < totalOptions; i++) {
+                RewardContext.ActiveRewardIndex = i;
                 rewardIndicies.Clear();
                 int residual = i;
                 for (int j = 0; j < rewardOptions.Count; j++) {

@@ -140,7 +140,7 @@ namespace ProjectPumpernickle {
         }
 
         public static string ChooseBestUpgrade(out float bestValue, Path path = null, int index = -1) {
-            var numPriorUpgrades = path == null ? 0 : (int)path.expectedUpgrades.Take(index).Sum();
+            var numPriorUpgrades = path == null ? 0 : (int)Math.Round(path.expectedUpgrades[index]);
             ChooseBestAndWorstUpgrade(numPriorUpgrades, out var bestId, out bestValue, out var worstId, out var worstValue);
             return bestId;
         }
@@ -170,7 +170,7 @@ namespace ProjectPumpernickle {
             return floorNum <= 17 ? 1 : (floorNum <= 34 ? 2 : (floorNum <= 51 ? 3 : 4));
         }
         public static int ActToFirstFloor(int actNum) {
-            return 1 + ((actNum - 1) * 17);
+            return 1 + ((actNum - 1) * 17) + (actNum == 4 ? 1 : 0);
         }
         public static int FloorsIntoAct(int floorNum) {
             var act = FloorToAct(floorNum);
@@ -458,22 +458,29 @@ namespace ProjectPumpernickle {
             return (a == b) || (a == PlayerCharacter.Any || b == PlayerCharacter.Any);
         }
 
-        public static void BestAndWorstRewardResults(Color color, out Card bestCard, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
+        public static void BestAndWorstRewardResults(Color color, out Card bestCard, out float bestValue, out float worstValue, out float averageValue, Rarity rarity = Rarity.Randomable) {
             bestValue = float.MinValue;
             worstValue = float.MaxValue;
             bestCard = null;
+            Card worstCard;
+            float totalValue = 0f;
+            int qualifyingCards = 0;
             foreach (var card in Database.instance.cards) {
                 if (card.cardColor.Is(color) && card.cardRarity.Is(rarity)) {
+                    qualifyingCards++;
                     var cardScore = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, -1);
+                    totalValue += cardScore;
                     if (cardScore > bestValue) {
                         bestValue = cardScore;
                         bestCard = card;
                     }
                     if (cardScore < worstValue) {
                         worstValue = cardScore;
+                        worstCard = card;
                     }
                 }
             }
+            averageValue = totalValue / qualifyingCards;
         }
 
         public static void RandomRelicValue(PlayerCharacter forCharacter, out Relic bestRelic, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
@@ -575,7 +582,7 @@ namespace ProjectPumpernickle {
             // If your overallPower == 1f, you're right on track, so interpolation = 1
             var interpolation = Lerp.InverseUncapped(.75f, 1.25f, overallPower) * 2f;
             var deltaFights = 3f * (interpolation - .5f) * 2f;
-            return normalFights + deltaFights;
+            return MathF.Round(normalFights + deltaFights);
         }
 
         public static float DesiredShops(float estimatedBeginningGold) {
@@ -627,23 +634,23 @@ namespace ProjectPumpernickle {
             var floorsLeft = 55f - Save.state.floor_num;
             return 17f * (floorsLeft / 55f);
         }
+        // Roughly: https://www.wolframalpha.com/input?i=x%2F%28x%2B10%29+from+0+to+30
         public static float PercentAllGreen(Evaluation evaluation) {
             var projectedCardAdds = Evaluators.EstimateFutureAddedCards();
             var cardsByUpgradeWeight = Save.state.cards.Select(x => x.upgradePowerMultiplier).Concat(Enumerable.Range(0, (int)projectedCardAdds).Select(x => 1.3f)).OrderByDescending(x => x);
             var totalWeight = cardsByUpgradeWeight.Sum();
-            var futureUpgrades = evaluation.Path.expectedUpgrades[^1];
+            var denominatorOffset = totalWeight / 2f;
+            var endOfAct = evaluation.Path.nodes.Length - 1;
+            var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
             var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
-            var fullUpgrades = (int)futureUpgrades + presentUpgrades;
-            var partialUpgrades = futureUpgrades - (int)futureUpgrades;
-            var realizedWeight = cardsByUpgradeWeight.Take(fullUpgrades).Sum();
-            realizedWeight += partialUpgrades * cardsByUpgradeWeight.Skip(fullUpgrades).First();
-            return realizedWeight / totalWeight;
+            var fullUpgrades = futureUpgrades + presentUpgrades;
+            return fullUpgrades / (fullUpgrades + denominatorOffset);
         }
         public static float AverageCardsPerTurn() {
             return 5f;
         }
         public static readonly float LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY = .3f;
-        public static readonly float NEED_BIAS = 0.5f;
+        public static readonly float NEED_BIAS = 3f;
         public static float ExtraCardValue(Card c, float value, int index) {
             if (c.bottled && c.tags.TryGetValue(Tags.BottleEquity.ToString(), out var bottleValue)) {
                 value += bottleValue;
@@ -697,21 +704,25 @@ namespace ProjectPumpernickle {
             var firstFloor = ActToFirstFloor(act);
             switch (pool) {
                 case NodeType.Fight: {
-                    return easyPool ? firstFloor : firstFloor + (act == 1 ? 4 : 3); 
+                    return easyPool ? firstFloor : firstFloor + (act == 1 ? 4 : 3);
                 }
                 case NodeType.Elite:
                 case NodeType.MegaElite: {
-                    return firstFloor + 5;
+                    return firstFloor + 7;
                 }
                 default: {
                     throw new NotImplementedException();
                 }
             }
         }
+        public static readonly float MAX_OLD_POOL_BONUS = 1.2f;
         public static float PoolAge(NodeType pool, bool easyPool, int floor) {
             var poolStartFloor = PoolBegins(pool, easyPool, FloorToAct(floor));
-            var gameFraction = (floor - poolStartFloor) / floor;
-            return 1f + gameFraction;
+            if (floor < poolStartFloor) {
+                var gameFraction = (floor * 1f - poolStartFloor) / floor;
+                return 1f + gameFraction;
+            }
+            return Lerp.From(1f, MAX_OLD_POOL_BONUS, (floor * 1f - poolStartFloor) / (floor + 3));
         }
         public static float MaxHealing() {
             return 0f;
@@ -730,17 +741,27 @@ namespace ProjectPumpernickle {
         public static bool ShouldConsiderSkippingRelic() {
             return false;
         }
+        public static bool ShouldConsiderSkippingPotion() {
+            return Save.state.EmptyPotionSlots() == 0;
+        }
         public static void SkipUnpalatableOptions(List<RewardOption> rewardOptions) {
             if (!ShouldConsiderSkippingGold()) {
                 foreach (var option in rewardOptions) {
-                    if (option.rewardType == RewardType.Gold) {
+                    if (option.rewardType == RewardType.Gold && option.cost == 0) {
                         option.skippable = false;
                     }
                 }
             }
             if (!ShouldConsiderSkippingRelic()) {
                 foreach (var option in rewardOptions) {
-                    if (option.rewardType == RewardType.Relic) {
+                    if (option.rewardType == RewardType.Relic && option.cost == 0) {
+                        option.skippable = false;
+                    }
+                }
+            }
+            if (!ShouldConsiderSkippingPotion()) {
+                foreach (var option in rewardOptions) {
+                    if (option.rewardType == RewardType.Potion && option.cost == 0) {
                         option.skippable = false;
                     }
                 }

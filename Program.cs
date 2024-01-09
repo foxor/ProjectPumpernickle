@@ -118,8 +118,11 @@ namespace ProjectPumpernickle {
             }
 
             save.OnLoad();
+            GenerateMap();
+        }
 
-            var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + save!.seed);
+        public static void GenerateMap() {
+            var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + Save.state!.seed);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.CreateNoWindow = true;
