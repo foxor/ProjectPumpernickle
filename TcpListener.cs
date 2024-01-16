@@ -53,7 +53,7 @@ namespace ProjectPumpernickle {
             control.Invoke(() => {
                 var capture = fromJava;
                 try {
-                    PumpernickelMessage.HandleMessage(capture);
+                    PumpernickelMessage.HandleMessages(capture);
                 }
                 catch (Exception e) {
                     PumpernickelAdviceWindow.instance.DisplayException(e);

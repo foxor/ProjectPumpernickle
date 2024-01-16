@@ -126,7 +126,7 @@ namespace ProjectPumpernickle {
         public static float Vampires(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float WheelofChange(Event e, int floorsFromNow) {
+        public static float GremlinWheelGame(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float WindingHalls(Event e, int floorsFromNow) {
@@ -153,7 +153,10 @@ namespace ProjectPumpernickle {
         public static float Designer(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float TheColosseum(Event e, int floorsFromNow) {
+        public static float Colosseum(Event e, int floorsFromNow) {
+            return 0f;
+        }
+        public static float CursedTome(Event e, int floorsFromNow) {
             return 0f;
         }
     }

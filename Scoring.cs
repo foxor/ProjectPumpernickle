@@ -49,7 +49,8 @@ namespace ProjectPumpernickle {
             if (goldBrought < 180f) {
                 return 0f;
             }
-            var shopValue = Math.Pow(1f - (1f / (1 + ((goldBrought - 180f) / 50f))), 1f);
+            // https://www.wolframalpha.com/input?i=1+-+%281+%2F+%281+%2B+%28%28x+-+180%29+%2F+360%29%29%29+from+0+to+1000
+            var shopValue = 1f - (1f / (1 + ((goldBrought - 180f) / 360f)));
             return (float)shopValue * MAX_SHOP_VALUE;
         }
         public static void ScorePath(Evaluation evaluation) {
@@ -72,7 +73,7 @@ namespace ProjectPumpernickle {
             evaluation.AddScore(ScoreReason.Key, Save.state.has_ruby_key ? .1f : 0);
             evaluation.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? .1f : 0);
 
-            var effectiveHealth = Evaluators.GetEffectiveHealth();
+            var effectiveHealth = Evaluators.GetCurrentEffectiveHealth();
             evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 30f);
 
             // This does incorporate future act points, because otherwise we might misbehave
@@ -97,9 +98,13 @@ namespace ProjectPumpernickle {
             }
         }
         public static void Score(Evaluation evaluation) {
+            if (evaluation.Id == 1783 || evaluation.Id == 1129) {
+                Console.WriteLine();
+            }
             for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
                 var card = PumpernickelSaveState.instance.cards[i];
-                evaluation.AddScore(ScoreReason.DeckQuality, EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i));
+                var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
+                evaluation.AddScore(ScoreReason.DeckQuality, cardValue);
             }
             for (int i = 0; i < PumpernickelSaveState.instance.relics.Count; i++) {
                 var relicId = PumpernickelSaveState.instance.relics[i];

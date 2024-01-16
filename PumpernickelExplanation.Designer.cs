@@ -24,6 +24,7 @@
         /// </summary>
         private void InitializeComponent() {
             explanation = new RichTextBox();
+            groupByButton = new Button();
             SuspendLayout();
             // 
             // explanation
@@ -34,11 +35,22 @@
             explanation.TabIndex = 0;
             explanation.Text = "";
             // 
+            // button1
+            // 
+            groupByButton.Location = new Point(12, 654);
+            groupByButton.Name = "groupByButton";
+            groupByButton.Size = new Size(176, 34);
+            groupByButton.TabIndex = 1;
+            groupByButton.Text = "Group by reward";
+            groupByButton.UseVisualStyleBackColor = true;
+            groupByButton.Click += groupByReward;
+            // 
             // PumpernickelExplanation
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(507, 660);
+            ClientSize = new Size(507, 700);
+            Controls.Add(groupByButton);
             Controls.Add(explanation);
             Name = "PumpernickelExplanation";
             Text = "PumpernickelExplanation";
@@ -48,5 +60,6 @@
         #endregion
 
         public RichTextBox explanation;
+        private Button groupByButton;
     }
 }

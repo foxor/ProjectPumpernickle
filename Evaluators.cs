@@ -111,8 +111,12 @@ namespace ProjectPumpernickle {
             totalDamage = 0;
         }
 
+        public static float RandomPotionHealthValue() {
+            return 10f;
+        }
+
         public static float GetPotionHealthValue(string potionId, float expectedHealth) {
-            var potionValue = 10f;
+            var potionValue = RandomPotionHealthValue();
             switch (potionId) {
                 case "Ancient Potion": {
                     potionValue = 0f;
@@ -127,16 +131,30 @@ namespace ProjectPumpernickle {
             return potionValue * healthEfficiencyMultiplier;
         }
 
-        public static float GetEffectiveHealth() {
+        public static float GetCurrentEffectiveHealth() {
             var literalHealth = Save.state.current_health;
             var effectiveHealth = literalHealth * 1f;
-            foreach (var potion in Save.state.potions) {
-                if (potion.Equals("Potion Slot")) {
-                    continue;
+            if (Save.state.potions != null) {
+                foreach (var potion in Save.state.potions) {
+                    if (potion.Equals("Potion Slot")) {
+                        continue;
+                    }
+                    effectiveHealth += GetPotionHealthValue(potion, literalHealth);
                 }
-                effectiveHealth += GetPotionHealthValue(potion, literalHealth);
             }
             return effectiveHealth;
+        }
+
+        public static float GetHealth(int floor) {
+            var path = Evaluation.Active.Path;
+            if (path == null) {
+                return GetCurrentEffectiveHealth();
+            }
+            var index = path.FloorNumToPathIndex(floor);
+            if (index == -1) {
+                return GetCurrentEffectiveHealth();
+            }
+            return path.expectedHealth[index];
         }
 
         public static string ChooseBestUpgrade(out float bestValue, Path path = null, int index = -1) {
@@ -182,6 +200,9 @@ namespace ProjectPumpernickle {
                 4 => 55,
                 _ => ActToFirstFloor(actNum + 1) - 1
             };
+        }
+        public static float PercentGameOver(int floorNum) {
+            return floorNum / FightSimulator.FLOORS_IN_GAME;
         }
 
         public static readonly int BASE_RARE_CHANCE = 3;
@@ -650,17 +671,14 @@ namespace ProjectPumpernickle {
             return 5f;
         }
         public static readonly float LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY = .3f;
-        public static readonly float NEED_BIAS = 3f;
         public static float ExtraCardValue(Card c, float value, int index) {
             if (c.bottled && c.tags.TryGetValue(Tags.BottleEquity.ToString(), out var bottleValue)) {
                 value += bottleValue;
             }
-            if (Save.state.potions.Any(x => x.Equals("LiquidMemories")) && c.intCost != int.MaxValue && !c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
+            if (Save.state.potions?.Any(x => x.Equals("LiquidMemories")) == true && c.intCost != int.MaxValue && !c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
                 var extraCost = c.intCost - 1;
                 value += LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY * extraCost;
             }
-            var needFactor = CardNeedFitFactor(c);
-            value += needFactor * NEED_BIAS;
             value += c.bias;
             if (c.upgrades > 0) {
                 value = EvaluationFunctionReflection.GetUpgradeFunctionCached(c.id)(c, index, value);
@@ -766,6 +784,19 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
+        }
+        public static bool FireChoicesValid(FireChoice[] fireChoices) {
+            if (Save.state.relics.Contains("Coffee Dripper") && fireChoices.Contains(FireChoice.Rest)) {
+                return false;
+            }
+            return true;
+        }
+        public static float EstimatedHealingPerFight() {
+            var found = 0f;
+            if (Save.state.relics.Contains("Burning Blood")) {
+                found += 6f;
+            }
+            return found;
         }
     }
 }

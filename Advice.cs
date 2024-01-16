@@ -12,9 +12,11 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace ProjectPumpernickle {
     public class Advice {
+        public static int nextEvaluationId;
         protected static IEnumerable<Evaluation> MultiplexRewards(List<RewardOption> rewardOptions, bool eligibleForBlueKey, bool isShop) {
             var totalOptions = rewardOptions.Select(x => x.values.Length + 1).Aggregate(1, (a, x) => a * x);
             List<int> rewardIndicies = new List<int>();
+            nextEvaluationId = 0;
             for (int i = 0; i < totalOptions; i++) {
                 RewardContext.ActiveRewardIndex = i;
                 rewardIndicies.Clear();
@@ -28,7 +30,7 @@ namespace ProjectPumpernickle {
                     if (!context.IsValid()) {
                         continue;
                     }
-                    var evaluations = GenerateEvaluationsWithinContext(context);
+                    var evaluations = GenerateEvaluationsWithinContext(context, ref nextEvaluationId);
                     foreach (var evaluation in evaluations) {
                         yield return evaluation;
                     }
@@ -50,10 +52,14 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public static IEnumerable<Evaluation> GenerateEvaluationsWithinContext(RewardContext context) {
+        public static IEnumerable<Evaluation> GenerateEvaluationsWithinContext(RewardContext context, ref int nextEvaluationIndex) {
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
-            var allPaths = Path.BuildAllPaths(currentNode, context.bonusCardRewards).ToArray();
-            var allEvaluations = Enumerable.Range(0, allPaths.Length).Select(x => new Evaluation(context, allPaths[x])).ToArray();
+            var allPaths = Path.BuildAllPaths(currentNode).ToArray();
+            var allEvaluations = new Evaluation[allPaths.Length];
+            for (var i = 0; i < allEvaluations.Length; i++) {
+                allEvaluations[i] = new Evaluation(context, nextEvaluationIndex++);
+                allEvaluations[i].SetPath(allPaths[i], context.bonusCardRewards);
+            }
             SetEvaluationOffRamps(currentNode, allEvaluations);
             if (!allPaths.Any()) {
                 allEvaluations = new Evaluation[] { new Evaluation(context) };
@@ -71,6 +77,7 @@ namespace ProjectPumpernickle {
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;
             var preRewardEvaluation = new Evaluation();
+            preRewardEvaluation.SetPath(null);
             Scoring.Score(preRewardEvaluation);
             Evaluators.ReorderOptions(rewardOptions);
             Evaluators.SkipUnpalatableOptions(rewardOptions);

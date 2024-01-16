@@ -25,6 +25,7 @@ namespace ProjectPumpernickle {
         BottleEquity,
         ExhaustCost,
         Unpurgeable,
+        PickLimit,
     }
     public enum Color {
         Red,
@@ -57,6 +58,7 @@ namespace ProjectPumpernickle {
         public int intCost = -1;
         public Rarity cardRarity;
         public Color cardColor;
+        public bool isNew;
 
         public void CopyFrom(Card other) {
             this.name = other.name;
@@ -74,6 +76,7 @@ namespace ProjectPumpernickle {
             this.intCost = other.intCost;
             this.cardRarity = other.cardRarity;
             this.cardColor = other.cardColor;
+            this.isNew = other.isNew;
         }
 
         public void OnLoad() {
@@ -89,6 +92,9 @@ namespace ProjectPumpernickle {
             var blockMatch = blockRegex.Match(description);
             if (blockMatch.Success) {
                 tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[upgrades == 0 ? 1 : 2].Value);
+            }
+            if (description.Contains("Weak") && !tags.ContainsKey(Tags.Block.ToString())) {
+                tags[Tags.Block.ToString()] = 1f;
             }
             var costRegex = new Regex(@"(\d+) ?(\((\d+)\) )?");
             var costMatch = costRegex.Match(cost);
@@ -240,6 +246,7 @@ namespace ProjectPumpernickle {
         public List<DamageTaken> metric_damage_taken;
         public int card_random_seed_randomizer;
         public bool chose_neow_reward;
+        public int potion_chance;
 
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, 7, 15];
@@ -257,8 +264,7 @@ namespace ProjectPumpernickle {
         public bool badBottle;
         public float[] transformValues;
         public string[] averageTransformValueIds;
-
-
+        public bool addedSkill;
         public PumpernickelSaveState() {
             instance = this;
         }
@@ -272,6 +278,7 @@ namespace ProjectPumpernickle {
                 misc = 0
             };
             card.CopyFrom(Database.instance.cardsDict[card.id]);
+            card.isNew = true;
             cards.Add(card);
             return cards.Count - 1;
         }
@@ -421,6 +428,9 @@ namespace ProjectPumpernickle {
             potions[potionIndex] = "Potion Slot";
         }
         public int EmptyPotionSlots() {
+            if (potions == null) {
+                return 2;
+            }
             return potions.Where(x => x.Equals("Potion Slot")).Count();
         }
 

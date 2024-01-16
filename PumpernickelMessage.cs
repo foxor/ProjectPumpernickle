@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Windows.Forms.LinkLabel;
 
 namespace ProjectPumpernickle {
     public enum RewardType {
@@ -44,98 +45,72 @@ namespace ProjectPumpernickle {
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
-        public static void HandleMessage(string fromJava) {
+        public static void HandleMessages(string fromJava) {
             stringBuilder.Append(fromJava);
             if (stringBuilder.ToString().EndsWith("Done\n")) {
                 var lines = stringBuilder.ToString().Split('\n');
-                switch (lines[0]) {
-                    case "Reward": {
-                        var floor = int.Parse(lines[1]);
-                        var didFight = bool.Parse(lines[2]);
-                        Program.ParseNewFile(floor, didFight);
-                        ParseRewardMessage(lines.Skip(3).Take(lines.Length - 5));
-                        break;
-                    }
-                    case "GreenKey": {
-                        var floor = int.Parse(lines[1]);
-                        var didFight = false;
-                        Program.ParseNewFile(floor, didFight);
-                        ParseGreenKeyMessage(lines.Skip(2).Take(lines.Length - 4));
-                        break;
-                    }
-                    case "Event": {
-                        var floor = int.Parse(lines[1]);
-                        var didFight = false;
-                        Program.ParseNewFile(floor, didFight);
-                        ParseEventMessage(lines.Skip(2).Take(lines.Length - 4));
-                        break;
-                    }
-                    case "NewDungeon": {
-                        Save.state.act_num++;
-                        Save.state.room_y = -1;
-                        Save.state.event_chances = new float[] {
-                            0f,
-                            0.1f,
-                            0.03f,
-                            0.02f,
-                        };
-                        var healthLine = lines.Skip(1).First();
-                        Save.state.current_health = int.Parse(healthLine.Substring(healthLine.LastIndexOf(" ") + 1));
-                        var bossLine = lines.Skip(2).First();
-                        Save.state.boss = bossLine.Substring(bossLine.IndexOf(" ") + 1);
-                        var relicHeaderIndex = lines.FirstIndexOf(x => x.Equals("Relics: "));
-                        var deckIndex = 0;
-                        for (int i = 4; i < relicHeaderIndex; i++) {
-                            var colonIndex = lines[i].IndexOf(':');
-                            var cardId = lines[i].Substring(0, colonIndex);
-                            while (deckIndex < Save.state.cards.Count && !Save.state.cards[deckIndex].id.Equals(cardId)) {
-                                Save.state.cards.RemoveAt(deckIndex);
-                            }
-                            if (deckIndex >= Save.state.cards.Count) {
-                                var upgrades = int.Parse(lines[i].Substring(colonIndex + 1));
-                                var card = Database.instance.cardsDict[cardId];
-                                // Do we need a copy constructor so that we're not messing with the database version?
-                                card.upgrades = upgrades;
-                                Save.state.cards.Add(card);
-                            }
-                            deckIndex++;
-                        }
-                        var greenKeyHeaderIndex = lines.FirstIndexOf(x => x.Equals("GreenKey"));
-                        var relicEndIndex = greenKeyHeaderIndex >= 0 ? greenKeyHeaderIndex : lines.Length - 2;
-                        for (int i = relicHeaderIndex + 1 + Save.state.relics.Count; i < greenKeyHeaderIndex; i++) {
-                            var relicId = lines[i];
-                            Save.state.relics.Add(relicId);
-                        }
-                        PumpernickelAdviceWindow.instance.UpdateAct();
-                        if (greenKeyHeaderIndex >= 0) {
-                            ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..(greenKeyHeaderIndex + 3)]);
-                        }
-                        GivePathingAdvice();
-                        break;
-                    }
-                    case "Shop": {
-                        var floor = int.Parse(lines[1]);
-                        var didFight = false;
-                        Program.ParseNewFile(floor, didFight);
-                        ParseShopMessage(lines.Skip(2).Take(lines.Length - 4));
-                        break;
-                    }
-                    case "Neow": {
-                        var seed = long.Parse(lines[1]);
-                        if (Save.state == null) {
-                            PumpernickelSaveState.instance = new PumpernickelSaveState();
-                        }
-                        Save.state.seed = seed;
-                        Program.GenerateMap();
-                        ParseNeowMessage(lines.Skip(2).Take(lines.Length - 4));
-                        break;
-                    }
-                    default: {
-                        throw new System.NotImplementedException("Unsupported message type: " + lines[0]);
-                    }
+                var messages = lines.Where(x => !string.IsNullOrEmpty(x)).Split(x => x.Equals("Done"));
+                foreach (var message in messages) {
+                    HandleMessage(message.ToArray());
                 }
-                stringBuilder.Clear();
             }
+        }
+        public static void HandleMessage(string[] lines) {
+            switch (lines[0]) {
+                case "Reward": {
+                    var floor = int.Parse(lines[1]);
+                    var didFight = bool.Parse(lines[2]);
+                    Program.ParseNewFile(floor, didFight);
+                    ParseRewardMessage(lines.Skip(3));
+                    break;
+                }
+                case "GreenKey": {
+                    if (Save.state == null) {
+                        return;
+                    }
+                    var floor = int.Parse(lines[2]);
+                    var didFight = false;
+                    Program.ParseNewFile(floor, didFight);
+                    Save.state.act_num = int.Parse(lines[1]);
+                    ParseGreenKeyMessage(lines.Skip(3));
+                    break;
+                }
+                case "Event": {
+                    var floor = int.Parse(lines[1]);
+                    var didFight = false;
+                    Program.ParseNewFile(floor, didFight);
+                    ParseEventMessage(lines.Skip(2));
+                    break;
+                }
+                case "NewDungeon": {
+                    ParseNewDungeonMessage(lines.Skip(1));
+                    break;
+                }
+                case "Shop": {
+                    var floor = int.Parse(lines[1]);
+                    var didFight = false;
+                    Program.ParseNewFile(floor, didFight);
+                    ParseShopMessage(lines.Skip(2));
+                    break;
+                }
+                case "Neow": {
+                    var seed = long.Parse(lines[1]);
+                    if (Save.state == null) {
+                        PumpernickelSaveState.instance = new PumpernickelSaveState();
+                    }
+                    Save.state.seed = seed;
+                    Save.state.act_num = 1;
+                    Save.state.room_x = 0;
+                    Save.state.room_y = -1;
+                    Program.GenerateMap();
+                    ParseNeowMessage(lines.Skip(2));
+                    break;
+                }
+                default: {
+                    throw new System.NotImplementedException("Unsupported message type: " + lines[0]);
+                }
+            }
+            stringBuilder.Clear();
         }
         protected static void ParseRewardMessage(IEnumerable<string> rewardGroups) {
             List<RewardOption> rewardOptions = new List<RewardOption>();
@@ -207,6 +182,51 @@ namespace ProjectPumpernickle {
         protected static void GivePathingAdvice() {
             PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(new List<RewardOption>()));
         }
+
+        protected static void ParseNewDungeonMessage(IEnumerable<string> parameters) {
+            var lines = parameters.ToArray();
+            var actLine = lines.First();
+            Save.state.act_num = int.Parse(actLine.Substring(actLine.LastIndexOf(" ") + 1));
+            Save.state.room_y = -1;
+            Save.state.event_chances = new float[] {
+                            0f,
+                            0.1f,
+                            0.03f,
+                0.02f,
+                        };
+            var healthLine = lines.Skip(1).First();
+            Save.state.current_health = int.Parse(healthLine.Substring(healthLine.LastIndexOf(" ") + 1));
+            var bossLine = lines.Skip(2).First();
+            Save.state.boss = bossLine.Substring(bossLine.IndexOf(" ") + 1);
+            var relicHeaderIndex = lines.FirstIndexOf(x => x.Equals("Relics: "));
+            var deckIndex = 0;
+            for (int i = 4; i < relicHeaderIndex; i++) {
+                var colonIndex = lines[i].IndexOf(':');
+                var cardId = lines[i].Substring(0, colonIndex);
+                while (deckIndex < Save.state.cards.Count && !Save.state.cards[deckIndex].id.Equals(cardId)) {
+                    Save.state.cards.RemoveAt(deckIndex);
+                }
+                if (deckIndex >= Save.state.cards.Count) {
+                    var upgrades = int.Parse(lines[i].Substring(colonIndex + 1));
+                    var card = Database.instance.cardsDict[cardId];
+                    // Do we need a copy constructor so that we're not messing with the database version?
+                    card.upgrades = upgrades;
+                    Save.state.cards.Add(card);
+                }
+                deckIndex++;
+            }
+            var greenKeyHeaderIndex = lines.FirstIndexOf(x => x.Equals("GreenKey"));
+            var relicEndIndex = greenKeyHeaderIndex >= 0 ? greenKeyHeaderIndex : lines.Length - 2;
+            for (int i = relicHeaderIndex + 1 + Save.state.relics.Count; i < greenKeyHeaderIndex; i++) {
+                var relicId = lines[i];
+                Save.state.relics.Add(relicId);
+            }
+            PumpernickelAdviceWindow.instance.UpdateAct();
+            if (greenKeyHeaderIndex >= 0) {
+                ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..(greenKeyHeaderIndex + 3)]);
+            }
+            GivePathingAdvice();
+        }
         protected static void ParseShopMessage(IEnumerable<string> shopOptionLines) {
             RewardType activeRewardType = RewardType.None;
             List<RewardOption> rewardOptions = new List<RewardOption>();
@@ -272,15 +292,18 @@ namespace ProjectPumpernickle {
 public static class SplitIEnumerable {
     public static IEnumerable<IEnumerable<T>> Split<T>(this IEnumerable<T> source, Func<T, bool> predicate) {
         var r = new List<List<T>>();
-        List<T> activeList = null;
+        List<T> activeList = new List<T>();
         foreach (var item in source) {
             if (predicate(item)) {
-                activeList = new List<T>();
                 r.Add(activeList);
+                activeList = new List<T>();
             }
             else {
                 activeList.Add(item);
             }
+        }
+        if (activeList.Any()) {
+            r.Add(activeList);
         }
         return r;
     }

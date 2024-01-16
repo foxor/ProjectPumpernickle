@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +15,9 @@ namespace ProjectPumpernickle {
                 return max;
             }
             return (max - min) * t + min;
+        }
+        public static Vector3 From(Vector3 min, Vector3 max, float t) {
+            return new Vector3(From(min.X, max.X, t), From(min.Y, max.Y, t), From(min.Z, max.Z, t));
         }
         public static float FromUncapped(float min, float max, float t) {
             return (max - min) * t + min;

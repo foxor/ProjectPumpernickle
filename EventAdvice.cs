@@ -25,7 +25,9 @@ namespace ProjectPumpernickle {
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] BigFish(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+            var existingAdvice = new List<string>(){
+                "Eat the bananna",
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] BonfireSpirits(IEnumerable<string> arguments) {
@@ -37,7 +39,9 @@ namespace ProjectPumpernickle {
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] DrugDealer(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+            var existingAdvice = new List<string>(){
+                "Ingest Mutagens"
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] Duplicator(IEnumerable<string> arguments) {
@@ -99,7 +103,9 @@ namespace ProjectPumpernickle {
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] MaskedBandits(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+            var existingAdvice = new List<string>(){
+                "Fight!",
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] MatchandKeep(IEnumerable<string> arguments) {
@@ -174,8 +180,11 @@ namespace ProjectPumpernickle {
             return Advice.CreateEventEvaluations(existingAdvice);
         }
         public static Evaluation[] Transmogrifier(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            var advice = Advice.CreateEventEvaluations(new string[0]);
+            var remove = Evaluators.CardRemoveTarget();
+            // This could lead to remove advice "double coverage" where the above path also prioritizes removing this card
+            advice[0].Advice.Insert(0, "Transform the " + Save.state.cards[remove].name);
+            return advice;
         }
         public static Evaluation[] UpgradeShrine(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
@@ -187,7 +196,7 @@ namespace ProjectPumpernickle {
             };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
-        public static Evaluation[] WheelofChange(IEnumerable<string> arguments) {
+        public static Evaluation[] GremlinWheelGame(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
@@ -262,8 +271,17 @@ namespace ProjectPumpernickle {
             };
             return Advice.AdviseOnRewards(rewardOption, existingAdvice);
         }
-        public static Evaluation[] TheColosseum(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
+        public static Evaluation[] Colosseum(IEnumerable<string> arguments) {
+            var existingAdvice = new List<string>(){
+                "Win the fight",
+                "Choose victory",
+            };
+            return Advice.CreateEventEvaluations(existingAdvice);
+        }
+        public static Evaluation[] CursedTome(IEnumerable<string> arguments) {
+            var existingAdvice = new List<string>(){
+                "Read the book"
+            };
             return Advice.CreateEventEvaluations(existingAdvice);
         }
     }

@@ -158,7 +158,7 @@ namespace ProjectPumpernickle {
                 rtb.explanationText.Append(") ");
             }
             rtb.explanationText.Append("\n");
-            rtb.explanationText.Append("PID: " + evaluation.Path.pathIndex + " Reward Index: " + evaluation.RewardIndex + "\n");
+            rtb.explanationText.Append("ID: " + evaluation.Id + "\n");
 
             var advice = evaluation.ToString().Replace("\r", "");
             rtb.explanationText.Append(advice + "\n\n");
@@ -208,6 +208,10 @@ namespace ProjectPumpernickle {
                 }
             }
             explanation.Select(0, 0);
+        }
+
+        private void groupByReward(object sender, EventArgs e) {
+            PumpernickelAdviceWindow.instance.SetFiltererdEvaluations(PumpernickelAdviceWindow.instance.FilteredEvaluations.DistinctBy(x => x.RewardIndex).ToArray());
         }
     }
 }

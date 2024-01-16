@@ -9,14 +9,29 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.CardSave;
+import com.megacrit.cardcrawl.cards.blue.Loop;
+import com.megacrit.cardcrawl.cards.green.Eviscerate;
+import com.megacrit.cardcrawl.cards.purple.Blasphemy;
+import com.megacrit.cardcrawl.cards.red.Anger;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.dungeons.Exordium;
+import com.megacrit.cardcrawl.events.beyond.MindBloom;
 import com.megacrit.cardcrawl.events.city.TheLibrary;
 import com.megacrit.cardcrawl.events.shrines.Designer;
+import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
+import com.megacrit.cardcrawl.monsters.beyond.Nemesis;
+import com.megacrit.cardcrawl.monsters.beyond.TimeEater;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
+import com.megacrit.cardcrawl.relics.ClockworkSouvenir;
+import com.megacrit.cardcrawl.relics.Duality;
+import com.megacrit.cardcrawl.relics.IncenseBurner;
+import com.megacrit.cardcrawl.relics.MutagenicStrength;
+import com.megacrit.cardcrawl.relics.OrangePellets;
+import com.megacrit.cardcrawl.relics.SneckoEye;
+import com.megacrit.cardcrawl.relics.TungstenRod;
 import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.EventRoom;
@@ -30,9 +45,18 @@ import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+
+import basemod.abstracts.events.phases.CombatPhase;
+
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.neow.NeowReward;
 import com.megacrit.cardcrawl.neow.NeowRoom;
+import com.megacrit.cardcrawl.orbs.Lightning;
+import com.megacrit.cardcrawl.powers.ArtifactPower;
+import com.megacrit.cardcrawl.powers.ConfusionPower;
+import com.megacrit.cardcrawl.powers.FireBreathingPower;
+import com.megacrit.cardcrawl.powers.IntangiblePower;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -115,6 +139,7 @@ public class SpirePatches {
 			            DataOutputStream outToServer =
 			                    new DataOutputStream(clientSocket.getOutputStream());
 			            outToServer.write("GreenKey\n".getBytes(StandardCharsets.UTF_8));
+			            outToServer.write((AbstractDungeon.actNum + "\n").getBytes(StandardCharsets.UTF_8));
 			            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
 		                outToServer.write((node.x + "\n").getBytes(StandardCharsets.UTF_8));
 		                outToServer.write((node.y + "\n").getBytes(StandardCharsets.UTF_8));
@@ -159,6 +184,21 @@ public class SpirePatches {
             }
         }
     }
+    public static void genericUpdate() {
+        try {
+            Socket clientSocket = new Socket("localhost", 13076);
+            DataOutputStream outToServer =
+                    new DataOutputStream(clientSocket.getOutputStream());
+            outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write("false\n".getBytes(StandardCharsets.UTF_8)); // Are we expecting a fight to have just ended
+            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.flush();
+            clientSocket.close();
+        }
+        catch (Exception e) {
+        }
+    }
     public static void bossRelicReward() {
         try {
             Socket clientSocket = new Socket("localhost", 13076);
@@ -185,6 +225,7 @@ public class SpirePatches {
             DataOutputStream outToServer =
                     new DataOutputStream(clientSocket.getOutputStream());
             outToServer.write("NewDungeon\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write(("Act: " + AbstractDungeon.actNum + "\n").getBytes(StandardCharsets.UTF_8));
             outToServer.write(("CurrentHealth: " + AbstractDungeon.player.currentHealth + "\n").getBytes(StandardCharsets.UTF_8));
             outToServer.write(("FirstBoss: " + AbstractDungeon.bossKey + "\n").getBytes(StandardCharsets.UTF_8));
             outToServer.write(("Cards: \n").getBytes(StandardCharsets.UTF_8));
@@ -327,5 +368,9 @@ public class SpirePatches {
     @SpirePatch(clz = GridCardSelectScreen.class, method = "open", paramtypez = { CardGroup.class, int.class, String.class, boolean.class, boolean.class, boolean.class, boolean.class})
     public static class OnLibraryPresentPatch {
         @SpirePostfixPatch public static void Postfix() { openGrid(); }
+    }
+    @SpirePatch(clz = CardHelper.class, method = "obtain", paramtypez = { String.class, AbstractCard.CardRarity.class, AbstractCard.CardColor.class })
+    public static class OnCardAddedPatch {
+        @SpirePostfixPatch public static void Postfix() { genericUpdate(); }
     }
 }

@@ -12,7 +12,6 @@ namespace ProjectPumpernickle {
         Survivabiltiy,
     }
     internal struct Weakness {
-        public static readonly float RADICAL_TWO_OVER_TWO = (float)Math.Sqrt(2) / 2f;
         public float[] Weaknesses;
         // This is for weaknesses YOU have
         public Weakness() {
@@ -26,14 +25,13 @@ namespace ProjectPumpernickle {
         }
         // This is for the weaknesses the card addresses
         public Weakness(Card c) {
+            Weaknesses = new float[] { 0f, 0f };
             if (c.tags.ContainsKey(Tags.Block.ToString())) {
-                Weaknesses = new float[] { 0f, 1f };
+                Weaknesses[1] += 1f;
             }
             else if (c.tags.ContainsKey(Tags.Damage.ToString())) {
-                Weaknesses = new float[] { 1f, 0f };
-            }
-            else {
-                Weaknesses = new float[] { RADICAL_TWO_OVER_TWO, RADICAL_TWO_OVER_TWO };
+                Weaknesses[0] += .8f;
+                Weaknesses[1] += .2f;
             }
         }
 
@@ -41,7 +39,7 @@ namespace ProjectPumpernickle {
             switch (axis) {
                 case WeaknessAxis.Lethality: {
                     // You start out very far behind on damage
-                    var earlyBonus = 5f / (Save.state.floor_num + 1);
+                    var earlyBonus = (5f / (Save.state.floor_num / 3f + 1)) + 1;
                     var observed = FightSimulator.EstimateDamagePerTurn();
                     var projected = FightSimulator.NormalDamageForFloor(Save.state.floor_num) * earlyBonus;
                     var minExpected = projected * .8f;

@@ -70,6 +70,7 @@ namespace ProjectPumpernickle {
         public float bias;
         public string pool;
         public string tier;
+        public string name;
 
         public PlayerCharacter forCharacter;
         public Rarity rarity;

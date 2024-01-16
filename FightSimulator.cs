@@ -4,12 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class FightSimulator {
-        public static readonly float DECAY_RATE = 2f;
-        public static readonly float ACT_STRETCH_FLOORS = 8f;
+        public static readonly float DECAY_RATE = 1.5f;
+        public static readonly int ACT_STRETCH_FLOORS = 8;
+        public static readonly int BEGINNING_OF_GAME_STRETCH_FLOORS = 15;
         internal static float SignificanceFactor(int fromFloor) {
             // TODO: fighting an act 1 boss in act 3 should have very low significance... or a different median or something
             // TODO: decay rate should depend on "important" things happening, like finishing a combo or getting a significant relic
@@ -17,9 +19,10 @@ namespace ProjectPumpernickle {
             if (currentFloor <= 0) {
                 return 1f;
             }
-            float stretchFloors = 0f;
+            var stretchFloors = 0;
             var actsApart = Save.state.act_num - Evaluators.FloorToAct((int)MathF.Round(fromFloor));
-            stretchFloors += actsApart * ACT_STRETCH_FLOORS;
+            stretchFloors += actsApart * ACT_STRETCH_FLOORS + BEGINNING_OF_GAME_STRETCH_FLOORS;
+            fromFloor += BEGINNING_OF_GAME_STRETCH_FLOORS;
 
             var effectiveFloor = currentFloor + stretchFloors;
             var pctRunAgo = (effectiveFloor - fromFloor) * 1f / effectiveFloor;
@@ -55,15 +58,20 @@ namespace ProjectPumpernickle {
             var enemyHealth = encounter.characters.Select(x => Database.instance.creatureDict[x].averageHealth).Sum();
             return enemyHealth;
         }
+        public static readonly float ACT_COMPLETION_WEIGHT = 10f;
         public static float EstimateDefensivePower() {
+            if (Save.state.metric_damage_taken == null) {
+                return 1f;
+            }
             var totalSignificance = 0f;
             var totalPower = 0f;
             foreach (var damageTaken in Save.state.metric_damage_taken) {
                 var encounter = Database.instance.encounterDict[damageTaken.enemies];
                 var totalHealth = AverageEnemyHealth(encounter);
                 var incomingDamage = EstimateIncomingDamage(encounter, damageTaken.turns, totalHealth / damageTaken.turns);
+                var estimatedHealing = Evaluators.EstimatedHealingPerFight();
                 var realDamage = damageTaken.damage;
-                var estimatedRealBlock = incomingDamage - realDamage;
+                var estimatedRealBlock = incomingDamage - realDamage + estimatedHealing;
                 var estimatedMedianBlock = incomingDamage - encounter.medianExpectedHealthLoss;
                 float powerRatio = 1f;
                 if (MathF.Abs(estimatedMedianBlock) > 0.2f) {
@@ -75,6 +83,13 @@ namespace ProjectPumpernickle {
                 var significance = SignificanceFactor((int)damageTaken.floor);
                 totalSignificance += significance;
                 totalPower += powerRatio * significance;
+            }
+            for (var finishedAct = 0; finishedAct < Save.state.act_num; finishedAct++) {
+                var endFloor = Evaluators.ActToFirstFloor(finishedAct + 1) - 1;
+                var significance = SignificanceFactor(endFloor) * ACT_COMPLETION_WEIGHT;
+                totalSignificance += significance;
+                totalPower += significance;
+                // TODO: If we're playing watcher, maybe we're more powerful than 1 * significance
             }
             if (MathF.Abs(totalSignificance) - 0.2f < 0f) {
                 return 1f;
@@ -88,6 +103,9 @@ namespace ProjectPumpernickle {
         public static readonly float FLOORS_IN_GAME = 55;
         public static readonly float DAMAGE_LOG_PER_FLOOR = (END_OF_GAME_DAMAGE_LOG - BEGINNING_OF_GAME_DAMAGE_LOG) / FLOORS_IN_GAME;
         public static float EstimateDamagePerTurn() {
+            if (Save.state.metric_damage_taken == null) {
+                return 1f;
+            }
             float totalSignificance = 0f;
             float totalDamagePerTurn = 0f;
             foreach (var damageTaken in Save.state.metric_damage_taken) {
@@ -140,7 +158,13 @@ namespace ProjectPumpernickle {
             if (MathF.Abs(incomingDamage) < 0.2f) {
                 return 0f;
             }
-            var estimatedMedianBlock = incomingDamage - encounter.medianExpectedHealthLoss;
+            var medianHealthLoss = encounter.medianExpectedHealthLoss;
+            var health = Evaluators.GetHealth(floor - 1);
+            if (encounter.id.Equals("Hexaghost")) {
+                // Median character is in the 12-23 range
+                medianHealthLoss += 6 * ((int)(health / 12) - 1);
+            }
+            var estimatedMedianBlock = incomingDamage - medianHealthLoss;
             if (estimatedMedianBlock < 0.2f) {
                 return incomingDamage / defensivePower;
             }

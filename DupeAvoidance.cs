@@ -11,23 +11,17 @@ namespace ProjectPumpernickle {
         public static readonly float PARTIAL_PUNISHMENT_PER_CARD = -1f;
         bool IGlobalRule.ShouldApply => true;
 
-        protected bool ShouldAvoidPunishment(string cardId) => false;
-        protected bool PartialPunishment(string cardId) => false;
-
         void IGlobalRule.Apply(Evaluation evaluation) {
             var totalPunishment = 0f;
             var counts = new Dictionary<string, int>();
-            foreach (var cardId in Save.state.cards.Where(x => x.cardRarity != Rarity.Basic).Select(x => x.id)) {
-                counts[cardId] = counts.GetValueOrDefault(cardId, 0) + 1;
+            foreach (var card in Save.state.cards.Where(x => x.cardRarity != Rarity.Basic)) {
+                if (!counts.ContainsKey(card.id) && card.tags.TryGetValue(Tags.PickLimit.ToString(), out var limit)) {
+                    counts[card.id] = (int)-limit;
+                }
+                counts[card.id] = counts.GetValueOrDefault(card.id, 0) + 1;
             }
             foreach (var dupe in counts) {
-                if (ShouldAvoidPunishment(dupe.Key)) {
-                    continue;
-                }
-                else if (PartialPunishment(dupe.Key)) {
-                    totalPunishment += PARTIAL_PUNISHMENT_PER_CARD * (dupe.Value - 1);
-                }
-                else {
+                if (dupe.Value > 1) {
                     totalPunishment += PUNISHMENT_PER_CARD * (dupe.Value - 1);
                 }
             }

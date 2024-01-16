@@ -70,7 +70,7 @@ namespace ProjectPumpernickle {
         Transmogrifier,
         UpgradeShrine,
         Vampires,
-        WheelofChange,
+        GremlinWheelGame,
         WindingHalls,
         WorldofGoop,
         MindBloom,
@@ -79,8 +79,11 @@ namespace ProjectPumpernickle {
         ANoteForYourself,
         WeMeetAgain,
         Designer,
-        TheColosseum,
+        Colosseum,
+        CursedTome,
         EVENT_END,
+        SkillIntoNob,
+        PickedNeededCard,
         COUNT,
     }
     public class Evaluation {
@@ -98,11 +101,14 @@ namespace ProjectPumpernickle {
         public Evaluation OffRamp;
         public bool NeedsMoreInfo = false;
         public int RewardIndex;
+        public int Id;
 
         protected bool hasDescribedPathing;
 
-        public Evaluation(RewardContext context = null, Path path = null) {
+        public Evaluation(RewardContext context = null, int Id = -1) {
             Active = this;
+            this.Id = Id;
+            RewardIndex = RewardContext.ActiveRewardIndex;
 
             if (context != null) {
                 Advice = context.description.ToList();
@@ -111,16 +117,18 @@ namespace ProjectPumpernickle {
                 AverageCaseRewardFactor = context.averageCaseValueProportion;
                 BonusCardRewards = context.bonusCardRewards;
             }
-            RewardIndex = RewardContext.ActiveRewardIndex;
-            this.Path = path;
-            if (path == null) {
-                Path = Path.BuildPath(new MapNode[] { }, -1);
-            }
 
             Save.state.earliestInfinite = 0;
-            Save.state.buildingInfinite = false;
             Save.state.expectingToRedBlue = Save.state.character == PlayerCharacter.Watcher;
+            Save.state.buildingInfinite = Save.state.expectingToRedBlue;
             Save.state.huntingCards.Clear();
+        }
+        public void SetPath(Path path, int startingCardRewards = 0) {
+            Path = path;
+            if (path == null) {
+                Path = Path.BuildPath(new MapNode[0], new FireChoice[0]);
+            }
+            Path.ExplorePath(startingCardRewards);
         }
         public void MergeScoreWithOffRamp() {
             if (OffRamp == null) {
@@ -157,6 +165,7 @@ namespace ProjectPumpernickle {
                 NodeType.Boss => "Fight " + Save.state.boss,
                 NodeType.BossChest => "Open the boss chest",
                 NodeType.Fight => "Go to next act",
+                NodeType.Animation => "Open the door to act 4",
                 NodeType.Fire => "Go to act 4",
                 NodeType.Shop => "Go to the shop",
                 _ => throw new NotImplementedException("Node type " + nodeType + " not expected to appear off map"),
@@ -167,7 +176,7 @@ namespace ProjectPumpernickle {
             var moveFromPos = currentNode.Value;
             var direction = moveFromPos.x > moveToPos.x ? "left" :
                 (moveFromPos.x < moveToPos.x ? "right" : "up");
-            if (moveFromPos.y < Evaluators.ActToFirstFloor(Save.state.act_num) - 1) {
+            if (moveFromPos.y == Evaluators.ActToFirstFloor(Save.state.act_num) - 1) {
                 direction = "as marked";
             }
             var destination = pathNodes[0].nodeType.ToString();
@@ -176,6 +185,7 @@ namespace ProjectPumpernickle {
         public void DescribePathing() {
             var i = 0;
             var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
+            // Something about this caused off-map pathing when neow gave a random rare card?
             while (!NeedsMoreInfo && Path.remainingFloors > i) {
                 var nodeType = Path.nodeTypes[i];
                 if (i < Path.nodes.Length) {
@@ -222,8 +232,9 @@ namespace ProjectPumpernickle {
                                 Advice.Add("Take the red key");
                                 break;
                             }
-                            default:
-                            throw new System.NotImplementedException();
+                            default: {
+                                throw new System.NotImplementedException();
+                            }
                         }
                         break;
                     }
