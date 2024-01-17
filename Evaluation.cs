@@ -126,7 +126,7 @@ namespace ProjectPumpernickle {
         public void SetPath(Path path, int startingCardRewards = 0) {
             Path = path;
             if (path == null) {
-                Path = Path.BuildPath(new MapNode[0], new FireChoice[0]);
+                Path = Path.BuildPath(new MapNode[0], new FireChoice[0], -1);
             }
             Path.ExplorePath(startingCardRewards);
         }

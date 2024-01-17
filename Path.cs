@@ -40,9 +40,11 @@ namespace ProjectPumpernickle {
         public float[] projectedDefensivePower = null;
         public float[] expectedHealthLoss = null;
         public float[] expectedPotionsAdded = null;
+        public int pathId;
         public static IEnumerable<Path> BuildAllPaths(MapNode root) {
             var skipFirstNode = true;
             var nodeSequences = IterateNodeSequences(root, skipFirstNode).ToArray();
+            var pathId = 0;
             for(var pathIndex = 0; pathIndex < nodeSequences.Length; pathIndex++) {
                 var nodes = nodeSequences[pathIndex].ToArray();
 
@@ -66,12 +68,13 @@ namespace ProjectPumpernickle {
                         continue;
                     }
                     // TODO: filter invalid paths, like those where we get multiple blue keys
-                    yield return BuildPath(nodes, fireChoices);
+                    yield return BuildPath(nodes, fireChoices, pathId++);
                 }
             }
         }
-        public static Path BuildPath(MapNode[] nodeSequence, FireChoice[] fireChoices) {
+        public static Path BuildPath(MapNode[] nodeSequence, FireChoice[] fireChoices, int pathId) {
             Path path = new Path();
+            path.pathId = pathId;
             path.nodes = nodeSequence;
             path.InitArrays();
             path.InitNodeTypes();
@@ -748,9 +751,6 @@ namespace ProjectPumpernickle {
             var deathLikelihood = PumpernickelMath.Sigmoid(sigmoidX);
             var upcomingDeathMultiplier = UPCOMING_DEATH_THREAT_MULTIPLIER * distanceFactor;
             Threats[threat.id] += deathLikelihood * chanceOfThis * upcomingDeathMultiplier;
-            if (Evaluation.Active.Id == 930 && floorIndex == 9) {
-                Console.WriteLine();
-            }
             chanceOfDeath[floorIndex] += deathLikelihood * chanceOfThis;
             if (chanceOfDeath[floorIndex] > .99f) {
                 //throw new Exception("Bot thinks it's 100% chance to die.  This causes problems usually");

@@ -56,9 +56,12 @@ namespace ProjectPumpernickle {
         public static void ScorePath(Evaluation evaluation) {
             // This doesn't ever award points for future acts to avoid perverse incentives
             var path = evaluation.Path;
+            var offRamp = evaluation.OffRamp?.Path ?? path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * path.ChanceToSurviveAct(Save.state.act_num));
+            // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
+            // but that's kinda the right way to play the game
+            evaluation.AddScore(ScoreReason.ActSurvival, 10f * offRamp.ChanceToSurviveAct(Save.state.act_num));
 
             evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.PercentAllGreen(evaluation));
 
@@ -67,7 +70,7 @@ namespace ProjectPumpernickle {
 
             var expectedCardRewards = path.expectedCardRewards[floorsTillEndOfAct];
             var cardRewardValue = 1f - (Lerp.Inverse(0f, 40f, Save.state.floor_num) * .8f);
-            evaluation.AddScore(ScoreReason.CardReward, .5f * expectedCardRewards * cardRewardValue);
+            evaluation.AddScore(ScoreReason.CardReward, .1f * expectedCardRewards * cardRewardValue);
 
             evaluation.AddScore(ScoreReason.Key, Save.state.has_emerald_key ? .1f : 0);
             evaluation.AddScore(ScoreReason.Key, Save.state.has_ruby_key ? .1f : 0);
@@ -98,9 +101,6 @@ namespace ProjectPumpernickle {
             }
         }
         public static void Score(Evaluation evaluation) {
-            if (evaluation.Id == 1783 || evaluation.Id == 1129) {
-                Console.WriteLine();
-            }
             for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
                 var card = PumpernickelSaveState.instance.cards[i];
                 var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);

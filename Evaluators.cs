@@ -665,7 +665,9 @@ namespace ProjectPumpernickle {
             var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
             var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
             var fullUpgrades = futureUpgrades + presentUpgrades;
-            return fullUpgrades / (fullUpgrades + denominatorOffset);
+            var upgradeWeight = cardsByUpgradeWeight.Take((int)fullUpgrades).Sum();
+            upgradeWeight += (fullUpgrades - (int)fullUpgrades) * cardsByUpgradeWeight.Skip((int)fullUpgrades).First();
+            return upgradeWeight / (upgradeWeight + denominatorOffset);
         }
         public static float AverageCardsPerTurn() {
             return 5f;

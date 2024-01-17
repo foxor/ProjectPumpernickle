@@ -169,6 +169,7 @@
          "upgradePowerMultiplier": 1.9,
          "tags": {
             "CardDraw": 2,
+            "PickLimit": 2,
          },
       },
       {

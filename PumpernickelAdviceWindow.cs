@@ -47,7 +47,7 @@ namespace ProjectPumpernickle {
 
         private void WhyButton_Click(object? sender, EventArgs e) {
             explainForm = new PumpernickelExplanation();
-            explainForm.Explain(FilteredEvaluations);
+            explainForm.Explain(ExplanationGroupMode.Reward);
             explainForm.Show();
         }
 
@@ -95,12 +95,13 @@ namespace ProjectPumpernickle {
                     var pathIndex = ChosenEvaluation.Path.nodes.FirstIndexOf(x => x.position.Equals(lastHoveredCoord));
                     if (pathIndex != -1) {
                         PathNodeInfoBox.Text =
-                            "Expected Health: " + ChosenEvaluation.Path.expectedHealth[pathIndex] + "\n" +
-                            "Worst Case Health: " + ChosenEvaluation.Path.worstCaseHealth[pathIndex] + "\n" +
-                            "Expected Gold: " + ChosenEvaluation.Path.expectedGold[pathIndex] + "\n" +
-                            "Defensive Power: " + ChosenEvaluation.Path.projectedDefensivePower[pathIndex] + "\n" +
-                            "Chance of Death: " + ChosenEvaluation.Path.chanceOfDeath[pathIndex] + "\n" +
-                            "Expected Upgrades: " + ChosenEvaluation.Path.expectedUpgrades[pathIndex] + "\n"
+                            "Expected health: " + ChosenEvaluation.Path.expectedHealth[pathIndex] + "\n" +
+                            "Worst case health: " + ChosenEvaluation.Path.worstCaseHealth[pathIndex] + "\n" +
+                            "Expected gold: " + ChosenEvaluation.Path.expectedGold[pathIndex] + "\n" +
+                            "Defensive power: " + ChosenEvaluation.Path.projectedDefensivePower[pathIndex] + "\n" +
+                            "Chance of death: " + ChosenEvaluation.Path.chanceOfDeath[pathIndex] + "\n" +
+                            "Expected upgrades: " + ChosenEvaluation.Path.expectedUpgrades[pathIndex] + "\n" +
+                            "Expected card rewards: " + ChosenEvaluation.Path.expectedCardRewards[pathIndex] + "\n"
                         ;
                         var chosenNode = ChosenEvaluation.Path.nodes[pathIndex];
                         if (chosenNode.nodeType == NodeType.Shop) {
@@ -143,11 +144,11 @@ namespace ProjectPumpernickle {
             SetFiltererdEvaluations(evaluations);
         }
 
-        public void SetFiltererdEvaluations(Evaluation[] evaluations) {
+        public void SetFiltererdEvaluations(Evaluation[] evaluations, bool shouldExplain = true) {
             FilteredEvaluations = evaluations;
             SetChosenEvaluation(evaluations.First());
-            if (explainForm != null && !explainForm.IsDisposed) {
-                explainForm.Explain(FilteredEvaluations);
+            if (explainForm != null && !explainForm.IsDisposed && shouldExplain) {
+                explainForm.Explain(ExplanationGroupMode.Reward);
             }
         }
 
