@@ -9,7 +9,8 @@
          "cost":"2",
          "description":"Deal 8 (10) damage.\nApply 2 (3) Vulnerable.",
          "mod":"Slay the Spire",
-         "upgradePowerMultiplier": 1.2,
+         "bias": -0.5,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Defend_R",
@@ -21,6 +22,7 @@
          "description":"Gain 5 (8) Block.",
          "mod":"Slay the Spire",
          "bias": -1.2,
+         "upgradePowerMultiplier": 0.7,
       },
       {
          "id":"Strike_R",
@@ -32,6 +34,7 @@
          "description":"Deal 6 (9) damage.",
          "mod":"Slay the Spire",
          "bias": -1.5,
+         "upgradePowerMultiplier": 0.7,
       },
       {
          "id":"Anger",
@@ -41,7 +44,9 @@
          "type":"Attack",
          "cost":"0",
          "description":"Deal 6 (8) damage.\nAdd a copy of this card into your discard pile.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Armaments",
@@ -53,6 +58,7 @@
          "description":"Gain 5 Block.\nUpgrade a (all) card (cards) in your hand for the rest of combat.",
          "mod":"Slay the Spire",
          "bias": 1,
+         "upgradePowerMultiplier": 2.3,
       },
       {
          "id":"Body Slam",
@@ -62,7 +68,9 @@
          "type":"Attack",
          "cost":"1 (0)",
          "description":"Deal damage equal to your Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.7,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"Clash",
@@ -72,7 +80,9 @@
          "type":"Attack",
          "cost":"0",
          "description":"Can only be played if every card in your hand is an Attack.\nDeal 14 (18) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Cleave",
@@ -82,7 +92,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 8 (11) damage to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.2,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Clothesline",
@@ -92,7 +104,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 12 (14) damage.\nApply 2 (3) Weak.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.2,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Flex",
@@ -102,7 +116,9 @@
          "type":"Skill",
          "cost":"0",
          "description":"Gain 2 (4) Strength.\nAt the end of this turn, lose 2 (4) Strength.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.6,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Havoc",
@@ -112,7 +128,9 @@
          "type":"Skill",
          "cost":"1 (0)",
          "description":"Play the top card of your draw pile and Exhaust it.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.4,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Headbutt",
@@ -122,7 +140,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 9 (12) damage.\nPut a card from your discard pile on top of your draw pile.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.4,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Heavy Blade",
@@ -132,7 +152,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 14 damage.\nStrength affects this card 3 (5) times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Iron Wave",
@@ -154,7 +176,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 6 damage.\nDeals 2 (3) additional damage for ALL your cards containing \"Strike\".",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Pommel Strike",
@@ -195,7 +219,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 3 damage to a random enemy 3 (4) times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Thunderclap",
@@ -205,7 +231,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 4 (7) damage and apply 1 Vulnerable to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.7,
+         "upgradePowerMultiplier": 1.1,
       },
       {
          "id":"True Grit",
@@ -215,7 +243,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Gain 7 (9) Block.\nExhaust 1 card~~-  at random -~~ .",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Twin Strike",
@@ -226,6 +256,7 @@
          "cost":"1",
          "description":"Deal 5 (7) damage twice.",
          "mod":"Slay the Spire",
+         "bias": -0.2,
          "upgradePowerMultiplier": 1.4,
       },
       {
@@ -249,7 +280,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 12 (17) damage.\nShuffle a Wound into your draw pile.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.4,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Battle Trance",
@@ -259,7 +292,9 @@
          "type":"Skill",
          "cost":"0",
          "description":"Draw 3 (4) cards.\nYou cannot draw additional cards this turn.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Blood for Blood",
@@ -269,7 +304,9 @@
          "type":"Attack",
          "cost":"4 (3)",
          "description":"Costs 1 less [R]\nfor each time you lose HP this combat.\nDeal 18 (22) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Bloodletting",
@@ -279,7 +316,9 @@
          "type":"Skill",
          "cost":"0",
          "description":"Lose 3 HP.\nGain [R] [R] ([R]).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.8,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Burning Pact",
@@ -289,7 +328,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Exhaust 1 card.\nDraw 2 (3) cards.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.4,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Carnage",
@@ -299,7 +340,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Ethereal.\nDeal 20 (28) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Combust",
@@ -309,7 +352,9 @@
          "type":"Power",
          "cost":"1",
          "description":"At the end of your turn, lose 1 HP and deal 5 (7) damage to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.2,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Dark Embrace",
@@ -319,7 +364,9 @@
          "type":"Power",
          "cost":"2 (1)",
          "description":"Whenever a card is Exhausted,\ndraw 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Disarm",
@@ -345,7 +392,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 5 (8) damage.\nIf the enemy has Vulnerable,\ngain [R] and\ndraw 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Dual Wield",
@@ -355,7 +404,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Choose an Attack or Power card. Add a (2) copy (copies) of that card into your hand.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.9,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Entrench",
@@ -365,7 +416,9 @@
          "type":"Skill",
          "cost":"2 (1)",
          "description":"Double your Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Evolve",
@@ -376,7 +429,8 @@
          "cost":"1",
          "description":"Whenever you draw a Status card, draw 1 (2) card (cards).",
          "mod":"Slay the Spire",
-         "upgradePowerMultiplier": 1.9,
+         "bias": 0.1,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Feel No Pain",
@@ -386,7 +440,9 @@
          "type":"Power",
          "cost":"1",
          "description":"Whenever a card is Exhausted,\ngain 3 (4) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.1,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Fire Breathing",
@@ -396,7 +452,9 @@
          "type":"Power",
          "cost":"1",
          "description":"Whenever you draw a Status or Curse card, deal 6 (10) damage to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.7,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"Flame Barrier",
@@ -406,7 +464,9 @@
          "type":"Skill",
          "cost":"2",
          "description":"Gain 12 (16) Block.\nWhenever you are attacked this turn, deal 4 (6) damage back.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.8,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Ghostly Armor",
@@ -416,7 +476,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Ethereal.\nGain 10 (13) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.7,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Hemokinesis",
@@ -439,7 +501,11 @@
          "cost":"1 (0)",
          "description":"Add a random Attack into your hand.\nIt costs 0 this turn.\nExhaust.",
          "mod":"Slay the Spire",
+         "bias": -0.5,
          "upgradePowerMultiplier": 1.25,
+         "tags": {
+            "damage": 10,
+         }
       },
       {
          "id":"Inflame",
@@ -461,7 +527,9 @@
          "type":"Skill",
          "cost":"0",
          "description":"Apply 1 (2) Weak to ALL enemies.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Metallicize",
@@ -471,7 +539,9 @@
          "type":"Power",
          "cost":"1",
          "description":"At the end of your turn, gain 3 (4) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Power Through",
@@ -481,7 +551,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Add 2 Wounds into your hand.\nGain 15 (20) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.2,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Pummel",
@@ -491,7 +563,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 2 damage 4 (5) times.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Rage",
@@ -501,7 +575,9 @@
          "type":"Skill",
          "cost":"0",
          "description":"Whenever you play an Attack this turn, gain 3 (5) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.7,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Rampage",
@@ -511,7 +587,9 @@
          "type":"Attack",
          "cost":"1",
          "description":"Deal 8 damage.\nIncrease this card's damage by 5 (8) this combat.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.2,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Reckless Charge",
@@ -522,6 +600,7 @@
          "cost":"0",
          "description":"Deal 7 (10) damage.\nShuffle a Dazed into your draw pile.",
          "mod":"Slay the Spire",
+         "bias": -0.5,
          "upgradePowerMultiplier": 1.5,
       },
       {
@@ -532,7 +611,9 @@
          "type":"Power",
          "cost":"1",
          "description":"Whenever you lose HP from a card,\ngain 1 (2) Strength.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.9,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Searing Blow",
@@ -542,7 +623,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 12 (16) (21) (27) (34) (42) (51) (61) (72) (84) damage.\nCan be Upgraded any number of times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Second Wind",
@@ -553,7 +636,7 @@
          "cost":"1",
          "description":"Exhaust all non-Attack cards in your hand. Gain 5 (7) Block for each card Exhausted.",
          "mod":"Slay the Spire",
-         "bias": 0.5,
+         "bias": 1.3,
          "upgradePowerMultiplier": 1.4,
       },
       {
@@ -564,7 +647,9 @@
          "type":"Skill",
          "cost":"1 (0)",
          "description":"Gain [R] [R].\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Sentinel",
@@ -574,7 +659,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Gain 5 (8) Block.\nIf this card is Exhausted,\ngain [R] [R] ([R]).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.6,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"Sever Soul",
@@ -585,7 +672,8 @@
          "cost":"2",
          "description":"Exhaust all non-Attack cards in your hand.\nDeal 16 (22) damage.",
          "mod":"Slay the Spire",
-         "bias": -3,
+         "bias": -0.8,
+         "upgradePowerMultiplier": 1.1,
       },
       {
          "id":"Shockwave",
@@ -596,7 +684,7 @@
          "cost":"2",
          "description":"Apply 3 (5) Weak and Vulnerable to ALL enemies.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 3.0,
+         "bias": 3.5,
          "upgradePowerMultiplier": 1.5,
          "tags": {
             "NonPermanent": 1,
@@ -610,7 +698,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"If the enemy intends to attack, gain 3 (4) Strength.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Uppercut",
@@ -620,7 +710,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 13 damage.\nApply 1 (2) Weak.\nApply 1 (2) Vulnerable.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Whirlwind",
@@ -630,7 +722,9 @@
          "type":"Attack",
          "cost":"X",
          "description":"Deal 5 (8) damage to ALL enemies X times.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Barricade",
@@ -641,7 +735,8 @@
          "cost":"3 (2)",
          "description":"Block is not removed at the start of your turn.",
          "mod":"Slay the Spire",
-         "upgradePowerMultiplier": 1.2,
+         "bias": 1.3,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Berserk",
@@ -651,7 +746,9 @@
          "type":"Power",
          "cost":"0",
          "description":"Gain 2 (1) Vulnerable.\nAt the start of your turn, gain [R].",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Bludgeon",
@@ -662,6 +759,7 @@
          "cost":"3",
          "description":"Deal 32 (42) damage.",
          "mod":"Slay the Spire",
+         "bias": 0.3,
          "upgradePowerMultiplier": 1.3,
       },
       {
@@ -673,7 +771,8 @@
          "cost":"0",
          "description":" (Innate.)\nAt the start of your turn, lose 1 HP and draw 1 card.",
          "mod":"Slay the Spire",
-         "upgradePowerMultiplier": 0.8,
+         "bias": 1.1,
+         "upgradePowerMultiplier": 1.1,
       },
       {
          "id":"Corruption",
@@ -683,7 +782,9 @@
          "type":"Power",
          "cost":"3 (2)",
          "description":"Skills cost 0.\nWhenever you play a Skill, Exhaust it.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Demon Form",
@@ -693,7 +794,9 @@
          "type":"Power",
          "cost":"3",
          "description":"At the start of your turn, gain 2 (3) Strength.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.8,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Double Tap",
@@ -703,7 +806,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"This turn, your next Attack (2) is (Attacks)  (are) played twice.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Exhume",
@@ -713,7 +818,9 @@
          "type":"Skill",
          "cost":"1 (0)",
          "description":"Put a card from your exhaust pile into your hand.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Feed",
@@ -724,8 +831,8 @@
          "cost":"1",
          "description":"Deal 10 (12) damage.\nIf Fatal, raise your Max HP by 3 (4). Exhaust.",
          "mod":"Slay the Spire",
-         "bias": 2.5,
-         "upgradePowerMultiplier": 1.5,
+         "bias": 4.5,
+         "upgradePowerMultiplier": 1.9,
       },
       {
          "id":"Fiend Fire",
@@ -735,7 +842,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Exhaust your hand.\nDeal 7 (10) damage for each card Exhausted.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.2,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"Immolate",
@@ -746,7 +855,8 @@
          "cost":"2",
          "description":"Deal 21 (28) damage to ALL enemies.\nAdd a Burn into your discard pile.",
          "mod":"Slay the Spire",
-         "bias": 6,
+         "bias": 4.1,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Impervious",
@@ -757,7 +867,7 @@
          "cost":"2",
          "description":"Gain 30 (40) Block.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 1.5,
+         "bias": 3.8,
          "tags": {
             "NonPermanent": 1,
          },
@@ -771,7 +881,9 @@
          "type":"Power",
          "cost":"2",
          "description":"Whenever you gain Block, deal 5 (7) damage to a random enemy.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Limit Break",
@@ -781,7 +893,9 @@
          "type":"Skill",
          "cost":"1",
          "description":"Double your Strength.\n~~- Exhaust. -~~ ",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
+         "upgradePowerMultiplier": 1.25,
       },
       {
          "id":"Offering",
@@ -792,7 +906,8 @@
          "cost":"0",
          "description":"Lose 6 HP.\nGain [R] [R].\nDraw 3 (5) cards.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 2,
+         "bias": 4,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Reaper",
@@ -802,7 +917,9 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 4 (5) damage to ALL enemies. Heal HP equal to unblocked damage.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.7,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Defend_G",
