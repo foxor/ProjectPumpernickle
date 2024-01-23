@@ -84,17 +84,20 @@ namespace ProjectPumpernickle {
         EVENT_END,
         SkillIntoNob,
         PickedNeededCard,
+        WingedBootsCharges,
+        WingedBootsFlexibility,
         COUNT,
     }
     public class Evaluation {
         public static readonly float MAX_ACCEPTABLE_RISK = .8f;
         public static readonly float MIN_ACCEPTABLE_RISK = .05f;
 
+        [ThreadStatic]
         public static Evaluation Active;
         public float[] Scores = new float[(byte)ScoreReason.COUNT];
         public List<string> Advice = new List<string>();
         public Path Path = null;
-        public float Likelihood;
+        public float Likelihood = 1f;
         public float WorstCaseRewardFactor;
         public float AverageCaseRewardFactor;
         public int BonusCardRewards;
@@ -105,10 +108,10 @@ namespace ProjectPumpernickle {
 
         protected bool hasDescribedPathing;
 
-        public Evaluation(RewardContext context = null, int Id = -1) {
+        public Evaluation(RewardContext context = null, int Id = -1, int RewardIndex = -1) {
             Active = this;
             this.Id = Id;
-            RewardIndex = RewardContext.ActiveRewardIndex;
+            this.RewardIndex = RewardIndex;
 
             if (context != null) {
                 Advice = context.description.ToList();
@@ -123,11 +126,8 @@ namespace ProjectPumpernickle {
             Save.state.buildingInfinite = Save.state.expectingToRedBlue;
             Save.state.huntingCards.Clear();
         }
-        public void SetPath(Path path, int startingCardRewards = 0) {
+        public void SetPath(Path path, int startingCardRewards) {
             Path = path;
-            if (path == null) {
-                Path = Path.BuildPath(new MapNode[0], new FireChoice[0], -1);
-            }
             Path.ExplorePath(startingCardRewards);
         }
         public void MergeScoreWithOffRamp() {
@@ -184,7 +184,7 @@ namespace ProjectPumpernickle {
         }
         public void DescribePathing() {
             var i = 0;
-            var currentNode = PumpernickelSaveState.instance.GetCurrentNode();
+            var currentNode = Save.state.GetCurrentNode();
             // Something about this caused off-map pathing when neow gave a random rare card?
             while (!NeedsMoreInfo && Path.remainingFloors > i) {
                 var nodeType = Path.nodeTypes[i];

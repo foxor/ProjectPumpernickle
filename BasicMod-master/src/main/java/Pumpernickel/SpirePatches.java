@@ -6,6 +6,7 @@ import com.evacipated.cardcrawl.modthespire.lib.LineFinder;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
+import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.CardSave;
@@ -13,12 +14,14 @@ import com.megacrit.cardcrawl.cards.blue.Loop;
 import com.megacrit.cardcrawl.cards.green.Eviscerate;
 import com.megacrit.cardcrawl.cards.purple.Blasphemy;
 import com.megacrit.cardcrawl.cards.red.Anger;
+import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.dungeons.Exordium;
 import com.megacrit.cardcrawl.events.beyond.MindBloom;
 import com.megacrit.cardcrawl.events.city.TheLibrary;
+import com.megacrit.cardcrawl.events.exordium.ScrapOoze;
 import com.megacrit.cardcrawl.events.shrines.Designer;
 import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
@@ -339,6 +342,36 @@ public class SpirePatches {
         catch (Exception e) {
         }
     }
+    public static void oozeClick() {
+        try {
+            Socket clientSocket = new Socket("localhost", 13076);
+            DataOutputStream outToServer =
+                    new DataOutputStream(clientSocket.getOutputStream());
+            outToServer.write("Ooze\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.flush();
+            clientSocket.close();
+        }
+        catch (Exception e) {
+        }
+    }
+    public static void obtainRelic(AbstractRelic relic) {
+        try {
+            Socket clientSocket = new Socket("localhost", 13076);
+            DataOutputStream outToServer =
+                    new DataOutputStream(clientSocket.getOutputStream());
+            outToServer.write("Reward\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write("false\n".getBytes(StandardCharsets.UTF_8)); // Are we expecting a fight to have just ended
+            outToServer.write(("Relic\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write((relic.relicId + "\n").getBytes(StandardCharsets.UTF_8));
+            outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+            outToServer.flush();
+            clientSocket.close();
+        }
+        catch (Exception e) {
+        }
+    }
     // Recompute after generating a card reward
     @SpirePatch( clz = CombatRewardScreen.class, method = "setupItemReward" )
     public static class AbstractDungeonGetRewardCardsPatch {
@@ -372,5 +405,13 @@ public class SpirePatches {
     @SpirePatch(clz = CardHelper.class, method = "obtain", paramtypez = { String.class, AbstractCard.CardRarity.class, AbstractCard.CardColor.class })
     public static class OnCardAddedPatch {
         @SpirePostfixPatch public static void Postfix() { genericUpdate(); }
+    }
+    @SpirePatch(clz = ScrapOoze.class, method = "buttonEffect", paramtypez = { int.class })
+    public static class OnOozeClickPatch {
+        @SpirePrefixPatch public static void Postfix() { oozeClick(); }
+    }
+    @SpirePatch(clz = AbstractRoom.class, method = "spawnRelicAndObtain", paramtypez = { float.class, float.class, AbstractRelic.class })
+    public static class OnGainRelicPatch {
+        @SpirePrefixPatch public static void Postfix(AbstractRoom __instance, float x, float y, AbstractRelic relic) { obtainRelic(relic); }
     }
 }

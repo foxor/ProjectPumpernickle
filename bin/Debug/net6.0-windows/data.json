@@ -4318,7 +4318,8 @@
          "pool":"Red",
          "description":"At the end of combat, heal 6 HP.",
          "flavorText":"Your body's own blood burns with an undying rage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.5,
       },
       {
          "id":"Cracked Core",
@@ -4327,7 +4328,8 @@
          "pool":"Blue",
          "description":"At the start of each combat, Channel 1 Lightning.",
          "flavorText":"The mysterious life force which powers the Automatons within the Spire. It appears to be cracked.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.1,
       },
       {
          "id":"PureWater",
@@ -4336,7 +4338,8 @@
          "pool":"Purple",
          "description":"At the start of each combat, add a Miracle into your hand.",
          "flavorText":"Filtered through fine sand and free of impurities.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
       },
       {
          "id":"Ring of the Snake",
@@ -4346,7 +4349,7 @@
          "description":"At the start of each combat, draw 2 additional cards.",
          "flavorText":"Made from a fossilized snake. Represents great skill as a huntress.",
          "mod":"Slay the Spire",
-         "bias": 3,
+         "bias": 5.2,
       },
       {
          "id":"Akabeko",
@@ -4355,7 +4358,8 @@
          "pool":"",
          "description":"Your first Attack each combat deals 8 additional damage.",
          "flavorText":"\"Muuu~\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2,
       },
       {
          "id":"Anchor",
@@ -4364,7 +4368,8 @@
          "pool":"",
          "description":"Start each combat with 10 Block.",
          "flavorText":"Holding this miniature trinket, you feel heavier and more stable.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.8,
       },
       {
          "id":"Ancient Tea Set",
@@ -4373,7 +4378,8 @@
          "pool":"",
          "description":"Whenever you enter a Rest Site, start the next combat with [E] [E] .",
          "flavorText":"The key to a refreshing night's rest.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.2,
       },
       {
          "id":"Art of War",
@@ -4382,7 +4388,8 @@
          "pool":"",
          "description":"If you do not play any Attacks during your turn, gain an additional [E] next turn.",
          "flavorText":"This ancient manuscript contains wisdom from a past age.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.9,
       },
       {
          "id":"Bag of Marbles",
@@ -4391,7 +4398,8 @@
          "pool":"",
          "description":"At the start of each combat, apply 1 Vulnerable to ALL enemies.",
          "flavorText":"A once popular toy in the City. Useful for throwing enemies off balance.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4,
       },
       {
          "id":"Bag of Preparation",
@@ -4400,7 +4408,8 @@
          "pool":"",
          "description":"At the start of each combat, draw 2 additional cards.",
          "flavorText":"Oversized adventurer's pack. Has many pockets and straps.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.2,
       },
       {
          "id":"Blood Vial",
@@ -4409,7 +4418,8 @@
          "pool":"",
          "description":"At the start of each combat, heal 2 HP.",
          "flavorText":"A vial containing the blood of a pure and elder vampire.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3,
       },
       {
          "id":"Bronze Scales",
@@ -4418,7 +4428,8 @@
          "pool":"",
          "description":"Start each combat with 3 Thorns.",
          "flavorText":"The sharp scales of the Guardian. Rearranges itself to protect its user.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Centennial Puzzle",
@@ -4427,7 +4438,8 @@
          "pool":"",
          "description":"The first time you lose HP each combat, draw 3 cards.",
          "flavorText":"Upon solving the puzzle, you feel a powerful warmth in your chest.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.2,
       },
       {
          "id":"CeramicFish",
@@ -4436,7 +4448,8 @@
          "pool":"",
          "description":"Whenever you add a card to your deck, gain 9 Gold.",
          "flavorText":"Meticulously painted, these fish were revered to bring great fortune.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Damaru",
@@ -4445,7 +4458,8 @@
          "pool":"Purple",
          "description":"At the start of your turn, gain 1 Mantra.",
          "flavorText":"The sound of the small drum keeps your mind awake, revealing a path forward.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"DataDisk",
@@ -4454,7 +4468,8 @@
          "pool":"Blue",
          "description":"Start each combat with 1 Focus.",
          "flavorText":"This disk contains precious data on birds and snakes.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.9,
       },
       {
          "id":"Dream Catcher",
@@ -4463,7 +4478,8 @@
          "pool":"",
          "description":"Whenever you Rest, you may add a card into your deck.",
          "flavorText":"The northern tribes would often use dream catchers at night, believing they led to self improvement.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Happy Flower",
@@ -4472,7 +4488,8 @@
          "pool":"",
          "description":"Every 3 turns, gain [E] .",
          "flavorText":"This unceasingly joyous plant is a popular novelty item among nobles.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"Juzu Bracelet",
@@ -4481,7 +4498,8 @@
          "pool":"",
          "description":"Normal enemy combats are no longer encountered in ? rooms.",
          "flavorText":"A ward against the unknown.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Lantern",
@@ -4490,7 +4508,8 @@
          "pool":"",
          "description":"Start each combat with an additional [E] .",
          "flavorText":"An eerie lantern which illuminates only for the wielder.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.7,
       },
       {
          "id":"MawBank",
@@ -4499,7 +4518,8 @@
          "pool":"",
          "description":"Whenever you climb a floor, gain 12 Gold. No longer works when you spend any Gold at a shop.",
          "flavorText":"Surprisingly popular, despite maw attacks being a regular occurrence.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3,
       },
       {
          "id":"MealTicket",
@@ -4508,7 +4528,8 @@
          "pool":"",
          "description":"Whenever you enter a shop, heal 15 HP.",
          "flavorText":"\"Complimentary meatballs with every visit!\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.8,
       },
       {
          "id":"Nunchaku",
@@ -4517,7 +4538,8 @@
          "pool":"",
          "description":"Every time you play 10 Attacks, gain [E] .",
          "flavorText":"A good training tool. Improves the posture and agility of the wielder.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"Oddly Smooth Stone",
@@ -4526,7 +4548,8 @@
          "pool":"",
          "description":"Start each combat with 1 Dexterity.",
          "flavorText":"You have never seen something so smooth and pristine. This must be the work of the Ancients.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.8,
       },
       {
          "id":"Omamori",
@@ -4535,7 +4558,8 @@
          "pool":"",
          "description":"Negate the next 2 Curses you obtain.",
          "flavorText":"A common charm for staving off vile spirits. This one seems to possess a spark of divine energy.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
       },
       {
          "id":"Orichalcum",
@@ -4554,7 +4578,8 @@
          "pool":"",
          "description":"Every 10th Attack you play deals double damage.",
          "flavorText":"Holding the nib, you can see everyone ever slain by a previous owner of the pen. A violent history.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
       },
       {
          "id":"Potion Belt",
@@ -4563,7 +4588,8 @@
          "pool":"",
          "description":"Upon pickup, gain 2 Potion slots.",
          "flavorText":"I can hold more Potions using this belt!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"PreservedInsect",
@@ -4572,7 +4598,8 @@
          "pool":"",
          "description":"Enemies in Elite combats have 25% less HP.",
          "flavorText":"The insect seems to create a shrinking aura that targets particularly large enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.2,
       },
       {
          "id":"Red Skull",
@@ -4581,7 +4608,8 @@
          "pool":"Red",
          "description":"While your HP is at or below 50%, you have 3 additional Strength.",
          "flavorText":"A small skull covered in ornamental paint.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.7,
       },
       {
          "id":"Regal Pillow",
@@ -4591,7 +4619,7 @@
          "description":"Whenever you Rest, heal an additional 15 HP.",
          "flavorText":"Now you can get a proper night's rest.",
          "mod":"Slay the Spire",
-         "bias": 0.08,
+         "bias": 0.3,
       },
       {
          "id":"Smiling Mask",
@@ -4600,7 +4628,8 @@
          "pool":"",
          "description":"The Merchant's card removal service now always costs 50 Gold.",
          "flavorText":"Mask worn by the Merchant. He must have spares...",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.8,
       },
       {
          "id":"Snake Skull",
@@ -4609,7 +4638,8 @@
          "pool":"Green",
          "description":"Whenever you apply Poison, apply an additional 1 Poison.",
          "flavorText":"A snecko skull in pristine condition. Mysteriously clean and smooth, dirt and grime fall off inexplicably.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.6,
       },
       {
          "id":"Strawberry",
@@ -4618,7 +4648,8 @@
          "pool":"",
          "description":"Upon pickup, raise your Max HP by 7.",
          "flavorText":"\"Delicious! Haven't seen any of these since the blight.\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Boot",
@@ -4627,7 +4658,8 @@
          "pool":"",
          "description":"Whenever you would deal 4 or less unblocked attack damage, increase it to 5.",
          "flavorText":"When wound up, the boot grows larger in size.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Tiny Chest",
@@ -4636,7 +4668,8 @@
          "pool":"",
          "description":"Every 4th ? room is a Treasure room.",
          "flavorText":"\"A fine prototype.\" - The Architect",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Toy Ornithopter",
@@ -4645,7 +4678,8 @@
          "pool":"",
          "description":"Whenever you use a potion, heal 5 HP.",
          "flavorText":"\"This little toy is the perfect companion for the lone adventurer!\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.7,
       },
       {
          "id":"Vajra",
@@ -4654,7 +4688,8 @@
          "pool":"",
          "description":"Start each combat with 1 Strength.",
          "flavorText":"An ornamental relic given to warriors displaying glory in battle.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.4,
       },
       {
          "id":"War Paint",
@@ -4663,7 +4698,8 @@
          "pool":"",
          "description":"Upon pickup, Upgrade 2 random Skills.",
          "flavorText":"In the past, Ironclads would create wards using enchanted war paint before charging into battle.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.1,
       },
       {
          "id":"Whetstone",
@@ -4672,7 +4708,8 @@
          "pool":"",
          "description":"Upon pickup, Upgrade 2 random Attacks.",
          "flavorText":"\"Flesh never beats steel.\" - Kublai the Great",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.7,
       },
       {
          "id":"Blue Candle",
@@ -4681,7 +4718,8 @@
          "pool":"",
          "description":"Unplayable Curse cards can now be played.\nWhenever you play a Curse, lose 1 HP and Exhaust it.",
          "flavorText":"The flame ignites when shrouded in darkness.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0,
       },
       {
          "id":"Bottled Flame",
@@ -4690,7 +4728,8 @@
          "pool":"",
          "description":"Upon pickup, choose an Attack. Start each combat with this card in your hand.",
          "flavorText":"Inside the bottle resides a flame that eternally burns.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
       },
       {
          "id":"Bottled Lightning",
@@ -4699,7 +4738,8 @@
          "pool":"",
          "description":"Upon pickup, choose a Skill. Start each combat with this card in your hand.",
          "flavorText":"Peering into the swirling maelstrom, you see a part of yourself staring back.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Bottled Tornado",
@@ -4708,7 +4748,8 @@
          "pool":"",
          "description":"Upon pickup, choose a Power card. Start each combat with this card in your hand.",
          "flavorText":"The bottle gently hums and whirs.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Darkstone Periapt",
@@ -4717,7 +4758,8 @@
          "pool":"",
          "description":"Whenever you obtain a Curse, increase your Max HP by 6.",
          "flavorText":"The stone draws power from dark energy, converting it into vitality for the wearer.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Yang",
@@ -4726,7 +4768,8 @@
          "pool":"Purple",
          "description":"Whenever you play an Attack, gain 1 temporary Dexterity.",
          "flavorText":"\"And the sun was extinguished forever, as if curtains fell before it.\" - Zoroth",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.9,
       },
       {
          "id":"Eternal Feather",
@@ -4735,7 +4778,8 @@
          "pool":"",
          "description":"For every 5 cards in your deck, heal 3 HP whenever you enter a Rest Site.",
          "flavorText":"This feather appears to be completely indestructible. What bird does this possibly come from?",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.5,
       },
       {
          "id":"Frozen Egg 2",
@@ -4744,7 +4788,8 @@
          "pool":"",
          "description":"Whenever you add a Power card into your deck, Upgrade it.",
          "flavorText":"The egg lies inert and frozen, never to hatch.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4,
       },
       {
          "id":"Cables",
@@ -4753,7 +4798,8 @@
          "pool":"Blue",
          "description":"Your rightmost Orb triggers its passive an additional time.",
          "flavorText":"\"Interesting! Even automatons are affected by placebo.\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.4,
       },
       {
          "id":"Gremlin Horn",
@@ -4762,7 +4808,8 @@
          "pool":"",
          "description":"Whenever an enemy dies, gain [E] and draw 1 card.",
          "flavorText":"\"Gremlin Nobs are capable of growing until the day they die. Remarkable.\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.8,
       },
       {
          "id":"HornCleat",
@@ -4771,7 +4818,8 @@
          "pool":"",
          "description":"At the start of your 2nd turn, gain 14 Block.",
          "flavorText":"Pleasant to hold in the hand. What was it for?",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.1,
       },
       {
          "id":"InkBottle",
@@ -4780,7 +4828,8 @@
          "pool":"",
          "description":"Whenever you play 10 cards, draw 1 card.",
          "flavorText":"Once exhausted, appears to refill itself in a different color.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.8,
       },
       {
          "id":"Kunai",
@@ -4789,7 +4838,8 @@
          "pool":"",
          "description":"Every time you play 3 Attacks in a single turn, gain 1 Dexterity.",
          "flavorText":"A blade favored by assassins for its lethality at range.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.5,
       },
       {
          "id":"Letter Opener",
@@ -4798,7 +4848,8 @@
          "pool":"",
          "description":"Every time you play 3 Skills in a single turn, deal 5 damage to ALL enemies.",
          "flavorText":"Unnaturally sharp.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.0,
       },
       {
          "id":"Matryoshka",
@@ -4807,7 +4858,8 @@
          "pool":"",
          "description":"The next 2 non-Boss chests you open contain 2 Relics.",
          "flavorText":"A stackable set of painted dolls. The paint depicts an unknown bird with white eyes and blue feathers.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Meat on the Bone",
@@ -4816,7 +4868,8 @@
          "pool":"",
          "description":"If your HP is at or below 50% at the end of combat, heal 12 HP.",
          "flavorText":"The meat keeps replenishing, never seeming to fully run out.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 7.1,
       },
       {
          "id":"Mercury Hourglass",
@@ -4825,7 +4878,8 @@
          "pool":"",
          "description":"At the start of your turn, deal 3 damage to ALL enemies.",
          "flavorText":"An enchanted hourglass that endlessly drips.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.7,
       },
       {
          "id":"Molten Egg 2",
@@ -4834,7 +4888,8 @@
          "pool":"",
          "description":"Whenever you add an Attack into your deck, Upgrade it.",
          "flavorText":"The egg of a Phoenix. It glows red hot with a simmering lava.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.3,
       },
       {
          "id":"Mummified Hand",
@@ -4843,7 +4898,8 @@
          "pool":"",
          "description":"Whenever you play a Power card, a random card in your hand costs 0 that turn.",
          "flavorText":"Frequently twitches, especially when your pulse is high.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 8.6,
       },
       {
          "id":"Ninja Scroll",
@@ -4852,7 +4908,8 @@
          "pool":"Green",
          "description":"At the start of each combat, add 3 Shivs into your hand.",
          "flavorText":"Contains the secrets of assassination.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Ornamental Fan",
@@ -4861,7 +4918,8 @@
          "pool":"",
          "description":"Every time you play 3 Attacks in a single turn, gain 4 Block.",
          "flavorText":"The fan seems to extend and harden as blood is spilled.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.8,
       },
       {
          "id":"Pantograph",
@@ -4870,7 +4928,8 @@
          "pool":"",
          "description":"At the start of Boss combats, heal 25 HP.",
          "flavorText":"\"Solid foundations are not accidental. Tools for planning are a must.\" - The Architect",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 9.1,
       },
       {
          "id":"Paper Crane",
@@ -4879,7 +4938,8 @@
          "pool":"Green",
          "description":"Enemies with Weak deal 40% less damage rather than 25%.",
          "flavorText":"An origami of a creature from a past age.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.8,
       },
       {
          "id":"Paper Frog",
@@ -4888,7 +4948,8 @@
          "pool":"Red",
          "description":"Enemies with Vulnerable take 75% more damage rather than 50%.",
          "flavorText":"The paper continually folds and unfolds itself into the shape of a small creature.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.7,
       },
       {
          "id":"Pear",
@@ -4897,7 +4958,8 @@
          "pool":"",
          "description":"Upon pickup, raise your Max HP by 10.",
          "flavorText":"A common fruit before the Spireblight.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
       },
       {
          "id":"Question Card",
@@ -4906,7 +4968,8 @@
          "pool":"",
          "description":"Future card rewards have 1 additional card to choose from.",
          "flavorText":"\"Those with more choices minimize the downside to chaos.\" - Kublai the Great",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
       },
       {
          "id":"Self Forming Clay",
@@ -4915,7 +4978,8 @@
          "pool":"Red",
          "description":"Whenever you lose HP, gain 3 Block next turn.",
          "flavorText":"\"Most curious! It appears to form itself loosely on my thoughts! Tele-clay?\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.0,
       },
       {
          "id":"Shuriken",
@@ -4924,7 +4988,8 @@
          "pool":"",
          "description":"Every time you play 3 Attacks in a single turn, gain 1 Strength.",
          "flavorText":"Lightweight throwing weapons. Recommend going for the eyes.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.9,
       },
       {
          "id":"Singing Bowl",
@@ -4934,7 +4999,7 @@
          "description":"When adding cards into your deck, you may raise your Max HP by 2 instead.",
          "flavorText":"This well-used artifact rings out with a beautiful melody when struck.",
          "mod":"Slay the Spire",
-         "bias": 1,
+         "bias": 4.2,
       },
       {
          "id":"StrikeDummy",
@@ -4943,7 +5008,8 @@
          "pool":"",
          "description":"Cards containing \"Strike\" deal 3 additional damage.",
          "flavorText":"It's beat up.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.2,
       },
       {
          "id":"Sundial",
@@ -4953,7 +5019,7 @@
          "description":"Every 3 times you shuffle your draw pile, gain [E] [E] .",
          "flavorText":"\"Early man's foolish obsession with time caused them to look to the sky for guidance, hoping for something permanent.\" - Zoroth",
          "mod":"Slay the Spire",
-         "bias": 2,
+         "bias": 7.9,
       },
       {
          "id":"Symbiotic Virus",
@@ -4962,7 +5028,8 @@
          "pool":"Blue",
          "description":"At the start of each combat, Channel 1 Dark.",
          "flavorText":"A little bit of bad can do a lot of good...",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.1,
       },
       {
          "id":"TeardropLocket",
@@ -4971,7 +5038,8 @@
          "pool":"Purple",
          "description":"Start each combat in Calm.",
          "flavorText":"Its owner blind, its contents unseen.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.6,
       },
       {
          "id":"The Courier",
@@ -4980,7 +5048,8 @@
          "pool":"",
          "description":"The Merchant restocks cards, relics, and potions. All prices are reduced by 20%.",
          "flavorText":"The Merchant's personal pet!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Toxic Egg 2",
@@ -4989,7 +5058,8 @@
          "pool":"",
          "description":"Whenever you add a Skill into your deck, Upgrade it.",
          "flavorText":"\"What a marvelous discovery! This appears to be the inert egg of some magical creature. Who or what created this?\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.8,
       },
       {
          "id":"White Beast Statue",
@@ -4998,7 +5068,8 @@
          "pool":"",
          "description":"Potions always appear in combat rewards.",
          "flavorText":"A small white statue of a creature you have never seen before.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.6,
       },
       {
          "id":"Bird Faced Urn",
@@ -5007,7 +5078,8 @@
          "pool":"",
          "description":"Whenever you play a Power card, heal 2 HP.",
          "flavorText":"This urn shows the crow god Mazaleth looking mischievous.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"Calipers",
@@ -5016,7 +5088,8 @@
          "pool":"",
          "description":"At the start of your turn, lose 15 Block rather than all of your Block.",
          "flavorText":"\"Mechanical precision leads to greatness\" - The Architect",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.7,
       },
       {
          "id":"CaptainsWheel",
@@ -5025,7 +5098,8 @@
          "pool":"",
          "description":"At the start of your 3rd turn, gain 18 Block.",
          "flavorText":"Wooden trinket carved with delicate precision. A name is carved into it but the language is foreign.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.1,
       },
       {
          "id":"Champion Belt",
@@ -5034,7 +5108,8 @@
          "pool":"Red",
          "description":"Whenever you apply Vulnerable, apply 1 Weak.",
          "flavorText":"Only the greatest may wear this belt.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
       },
       {
          "id":"Charon's Ashes",
@@ -5043,7 +5118,8 @@
          "pool":"Red",
          "description":"Whenever you Exhaust a card, deal 3 damage to ALL enemies.",
          "flavorText":"Charon was said to be the god of rebirth, eternally dying and reviving in a burst of flame.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.7,
       },
       {
          "id":"CloakClasp",
@@ -5052,7 +5128,8 @@
          "pool":"Purple",
          "description":"At the end of your turn, gain 1 Block for each card in your hand.",
          "flavorText":"A simple but sturdy design.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.8,
       },
       {
          "id":"Dead Branch",
@@ -5061,7 +5138,8 @@
          "pool":"",
          "description":"Whenever you Exhaust a card, add a random card into your hand.",
          "flavorText":"The branch of a tree from a forgotten era.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.5,
       },
       {
          "id":"Du-Vu Doll",
@@ -5070,7 +5148,8 @@
          "pool":"",
          "description":"For each Curse in your deck, start each combat with 1 Strength.",
          "flavorText":"A doll devised to gain strength from malicious energy.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.6,
       },
       {
          "id":"Emotion Chip",
@@ -5079,7 +5158,8 @@
          "pool":"Blue",
          "description":"If you lost HP during the previous turn, trigger the passive ability of all Orbs at the start of your turn.",
          "flavorText":"...<3...?",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.7,
       },
       {
          "id":"FossilizedHelix",
@@ -5088,7 +5168,8 @@
          "pool":"",
          "description":"Prevent the first time you would lose HP each combat.",
          "flavorText":"Seemingly indestructible, you wonder what kind of creature this belonged to.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.8,
       },
       {
          "id":"Gambling Chip",
@@ -5097,7 +5178,8 @@
          "pool":"",
          "description":"At the start of each combat, discard any number of cards, then draw that many cards.",
          "flavorText":"You can see a small inscription on one side. It reads: \"Bear's Lucky Chip!\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 9.8,
       },
       {
          "id":"Ginger",
@@ -5106,7 +5188,8 @@
          "pool":"",
          "description":"You can no longer become Weakened.",
          "flavorText":"A potent tool in many tonics.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.1,
       },
       {
          "id":"Girya",
@@ -5115,7 +5198,8 @@
          "pool":"",
          "description":"You can now gain Strength at Rest Sites (up to 3 times).",
          "flavorText":"This Girya is unfathomably heavy. You could train with this to get significantly stronger.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 7.1,
       },
       {
          "id":"GoldenEye",
@@ -5124,7 +5208,8 @@
          "pool":"Purple",
          "description":"Whenever you Scry, Scry 2 additional cards.",
          "flavorText":"See into the minds of those nearby, predicting their future moves.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 7.6,
       },
       {
          "id":"Ice Cream",
@@ -5133,7 +5218,8 @@
          "pool":"",
          "description":"Energy is now conserved between turns.",
          "flavorText":"\"Delicious!\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.2,
       },
       {
          "id":"Incense Burner",
@@ -5142,7 +5228,8 @@
          "pool":"",
          "description":"Every 6 turns, gain 1 Intangible.",
          "flavorText":"The smoke imbues its owner with the spirit of the burned.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 10,
       },
       {
          "id":"Lizard Tail",
@@ -5151,7 +5238,8 @@
          "pool":"",
          "description":"When you would die, heal to 50% of your Max HP instead (works once).",
          "flavorText":"A fake tail to trick enemies during combat.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.8,
       },
       {
          "id":"Magic Flower",
@@ -5160,7 +5248,8 @@
          "pool":"Red",
          "description":"Healing is 50% more effective during combat.",
          "flavorText":"A flower long thought extinct, somehow preserved in perfect condition.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.5,
       },
       {
          "id":"Mango",
@@ -5169,7 +5258,8 @@
          "pool":"",
          "description":"Upon pickup, raise your Max HP by 14.",
          "flavorText":"The most coveted forgotten fruit. Impeccably preserved with no signs of Spireblight.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.1,
       },
       {
          "id":"Old Coin",
@@ -5178,7 +5268,8 @@
          "pool":"",
          "description":"Upon pickup, gain 300 Gold.",
          "flavorText":"Unique coins are highly valued by merchants for their historical value and rare metallic composition.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.9,
       },
       {
          "id":"Peace Pipe",
@@ -5187,7 +5278,8 @@
          "pool":"",
          "description":"You can now remove cards from your deck at Rest Sites.",
          "flavorText":"Clears the mind and cleanses the soul.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Pocketwatch",
@@ -5196,7 +5288,8 @@
          "pool":"",
          "description":"Whenever you play 3 or less cards during your turn, draw 3 additional cards at the start of your next turn.",
          "flavorText":"The hands seem stuck on the 3 o'clock position.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 7.3,
       },
       {
          "id":"Prayer Wheel",
@@ -5205,7 +5298,8 @@
          "pool":"",
          "description":"Normal enemies drop an additional card reward.",
          "flavorText":"The wheel continues to spin, never stopping.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.9,
       },
       {
          "id":"Shovel",
@@ -5214,7 +5308,8 @@
          "pool":"",
          "description":"You can now Dig for relics at Rest Sites.",
          "flavorText":"The Spire houses all number of relics from past civilizations and powerful adventurers lost to time. Time to go dig them up!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5,
       },
       {
          "id":"StoneCalendar",
@@ -5223,7 +5318,8 @@
          "pool":"",
          "description":"At the end of turn 7, deal 52 damage to ALL enemies.",
          "flavorText":"The passage of time is imperceptible in the Spire.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
       },
       {
          "id":"The Specimen",
@@ -5232,7 +5328,8 @@
          "pool":"Green",
          "description":"Whenever an enemy dies, transfer any Poison it has to a random enemy.",
          "flavorText":"\"Fascinating! I found a mutated creature demonstrating astounding toxic properties. Storing a sample for later examination.\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"Thread and Needle",
@@ -5241,7 +5338,8 @@
          "pool":"",
          "description":"Start each combat with 4 Plated Armor.",
          "flavorText":"Wrapping the magical thread around your body, you feel harder to the touch.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6,
       },
       {
          "id":"Tingsha",
@@ -5250,7 +5348,8 @@
          "pool":"Green",
          "description":"Whenever you discard a card during your turn, deal 3 damage to a random enemy.",
          "flavorText":"The sound this instrument generates seems to be capable of reverberating to painful levels of volume.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.2,
       },
       {
          "id":"Torii",
@@ -5259,7 +5358,8 @@
          "pool":"",
          "description":"Whenever you would receive 5 or less unblocked attack damage, reduce it to 1.",
          "flavorText":"Holding the small Torii, you feel a sense of calm and safety drift through your mind.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.8,
       },
       {
          "id":"Tough Bandages",
@@ -5268,7 +5368,8 @@
          "pool":"Green",
          "description":"Whenever you discard a card during your turn, gain 3 Block.",
          "flavorText":"Loss gives strength.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 7.3,
       },
       {
          "id":"TungstenRod",
@@ -5277,7 +5378,8 @@
          "pool":"",
          "description":"Whenever you would lose HP, lose 1 less.",
          "flavorText":"It's very very heavy.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.2,
       },
       {
          "id":"Turnip",
@@ -5286,7 +5388,8 @@
          "pool":"",
          "description":"You can no longer become Frail.",
          "flavorText":"Best with Ginger.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 8.1,
       },
       {
          "id":"Unceasing Top",
@@ -5295,7 +5398,8 @@
          "pool":"",
          "description":"Whenever you have no cards in hand during your turn, draw a card.",
          "flavorText":"The top continues to spin effortlessly as if you were in a dream.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"WingedGreaves",
@@ -5304,7 +5408,8 @@
          "pool":"",
          "description":"You may ignore paths when choosing the next room to travel to 3 times.",
          "flavorText":"Stylish.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.9,
       },
       {
          "id":"Bloody Idol",

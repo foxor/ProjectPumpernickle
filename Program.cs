@@ -29,8 +29,8 @@ namespace ProjectPumpernickle {
             var lastWritten = Directory.GetFiles(path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
             var writtenTime = File.GetLastWriteTime(lastWritten);
             ParseFile(lastWritten);
-            var loadedFloorNum = Save.state.floor_num;
-            var didFightThisFloor = Save.state.metric_damage_taken.Any(x => x.floor == floorNum);
+            var loadedFloorNum = PumpernickelSaveState.parsed.floor_num;
+            var didFightThisFloor = PumpernickelSaveState.parsed.metric_damage_taken.Any(x => x.floor == floorNum);
             if (loadedFloorNum != floorNum || (expectFightOver && !didFightThisFloor)) {
                 var waitStartTime = DateTime.Now;
                 while (true) {
@@ -122,14 +122,14 @@ namespace ProjectPumpernickle {
         }
 
         public static void GenerateMap() {
-            var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + Save.state!.seed);
+            var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + PumpernickelSaveState.parsed!.seed);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.CreateNoWindow = true;
             var proc = Process.Start(psi);
 
             var psr = proc!.StandardOutput;
-            PumpernickelSaveState.instance.ParsePath(psr.ReadToEnd());
+            PumpernickelSaveState.parsed.ParsePath(psr.ReadToEnd());
 
             proc.WaitForExit();
         }
@@ -147,5 +147,14 @@ public static class ExceptExtension {
 }
 
 public static class Save {
-    public static PumpernickelSaveState state => PumpernickelSaveState.instance;
+    public static PumpernickelSaveState state {
+        get {
+            if (PumpernickelSaveState.instance == null) {
+                return PumpernickelSaveState.parsed;
+            }
+            else {
+                return PumpernickelSaveState.instance;
+            }
+        }
+    }
 }

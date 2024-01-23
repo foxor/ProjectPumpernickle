@@ -34,7 +34,11 @@ namespace ProjectPumpernickle {
                 return func;
             }
             func = FunctionFactory(id);
-            cache.Add(id, func);
+            lock(cache) {
+                if (!cache.ContainsKey(id)) {
+                    cache.Add(id, func);
+                }
+            }
             return func;
         }
         public static string SanitizeId(string id) {

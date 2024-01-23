@@ -57,10 +57,10 @@ namespace ProjectPumpernickle {
         }
 
         public void UpdateAct() {
-            if (Save.state.act_num == 4) {
+            if (PumpernickelSaveState.parsed.act_num == 4) {
                 return;
             }
-            PathPreview.Text = PathTexts[Save.state.act_num - 1];
+            PathPreview.Text = PathTexts[PumpernickelSaveState.parsed.act_num - 1];
         }
 
         public static Vector2Int IndexToPosition(int index, out bool IsValid) {

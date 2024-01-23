@@ -42,6 +42,7 @@ namespace ProjectPumpernickle {
         RANDOM_UPGRADE,
         REMOVE_AND_UPGRADE,
         TWO_RANDOM_UPGRADES,
+        RELIC_CHANCE,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
@@ -96,7 +97,7 @@ namespace ProjectPumpernickle {
                 case "Neow": {
                     var seed = long.Parse(lines[1]);
                     if (Save.state == null) {
-                        PumpernickelSaveState.instance = new PumpernickelSaveState();
+                        PumpernickelSaveState.parsed = new PumpernickelSaveState();
                     }
                     Save.state.seed = seed;
                     Save.state.act_num = 1;
@@ -104,6 +105,10 @@ namespace ProjectPumpernickle {
                     Save.state.room_y = -1;
                     Program.GenerateMap();
                     ParseNeowMessage(lines.Skip(2));
+                    break;
+                }
+                case "Ooze": {
+                    PumpernickelAdviceWindow.instance.AdviceBox.Text = "Click " + --EventAdvice.SCRAP_OOZE_CLICKS_EXPECTED + " more times";
                     break;
                 }
                 default: {
@@ -169,7 +174,7 @@ namespace ProjectPumpernickle {
         protected static void ParseGreenKeyMessage(IEnumerable<string> floorCoordinate) {
             int x = int.Parse(floorCoordinate.First());
             int y = int.Parse(floorCoordinate.Skip(1).Single());
-            PumpernickelSaveState.instance.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
+            Save.state.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
         }
         protected static void ParseEventMessage(IEnumerable<string> eventArguments) {
             var javaClassPath = eventArguments.First();

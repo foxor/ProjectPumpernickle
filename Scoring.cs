@@ -24,21 +24,30 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public static void ApplyVariance(Evaluation[] evaluations, Evaluation preRewardScore) {
+        public static void ApplyVariance(Evaluation[] evaluations) {
             // Evaluations are projected optimistically
             // Normally, we want to punish overly optimistic evaluations,
             // however, if all the evaluations are risky, we want to pick 
             // evaluations that actually have a shot
-            var defaultChanceToSurvive = preRewardScore.Path.chanceToWin;
-            var defaultScore = preRewardScore.Score;
-            var availableSafetyFactor = defaultChanceToSurvive;
+            var highestLikelihood = evaluations.Select(x => x.Likelihood).Max();
+            var defaultEval = evaluations.Where(x => x.Likelihood == highestLikelihood).OrderByDescending(x => x.Score).First();
+            var defaultChanceToSurvive = defaultEval.Path.chanceToWin;
+            var defaultScore = defaultEval.Score;
+            var availableSafetyFactor = MathF.Pow(defaultChanceToSurvive, 2f);
             foreach (var evaluation in evaluations) {
-                var worstCaseEstimatedScore = Lerp.FromUncapped(defaultScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
-                var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
-                if (evaluation.Likelihood != 0f) {
-                    // best case value proportion is bestValue / bestValue
-                    var failureProportion = Lerp.Inverse(evaluation.WorstCaseRewardFactor, 1f, evaluation.AverageCaseRewardFactor);
-                    var variancePenalty = maxScoreLoss * failureProportion * availableSafetyFactor;
+                if (evaluation.Likelihood != 1f) {
+                    // Our current score is proportional to the best case reward
+                    // The goal here is to interpolate towards a more average result
+                    // We took a sample of the probability distribution when we allocated the rewards
+                    // We will assume that the score probability distribution is similarly shaped
+                    var worstCaseEstimatedScore = Lerp.FromUncapped(defaultScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
+                    var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
+
+                    var replacementProposition = evaluation.AverageCaseRewardFactor * (1f - availableSafetyFactor);
+                    // best case value proportion is bestValue / bestValue => 1
+                    var failureProportion = 1f - Lerp.Inverse(evaluation.WorstCaseRewardFactor, 1f, replacementProposition);
+                    var variancePenalty = maxScoreLoss * failureProportion * (1f - evaluation.Likelihood);
+                    
                     evaluation.AddScore(ScoreReason.Variance, variancePenalty);
                     evaluation.NeedsMoreInfo = true;
                 }
@@ -66,6 +75,7 @@ namespace ProjectPumpernickle {
             evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.PercentAllGreen(evaluation));
 
             var expectedRelics = path.expectedRewardRelics[floorsTillEndOfAct];
+            // Should we take an average?
             evaluation.AddScore(ScoreReason.RelicCount, expectedRelics);
 
             var expectedCardRewards = path.expectedCardRewards[floorsTillEndOfAct];
@@ -82,6 +92,11 @@ namespace ProjectPumpernickle {
             // This does incorporate future act points, because otherwise we might misbehave
             var goldBrought = path.ExpectedGoldBroughtToShops();
             evaluation.AddScore(ScoreReason.BringGoldToShop, goldBrought.Select(PointsForShop).Sum());
+
+            var wingedBootChargesLeft = Math.Max(Evaluators.WingedBootsChargesLeft(), 0) - path.jumps;
+            var actsLeft = Math.Max(3 - Save.state.act_num, 0);
+            evaluation.AddScore(ScoreReason.WingedBootsCharges, wingedBootChargesLeft * actsLeft * 0.03f);
+            evaluation.AddScore(ScoreReason.WingedBootsFlexibility, (wingedBootChargesLeft * actsLeft >= 1) ? 1.5f : 0f);
 
             path.AddEventScore(evaluation);
 
@@ -101,13 +116,13 @@ namespace ProjectPumpernickle {
             }
         }
         public static void Score(Evaluation evaluation) {
-            for (int i = 0; i < PumpernickelSaveState.instance.cards.Count; i++) {
-                var card = PumpernickelSaveState.instance.cards[i];
+            for (int i = 0; i < Save.state.cards.Count; i++) {
+                var card = Save.state.cards[i];
                 var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
                 evaluation.AddScore(ScoreReason.DeckQuality, cardValue);
             }
-            for (int i = 0; i < PumpernickelSaveState.instance.relics.Count; i++) {
-                var relicId = PumpernickelSaveState.instance.relics[i];
+            for (int i = 0; i < Save.state.relics.Count; i++) {
+                var relicId = Save.state.relics[i];
                 // TODO: fix setup relics?
                 var relic = Database.instance.relicsDict[relicId];
                 evaluation.AddScore(ScoreReason.RelicQuality, EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic));

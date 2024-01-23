@@ -128,9 +128,46 @@ namespace ProjectPumpernickle {
             var existingAdvice = new List<string>(){};
             return Advice.CreateEventEvaluations(existingAdvice);
         }
+        public static int SCRAP_OOZE_CLICKS_EXPECTED = -1;
         public static Evaluation[] ScrapOoze(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            var adviceList = new List<string>();
+            var hpCostList = new List<int>();
+            var relicChanceList = new List<float>();
+            var numClicks = 0;
+            var marginalCost = 5;
+            var marginalChance = 0f;
+            var totalCost = 0;
+            var totalChance = 0f;
+            while (totalCost < Save.state.current_health) {
+                if (numClicks == 0) {
+                    adviceList.Add("Leave");
+                }
+                else {
+                    adviceList.Add("Click up to " + numClicks + " times for " + totalCost + " health");
+                }
+                hpCostList.Add(totalCost);
+                relicChanceList.Add(totalChance);
+
+                totalCost += marginalCost;
+                marginalCost += 1;
+                marginalChance += numClicks == 0 ? .25f : .1f;
+                totalChance = (1 - totalChance) * marginalChance + totalChance;
+                numClicks++;
+            }
+            var option = new RewardOption() {
+                advice = adviceList.ToArray(),
+                hpCost = hpCostList.ToArray(),
+                rewardType = RewardType.Event,
+                eventCost = hpCostList.Select(x => "NONE").ToArray(),
+                skippable = false,
+                values = relicChanceList.Select(x => "RELIC_CHANCE: " + x).ToArray(),
+            };
+            var rewardOptions = new List<RewardOption>() {
+                option
+            };
+            var evaluations = Advice.AdviseOnRewards(rewardOptions);
+            SCRAP_OOZE_CLICKS_EXPECTED = evaluations[0].RewardIndex;
+            return evaluations;
         }
         public static Evaluation[] SecretPortal(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};

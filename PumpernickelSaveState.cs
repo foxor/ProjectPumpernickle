@@ -218,6 +218,10 @@ namespace ProjectPumpernickle {
         public float turns;
     }
     public class PumpernickelSaveState {
+        public static readonly int MAX_MAP_X = 7;
+        public static readonly int MAX_MAP_Y = 15;
+        public static PumpernickelSaveState parsed;
+        [ThreadStatic]
         public static PumpernickelSaveState instance;
 
         public List<Card> cards = new List<Card>();
@@ -239,6 +243,7 @@ namespace ProjectPumpernickle {
         public int max_health;
         public int floor_num;
         public List<string> relics = new List<string>();
+        public List<int> relic_counters = new List<int>();
         public string[] potions;
         public bool has_emerald_key;
         public bool has_ruby_key;
@@ -249,7 +254,7 @@ namespace ProjectPumpernickle {
         public int potion_chance;
 
         public PlayerCharacter character;
-        public MapNode[,,] map = new MapNode[4, 7, 15];
+        public MapNode[,,] map = new MapNode[4, MAX_MAP_X, MAX_MAP_Y];
         public float infiniteBlockPerCard;
         public float infiniteMaxSize;
         public bool infiniteDoesDamage;
@@ -262,11 +267,62 @@ namespace ProjectPumpernickle {
         public float addedDamagePerTurn;
         public float addedBlockPerTurn;
         public bool badBottle;
-        public float[] transformValues;
-        public string[] averageTransformValueIds;
+        public float[] transformValues = new float[0];
+        public string[] averageTransformValueIds = new string[0];
         public bool addedSkill;
         public PumpernickelSaveState() {
+            parsed = this;
+        }
+        public PumpernickelSaveState(PumpernickelSaveState original) {
             instance = this;
+
+            path = original.path;
+            seed = original.seed;
+            boss = original.boss;
+            room_x = original.room_x;
+            room_y = original.room_y;
+            gold = original.gold;
+            purgeCost = original.purgeCost;
+            act_num = original.act_num;
+            event_chances = original.event_chances;
+            elite_monster_list = original.elite_monster_list;
+            elites1_killed = original.elites1_killed;
+            elites2_killed = original.elites2_killed;
+            elites3_killed = original.elites3_killed;
+            monsters_killed = original.monsters_killed;
+            current_health = original.current_health;
+            max_health = original.max_health;
+            floor_num = original.floor_num;
+            potions = original.potions;
+            has_emerald_key = original.has_emerald_key;
+            has_ruby_key = original.has_ruby_key;
+            has_sapphire_key = original.has_sapphire_key;
+            card_random_seed_randomizer = original.card_random_seed_randomizer;
+            chose_neow_reward = original.chose_neow_reward;
+            potion_chance = original.potion_chance;
+            character = original.character;
+            infiniteBlockPerCard = original.infiniteBlockPerCard;
+            infiniteMaxSize = original.infiniteMaxSize;
+            infiniteDoesDamage = original.infiniteDoesDamage;
+            earliestInfinite = original.earliestInfinite;
+            buildingInfinite = original.buildingInfinite;
+            expectingToRedBlue = original.expectingToRedBlue;
+            missingCardCount = original.missingCardCount;
+            chanceOfOutcome = original.chanceOfOutcome;
+            addedDamagePerTurn = original.addedDamagePerTurn;
+            addedBlockPerTurn = original.addedBlockPerTurn;
+            badBottle = original.badBottle;
+            addedSkill = original.addedSkill;
+
+            metric_damage_taken = original.metric_damage_taken;
+            map = original.map;
+
+            cards = original.cards.ToList();
+            relics = original.relics.ToList();
+            relic_counters = original.relic_counters.ToList();
+            huntingCards = original.huntingCards.ToList();
+            transformValues = original.transformValues.ToArray();
+            averageTransformValueIds = original.averageTransformValueIds.ToArray();
         }
 
         public int AddCardById(string name) {

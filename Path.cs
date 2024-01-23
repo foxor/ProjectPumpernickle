@@ -13,14 +13,37 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace ProjectPumpernickle {
+    public class NodeSequence {
+        public List<MapNode> nodes = new List<MapNode>();
+        public List<FireChoice> fireChoices = new List<FireChoice>();
+        public int jumps;
+        public bool invalidJump;
+        public bool invalidFireWalk;
+        public bool IsValid() {
+            var availableJumps = Evaluators.WingedBootsChargesLeft();
+            if (jumps > availableJumps) {
+                return false;
+            }
+            if (invalidJump) {
+                return false;
+            }
+            if (invalidFireWalk) {
+                return false;
+            }
+            return true;
+        }
+    }
     public class Path {
+        public static List<FireChoice> availableFireOptions;
+        public static bool hasWingBoots;
+
         public int elites;
         public bool hasMegaElite;
         public MapNode[] nodes = null;
         public float[] expectedGold = null;
         public int[] minPlanningGold = null;
         public PathShopPlan shortTermShopPlan;
-        public Dictionary<string, float> Threats = new Dictionary<string, float>();
+        public Dictionary<string, float> Threats = null;
         public float[] expectedCardRewards = null;
         public float[] expectedRewardRelics = null;
         public bool[] plannedCardRemove = null;
@@ -41,49 +64,100 @@ namespace ProjectPumpernickle {
         public float[] expectedHealthLoss = null;
         public float[] expectedPotionsAdded = null;
         public int pathId;
-        public static IEnumerable<Path> BuildAllPaths(MapNode root) {
-            var skipFirstNode = true;
-            var nodeSequences = IterateNodeSequences(root, skipFirstNode).ToArray();
-            var pathId = 0;
-            for(var pathIndex = 0; pathIndex < nodeSequences.Length; pathIndex++) {
-                var nodes = nodeSequences[pathIndex].ToArray();
-
-                List<FireChoice> fireOptions = new List<FireChoice>() {
+        public int jumps;
+        protected static void CheckPathRelic(string relicId, ref bool hasWingBoots, ref List<FireChoice> fireChoices) {
+            if (relicId.Equals("WingedGreaves")) {
+                hasWingBoots = true;
+            }
+        }
+        public static int CountNodeSequences(List<RewardOption> rewardOptions) {
+            availableFireOptions = new List<FireChoice>() {
                     FireChoice.Rest,
                     FireChoice.Upgrade,
                     FireChoice.Key,
                 };
-                var fireOptionCount = fireOptions.Count;
-                var fireFloors = Enumerable.Range(0, nodes.Length).Where(x => nodes[x].nodeType == NodeType.Fire);
-                var fireChoices = new FireChoice[fireFloors.Count()];
-                var totalOptions = nodes.Where(x => x.nodeType == NodeType.Fire).Select(x => fireOptionCount).Aggregate(1, (a, x) => a * x);
-                for (int i = 0; i < totalOptions; i++) {
-                    int residual = i;
-                    for (int j = 0; j < fireChoices.Length; j++) {
-                        var optionCount = fireOptionCount;
-                        fireChoices[j] = fireOptions[residual % optionCount];
-                        residual /= optionCount;
-                    }
-                    if (!Evaluators.FireChoicesValid(fireChoices)) {
-                        continue;
-                    }
-                    // TODO: filter invalid paths, like those where we get multiple blue keys
-                    yield return BuildPath(nodes, fireChoices, pathId++);
+            hasWingBoots = Save.state.relics.Contains("WingedGreaves");
+            foreach (var relic in rewardOptions.Where(x => x.rewardType == RewardType.Relic).Select(x => x.values).Merge()) {
+                CheckPathRelic(relic, ref hasWingBoots, ref availableFireOptions);
+            }
+            var root = Save.state.GetCurrentNode();
+            return CountNodeSequences(root);
+        }
+        public static int CountNodeSequences(MapNode root) {
+            if (root == null) {
+                return 1;
+            }
+            IEnumerable<MapNode> nextOptions = root.children;
+            if (hasWingBoots && root.position.y < PumpernickelSaveState.MAX_MAP_Y - 1) {
+                nextOptions = Enumerable.Range(0, PumpernickelSaveState.MAX_MAP_X)
+                    .Select(x => Save.state.map[Save.state.act_num, x, root.position.y + 1])
+                    .Where(x => x != null);
+            }
+            var subSequenceCount = nextOptions.Select(CountNodeSequences).Sum();
+            if (!nextOptions.Any()) {
+                subSequenceCount = 1;
+            }
+            if (root.nodeType == NodeType.Fire) {
+                subSequenceCount *= availableFireOptions.Count;
+            }
+            return subSequenceCount;
+        }
+        public static NodeSequence BuildNodeSequence(int pathIndex, MapNode root, bool skipFirstNode = false) {
+            var nextOptions = root.children;
+            if (hasWingBoots && root.position.y < PumpernickelSaveState.MAX_MAP_Y - 1) {
+                nextOptions = Enumerable.Range(0, PumpernickelSaveState.MAX_MAP_X)
+                    .Select(x => Save.state.map[Save.state.act_num, x, root.position.y + 1])
+                    .Where(x => x != null)
+                    .ToList();
+            }
+            var fireOptionIndex = -1;
+            if (root.nodeType == NodeType.Fire) {
+                fireOptionIndex = pathIndex % availableFireOptions.Count;
+                pathIndex /= availableFireOptions.Count;
+            }
+            var optionCount = nextOptions.Count;
+            if (optionCount == 0) {
+                var r = new NodeSequence();
+                r.nodes.Add(root);
+                if (root.nodeType == NodeType.Fire) {
+                    r.fireChoices.Add(availableFireOptions[fireOptionIndex]);
+                }
+                return r;
+            }
+            var childIndex = pathIndex % optionCount;
+            var residual = pathIndex / optionCount;
+            var recur = BuildNodeSequence(residual, nextOptions[childIndex]);
+            if (!skipFirstNode) {
+                recur.nodes.Add(root);
+                if (root.nodeType == NodeType.Fire) {
+                    recur.fireChoices.Add(availableFireOptions[fireOptionIndex]);
                 }
             }
+            if (hasWingBoots && !root.children.Contains(nextOptions[childIndex])) {
+                recur.jumps++;
+                recur.invalidJump |= root.children.Any(x => x.nodeType == nextOptions[childIndex].nodeType);
+            }
+            if (nextOptions[childIndex].children == null && root.children.Any(x => x.position.x < nextOptions[childIndex].position.x)) {
+                recur.invalidFireWalk = true;
+            }
+            return recur;
         }
-        public static Path BuildPath(MapNode[] nodeSequence, FireChoice[] fireChoices, int pathId) {
+        public static Path BuildPath(NodeSequence nodeSequence, int pathId) {
             Path path = new Path();
             path.pathId = pathId;
-            path.nodes = nodeSequence;
-            path.InitArrays();
-            path.InitNodeTypes();
-            path.InitFireChoices(fireChoices);
+            path.jumps = nodeSequence.jumps;
+            nodeSequence.nodes.Reverse();
+            path.nodes = nodeSequence.nodes.ToArray();
+            nodeSequence.fireChoices.Reverse();
+            path.InitFireChoices(nodeSequence.fireChoices.ToArray());
             return path;
         }
 
-        public void ExplorePath(int startingCardRewards = 0) {
+        public void ExplorePath(int startingCardRewards) {
             // Basic setup stuff
+            InitArrays();
+            InitNodeTypes();
+            AssumeFutureActUpgrades();
             InitializePossibleThreats();
             FindBasicProperties();
             ExpectGoldProgression();
@@ -110,24 +184,24 @@ namespace ProjectPumpernickle {
             r.chanceToWin = path.chanceToWin;
 
             r.nodes = path.nodes.ToArray();
-            r.expectedGold = path.expectedGold.ToArray();
-            r.minPlanningGold = path.minPlanningGold.ToArray();
-            r.expectedCardRewards = path.expectedCardRewards.ToArray();
-            r.expectedRewardRelics = path.expectedRewardRelics.ToArray();
-            r.plannedCardRemove = path.plannedCardRemove.ToArray();
-            r.expectedHealth = path.expectedHealth.ToArray();
-            r.worstCaseHealth = path.worstCaseHealth.ToArray();
-            r.possibleThreats = path.possibleThreats.ToArray();
-            r.expectedUpgrades = path.expectedUpgrades.ToArray();
+            r.expectedGold = path.expectedGold?.ToArray();
+            r.minPlanningGold = path.minPlanningGold?.ToArray();
+            r.expectedCardRewards = path.expectedCardRewards?.ToArray();
+            r.expectedRewardRelics = path.expectedRewardRelics?.ToArray();
+            r.plannedCardRemove = path.plannedCardRemove?.ToArray();
+            r.expectedHealth = path.expectedHealth?.ToArray();
+            r.worstCaseHealth = path.worstCaseHealth?.ToArray();
+            r.possibleThreats = path.possibleThreats?.ToArray();
+            r.expectedUpgrades = path.expectedUpgrades?.ToArray();
             r.fireChoices = path.fireChoices.ToArray();
-            r.expectedShops = path.expectedShops.ToArray();
-            r.fightChance = path.fightChance.ToArray();
-            r.chanceOfDeath = path.chanceOfDeath.ToArray();
-            r.nodeTypes = path.nodeTypes.ToArray();
-            r.expectedMaxHealth = path.expectedMaxHealth.ToArray();
-            r.projectedDefensivePower = path.projectedDefensivePower.ToArray();
-            r.expectedHealthLoss = path.expectedHealthLoss.ToArray();
-            r.expectedPotionsAdded = path.expectedPotionsAdded.ToArray();
+            r.expectedShops = path.expectedShops?.ToArray();
+            r.fightChance = path.fightChance?.ToArray();
+            r.chanceOfDeath = path.chanceOfDeath?.ToArray();
+            r.nodeTypes = path.nodeTypes?.ToArray();
+            r.expectedMaxHealth = path.expectedMaxHealth?.ToArray();
+            r.projectedDefensivePower = path.projectedDefensivePower?.ToArray();
+            r.expectedHealthLoss = path.expectedHealthLoss?.ToArray();
+            r.expectedPotionsAdded = path.expectedPotionsAdded?.ToArray();
 
             return r;
         }
@@ -141,6 +215,7 @@ namespace ProjectPumpernickle {
 
         public void InitArrays() {
             remainingFloors = 56 - Save.state.floor_num;
+            Threats = new Dictionary<string, float>();
             expectedGold = new float[remainingFloors];
             plannedCardRemove = new bool[remainingFloors];
             minPlanningGold = new int[remainingFloors];
@@ -150,7 +225,6 @@ namespace ProjectPumpernickle {
             worstCaseHealth = new float[remainingFloors];
             possibleThreats = new Encounter[remainingFloors][];
             expectedUpgrades = new float[remainingFloors];
-            fireChoices = new FireChoice[remainingFloors];
             expectedShops = new float[remainingFloors];
             fightChance = new float[remainingFloors];
             chanceOfDeath = new float[remainingFloors];
@@ -159,6 +233,20 @@ namespace ProjectPumpernickle {
             projectedDefensivePower = new float[remainingFloors];
             expectedHealthLoss = new float[remainingFloors];
             expectedPotionsAdded = new float[remainingFloors];
+        }
+
+        public void InitFireChoices(FireChoice[] fireChoices) {
+            remainingFloors = 56 - Save.state.floor_num;
+            this.fireChoices = new FireChoice[remainingFloors];
+            var choiceIndex = 0;
+            for (int i = 0; i < nodes.Length; i++) {
+                if (nodes[i].nodeType == NodeType.Fire) {
+                    this.fireChoices[i] = fireChoices[choiceIndex++];
+                }
+                else {
+                    this.fireChoices[i] = FireChoice.None;
+                }
+            }
         }
 
         public void InitNodeTypes() {
@@ -179,19 +267,10 @@ namespace ProjectPumpernickle {
             return nodeType;
         }
 
-        public void InitFireChoices(FireChoice[] fireChoices) {
-            var choiceIndex = 0;
-            for (int i = 0; i < this.fireChoices.Length; i++) {
-                if (nodeTypes[i] == NodeType.Fire) {
-                    if (choiceIndex >= fireChoices.Length) {
-                        this.fireChoices[i] = FireChoice.Upgrade;
-                    }
-                    else {
-                        this.fireChoices[i] = fireChoices[choiceIndex++];
-                    }
-                }
-                else {
-                    this.fireChoices[i] = FireChoice.None;
+        public void AssumeFutureActUpgrades() {
+            for (int i = 0; i < fireChoices.Length; i++) {
+                if (nodeTypes[i] == NodeType.Fire && fireChoices[i] == FireChoice.None) {
+                    fireChoices[i] = FireChoice.Upgrade;
                 }
             }
         }
@@ -597,8 +676,8 @@ namespace ProjectPumpernickle {
             };
         }
         public static readonly float RELIC_POWER_SPIKE = 1.05f;
-        public static readonly float REGRESSION_RATE = .15f;
-        public static readonly float REGRESSION_TARGET = 0.9f;
+        public static readonly float REGRESSION_RATE = .4f;
+        public static readonly float REGRESSION_TARGET = 0.95f;
         public void AdjustDefensivePowerForNodeType(float previousPower, NodeType nodeType, int index, int easyPoolLeft, out float floorPower, out float residualPower) {
             residualPower = (previousPower * (1 - REGRESSION_RATE)) + (REGRESSION_TARGET * REGRESSION_RATE);
             switch (nodeType) {
@@ -754,26 +833,6 @@ namespace ProjectPumpernickle {
             chanceOfDeath[floorIndex] += deathLikelihood * chanceOfThis;
             if (chanceOfDeath[floorIndex] > .99f) {
                 //throw new Exception("Bot thinks it's 100% chance to die.  This causes problems usually");
-            }
-        }
-
-        public static IEnumerable<List<MapNode>> IterateNodeSequences(MapNode root, bool skipFirstNode = false) {
-            if (root == null) {
-                yield return new List<MapNode>();
-                yield break;
-            }
-            if (root.children.Any()) {
-                foreach (var child in root.children) {
-                    foreach (var path in IterateNodeSequences(child)) {
-                        if (!skipFirstNode) {
-                            path.Insert(0, root);
-                        }
-                        yield return path;
-                    }
-                }
-            }
-            else {
-                yield return new List<MapNode>() { root };
             }
         }
 

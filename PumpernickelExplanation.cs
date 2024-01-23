@@ -183,6 +183,9 @@ namespace ProjectPumpernickle {
         }
 
         public void Explain(ExplanationGroupMode mode) {
+            btnGroupByPath.Enabled = mode != ExplanationGroupMode.Path;
+            btnGroupByReward.Enabled = mode != ExplanationGroupMode.Reward;
+            btnUngroup.Enabled = mode != ExplanationGroupMode.Ungrouped;
             var evaluations = PumpernickelAdviceWindow.instance.Evaluations;
             if (evaluations == null) {
                 return;
@@ -227,11 +230,9 @@ namespace ProjectPumpernickle {
             }
             explanation.Select(0, 0);
         }
-
         private void groupByReward(object sender, EventArgs e) {
             Explain(ExplanationGroupMode.Reward);
         }
-
         private void groupByPath(object sender, EventArgs e) {
             Explain(ExplanationGroupMode.Path);
         }

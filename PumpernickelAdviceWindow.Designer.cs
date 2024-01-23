@@ -99,7 +99,7 @@
         #endregion
 
         public TextBox pathing;
-        private TextBox AdviceBox;
+        public TextBox AdviceBox;
         private RichTextBox PathPreview;
         private RichTextBox PathNodeInfoBox;
         private Button whyButton;

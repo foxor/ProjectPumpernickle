@@ -14,7 +14,7 @@ namespace ProjectPumpernickle {
     internal static class Evaluators {
         internal static int RareRelicsAvailable() {
             var classRelics = 0;
-            switch (PumpernickelSaveState.instance.character) {
+            switch (Save.state.character) {
                 case PlayerCharacter.Ironclad: {
                     classRelics = 3;
                     break;
@@ -182,6 +182,32 @@ namespace ProjectPumpernickle {
             bestValue = anticipatedSelection.Val;
             worstId = worstSelection.Card.id;
             worstValue = worstSelection.Val;
+        }
+
+        public static bool EligibleToSeeRelic(Relic r) {
+            // TODO: have we seen this?
+            return
+                !Save.state.relics.Contains(r.id) &&
+                r.rarity != Rarity.Basic &&
+                r.rarity != Rarity.Special;
+        }
+
+        public static void ChooseBestRelic(out string bestRelic, out float bestValue, out float averageValue, out int count) {
+            var hasEvaluation = Evaluation.Active != null;
+            var relics = Database.instance.relics.Where(EligibleToSeeRelic).Select(x => {
+                if (hasEvaluation) {
+                    var value = EvaluationFunctionReflection.GetRelicEvalFunctionCached(x.id)(x);
+                    return (Relic: x, Val: value);
+                }
+                else {
+                    var value = x.bias;
+                    return (Relic: x, Val: value);
+                }
+            }).OrderByDescending(x => x.Val);
+            bestRelic = relics.First().Relic.id;
+            bestValue = relics.First().Val;
+            averageValue = relics.Average(x => x.Val);
+            count = relics.Count();
         }
 
         public static int FloorToAct(int floorNum) {
@@ -392,39 +418,13 @@ namespace ProjectPumpernickle {
             // The points we get are for scoring, so we massage them a bit
             var deckPower = Enumerable.Range(0, Save.state.cards.Count).Select(x =>
                 EvaluationFunctionReflection.GetCardEvalFunctionCached(Save.state.cards[x].id)(Save.state.cards[x], x)
-            ).Where(x => x > 0).Sum() + 1f;
+            ).Where(x => x > 0).Sum() + 10f;
             var expectedCardRewards = path.expectedCardRewards[floorIndex];
             var upgradeHits = CHANCE_OF_HIGH_VALUE_UPGRADE_PER_REWARD * expectedCardRewards;
             var newCardUpgradeValue = Lerp.From(LOW_VALUE_UPGRADE, HIGH_VALUE_UPGRADE, upgradeHits / (upgradeHits + 1f));
             var availableValueFraction = deltaValue / deckPower;
             var newValueFraction = newCardUpgradeValue / deckPower;
             return 1f + MathF.Max(availableValueFraction, newValueFraction);
-        }
-
-        public static float UpgradeHealthSaved(Path path, int floorIndex) {
-            var deckPowerMultiplierForCard = UpgradePowerMultiplier(path, floorIndex);
-            var nonUpgradePath = Path.Copy(path);
-            // The path passed in already forces an upgrade here, so we're simulating no upgrade here
-            nonUpgradePath.fireChoices[floorIndex] = FireChoice.None;
-            nonUpgradePath.SimulateHealthEvolution(1f / deckPowerMultiplierForCard, floorIndex);
-            var totalHealthSaved = nonUpgradePath.expectedHealthLoss.Sum() - path.expectedHealthLoss.Sum();
-            return totalHealthSaved;
-        }
-
-        public static float LiftValue(Path path, int i) {
-            if (!Save.state.relics.Contains("Girya")) {
-                return float.MinValue;
-            }
-            // FIXME: this math needs to be better, it's health not points
-            return 3.5f;
-        }
-
-        public static float RestValue(Path path, int i) {
-            var healthGained = MathF.Min(Save.state.max_health * .3f, Save.state.max_health - path.expectedHealth[i]);
-            //if (chance of gain health elsewhere) {
-            //    healthGained *= 1 - chance rest unecessary;
-            //}
-            return ((int)healthGained);
         }
 
         public static int NormalFutureActsLeft() {
@@ -799,6 +799,17 @@ namespace ProjectPumpernickle {
                 found += 6f;
             }
             return found;
+        }
+        public static int WingedBootsChargesLeft() {
+            var wingedBootsIndex = Save.state.relics.IndexOf("WingedGreaves");
+            if (wingedBootsIndex < 0) {
+                return 0;
+            }
+            if (wingedBootsIndex >= Save.state.relic_counters.Count) {
+                // You just got it
+                return 3;
+            }
+            return Save.state.relic_counters[wingedBootsIndex];
         }
     }
 }
