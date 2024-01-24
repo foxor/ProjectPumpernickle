@@ -111,6 +111,13 @@ namespace ProjectPumpernickle {
                     PumpernickelAdviceWindow.instance.AdviceBox.Text = "Click " + --EventAdvice.SCRAP_OOZE_CLICKS_EXPECTED + " more times";
                     break;
                 }
+                case "Fight": {
+                    var floor = int.Parse(lines[1]);
+                    var didFight = false;
+                    Program.ParseNewFile(floor, didFight);
+                    PumpernickelAdviceWindow.instance.AdviceBox.Text = "Your expected health loss: " + FightSimulator.SimulateFight(Database.instance.encounterDict[lines[2]]);
+                    break;
+                }
                 default: {
                     throw new System.NotImplementedException("Unsupported message type: " + lines[0]);
                 }
@@ -194,11 +201,11 @@ namespace ProjectPumpernickle {
             Save.state.act_num = int.Parse(actLine.Substring(actLine.LastIndexOf(" ") + 1));
             Save.state.room_y = -1;
             Save.state.event_chances = new float[] {
-                            0f,
-                            0.1f,
-                            0.03f,
+                0f,
+                0.1f,
+                0.03f,
                 0.02f,
-                        };
+            };
             var healthLine = lines.Skip(1).First();
             Save.state.current_health = int.Parse(healthLine.Substring(healthLine.LastIndexOf(" ") + 1));
             var bossLine = lines.Skip(2).First();

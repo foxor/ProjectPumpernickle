@@ -65,12 +65,8 @@ namespace ProjectPumpernickle {
         public static void ScorePath(Evaluation evaluation) {
             // This doesn't ever award points for future acts to avoid perverse incentives
             var path = evaluation.Path;
-            var offRamp = evaluation.OffRamp?.Path ?? path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
-            // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
-            // but that's kinda the right way to play the game
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * offRamp.ChanceToSurviveAct(Save.state.act_num));
 
             evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.PercentAllGreen(evaluation));
 
@@ -129,6 +125,12 @@ namespace ProjectPumpernickle {
             }
             EvaluateGlobalRules(evaluation);
             ScorePath(evaluation);
+        }
+        public static void ScoreAfterOffRampDetermined(Evaluation evaluation) {
+            var offRamp = evaluation.OffRamp?.Path ?? evaluation.Path;
+            // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
+            // but that's kinda the right way to play the game
+            evaluation.AddScore(ScoreReason.ActSurvival, 10f * offRamp.ChanceToSurviveAct(Save.state.act_num));
         }
     }
 }

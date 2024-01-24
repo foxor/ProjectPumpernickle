@@ -1,4 +1,8 @@
-﻿namespace ProjectPumpernickle {
+﻿using System.Security.Cryptography;
+using System.Security.Policy;
+using System.Text;
+
+namespace ProjectPumpernickle {
     public class Advice {
         public static Evaluation[] perThreadEvaluations;
         public static List<RewardOption> rewardOptions;
@@ -11,12 +15,16 @@
             var totalRewardOptions = rewardOptions.Select(x => x.values.Length + 1).Aggregate(1, (a, x) => a * x);
             var pathingOptions = Path.CountNodeSequences(rewardOptions);
             perThreadEvaluations = new Evaluation[totalRewardOptions * pathingOptions];
+            PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Creating {0} threads", perThreadEvaluations.Length);
+            Application.DoEvents();
             for (int i = 0; i < totalRewardOptions; i++) {
                 for (int p = 0; p < pathingOptions; p++) {
                     var optionIndexCapture = i;
                     var pathIndexCapture = p;
-                    ThreadPool.QueueUserWorkItem((_) => GenerateEvaluation(optionIndexCapture, pathIndexCapture, pathingOptions));
+                    var threadId = (optionIndexCapture * pathingOptions) + pathIndexCapture;
+                    ThreadPool.QueueUserWorkItem((_) => GenerateEvaluation(optionIndexCapture, pathIndexCapture, threadId));
                 }
+                Application.DoEvents();
             }
             var totalThreads = perThreadEvaluations.Length;
             while (ThreadPool.PendingWorkItemCount != 0) {
@@ -25,18 +33,26 @@
                 PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("{0:P2} complete", (done * 1f / totalThreads));
                 Application.DoEvents();
             }
+            PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Finalizing results");
+            Application.DoEvents();
             var validEvaluations = perThreadEvaluations.Where(x => x != null);
             SetEvaluationOffRamps(Save.state.GetCurrentNode(), validEvaluations, totalRewardOptions);
             foreach (var eval in validEvaluations) {
-                Scoring.Score(eval);
+                Scoring.ScoreAfterOffRampDetermined(eval);
             }
             foreach (var eval in validEvaluations) {
                 eval.MergeScoreWithOffRamp();
             }
+            // For debugging determinism
+            //var rewardsChosenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(',', validEvaluations.Select(x => x.Score)))));
             return validEvaluations;
         }
-        public static void GenerateEvaluation(int optionIndex, int pathIndex, int pathingOptions) {
-            int threadId = (optionIndex * pathingOptions) + pathIndex;
+        public static void GenerateEvaluation(int optionIndex, int pathIndex, int threadId) {
+            var skipFirstNode = true;
+            var nodeSequence = Path.BuildNodeSequence(pathIndex, Save.state.GetCurrentNode(), skipFirstNode);
+            if (!nodeSequence.IsValid()) {
+                return;
+            }
             PumpernickelSaveState.instance = new PumpernickelSaveState(PumpernickelSaveState.parsed);
             List<int> rewardIndicies = new List<int>();
             int residual = optionIndex;
@@ -46,17 +62,13 @@
                 residual /= optionCount;
             }
             using (var context = new RewardContext(rewardOptions, rewardIndicies, eligibleForBlueKey, isShop)) {
-                if (!context.IsValid()) {
-                    return;
-                }
-                var skipFirstNode = true;
-                var nodeSequence = Path.BuildNodeSequence(pathIndex, Save.state.GetCurrentNode(), skipFirstNode);
-                if (!nodeSequence.IsValid()) {
+                if (!context.IsValid(threadId)) {
                     return;
                 }
                 var eval = new Evaluation(context, threadId, optionIndex);
                 var path = Path.BuildPath(nodeSequence, pathIndex);
                 eval.SetPath(path, context.bonusCardRewards);
+                Scoring.Score(eval);
                 perThreadEvaluations[threadId] = eval;
             }
         }

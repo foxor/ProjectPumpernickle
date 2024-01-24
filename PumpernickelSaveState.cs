@@ -276,6 +276,7 @@ namespace ProjectPumpernickle {
         public PumpernickelSaveState(PumpernickelSaveState original) {
             instance = this;
 
+            // immutable or non-referential
             path = original.path;
             seed = original.seed;
             boss = original.boss;
@@ -284,8 +285,6 @@ namespace ProjectPumpernickle {
             gold = original.gold;
             purgeCost = original.purgeCost;
             act_num = original.act_num;
-            event_chances = original.event_chances;
-            elite_monster_list = original.elite_monster_list;
             elites1_killed = original.elites1_killed;
             elites2_killed = original.elites2_killed;
             elites3_killed = original.elites3_killed;
@@ -293,7 +292,6 @@ namespace ProjectPumpernickle {
             current_health = original.current_health;
             max_health = original.max_health;
             floor_num = original.floor_num;
-            potions = original.potions;
             has_emerald_key = original.has_emerald_key;
             has_ruby_key = original.has_ruby_key;
             has_sapphire_key = original.has_sapphire_key;
@@ -314,12 +312,17 @@ namespace ProjectPumpernickle {
             badBottle = original.badBottle;
             addedSkill = original.addedSkill;
 
+            // intentionally shared
+            event_chances = original.event_chances;
+            elite_monster_list = original.elite_monster_list;
             metric_damage_taken = original.metric_damage_taken;
             map = original.map;
 
+            // deep copied
             cards = original.cards.ToList();
             relics = original.relics.ToList();
             relic_counters = original.relic_counters.ToList();
+            potions = original.potions.ToArray();
             huntingCards = original.huntingCards.ToList();
             transformValues = original.transformValues.ToArray();
             averageTransformValueIds = original.averageTransformValueIds.ToArray();

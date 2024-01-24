@@ -38,7 +38,7 @@ namespace ProjectPumpernickle {
         public bool isInvalid;
         public Card bottled;
         public bool gainedMembershipCard;
-        public RewardContext(List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop) {
+        public RewardContext(in List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop) {
             for (int i = 0; i < rewardIndicies.Count; i++) {
                 var rewardGroup = rewardOptions[i];
                 var index = rewardIndicies[i];
@@ -480,7 +480,7 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public bool IsValid() {
+        public bool IsValid(int threadId) {
             var valid = true;
             valid &= Save.state.gold >= 0;
             valid &= !potionIndicies.Any(x => x == -1);

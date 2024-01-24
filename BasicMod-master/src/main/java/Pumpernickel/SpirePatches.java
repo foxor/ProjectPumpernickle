@@ -27,6 +27,7 @@ import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.monsters.beyond.Nemesis;
 import com.megacrit.cardcrawl.monsters.beyond.TimeEater;
+import com.megacrit.cardcrawl.monsters.exordium.Cultist;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.relics.ClockworkSouvenir;
 import com.megacrit.cardcrawl.relics.Duality;
@@ -37,6 +38,7 @@ import com.megacrit.cardcrawl.relics.SneckoEye;
 import com.megacrit.cardcrawl.relics.TungstenRod;
 import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import com.megacrit.cardcrawl.rooms.AbstractRoom.RoomPhase;
 import com.megacrit.cardcrawl.rooms.EventRoom;
 import com.megacrit.cardcrawl.rooms.MonsterRoom;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
@@ -156,7 +158,7 @@ public class SpirePatches {
 	        }
 	    }
     }
-    public static void eventRolled() {
+    public static void roomTransition() {
         AbstractRoom room = AbstractDungeon.getCurrRoom();
         if (room instanceof EventRoom) {
             EventRoom event = (EventRoom) room;
@@ -179,6 +181,21 @@ public class SpirePatches {
                     cleanup.setAccessible(true);
                 	outToServer.write((((boolean)cleanup.get(d)) ? "True\n" : "False\n").getBytes(StandardCharsets.UTF_8));
                 }
+                outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
+                outToServer.flush();
+                clientSocket.close();
+            }
+            catch (Exception e) {
+            }
+        }
+        else if (room instanceof MonsterRoom) {
+            try {
+                Socket clientSocket = new Socket("localhost", 13076);
+                DataOutputStream outToServer =
+                        new DataOutputStream(clientSocket.getOutputStream());
+                outToServer.write("Fight\n".getBytes(StandardCharsets.UTF_8));
+                outToServer.write((AbstractDungeon.floorNum + "\n").getBytes(StandardCharsets.UTF_8));
+                outToServer.write((AbstractDungeon.lastCombatMetricKey + "\n").getBytes(StandardCharsets.UTF_8));
                 outToServer.write("Done\n".getBytes(StandardCharsets.UTF_8));
                 outToServer.flush();
                 clientSocket.close();
@@ -384,7 +401,7 @@ public class SpirePatches {
     }
     @SpirePatch(clz = AbstractDungeon.class, method = "nextRoomTransition", paramtypez = { SaveFile.class })
     public static class OnEventRolledPatch {
-        @SpirePostfixPatch public static void Postfix() { eventRolled(); }
+        @SpirePostfixPatch public static void Postfix() { roomTransition(); }
     }
     @SpirePatch(clz = BossRelicSelectScreen.class, method = "open", paramtypez = { ArrayList.class })
     public static class OnBossRelicPatch {

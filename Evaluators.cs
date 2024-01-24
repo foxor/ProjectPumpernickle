@@ -146,7 +146,7 @@ namespace ProjectPumpernickle {
         }
 
         public static float GetHealth(int floor) {
-            var path = Evaluation.Active.Path;
+            var path = Evaluation.Active?.Path;
             if (path == null) {
                 return GetCurrentEffectiveHealth();
             }

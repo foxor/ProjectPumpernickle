@@ -144,6 +144,11 @@ namespace ProjectPumpernickle {
                 _ => 1f
             };
         }
+        public static float SimulateFight(Encounter encounter) {
+            var estimatedDamage = EstimateDamagePerTurn();
+            var defensivePower = EstimateDefensivePower();
+            return SimulateFight(encounter, Save.state.floor_num, estimatedDamage, defensivePower);
+        }
         public static float SimulateFight(Encounter encounter, int floor, float estimatedDamagePerTurn, float defensivePower) {
             if (defensivePower - 0.02f <= 0f) {
                 return encounter.medianWorstCaseHealthLoss;
