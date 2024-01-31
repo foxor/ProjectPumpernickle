@@ -57,20 +57,21 @@ namespace ProjectPumpernickle {
         public float[] chanceOfDeath = null;
         public int remainingFloors;
         public bool EndOfActPath;
-        public float chanceToWin;
         public NodeType[] nodeTypes = null;
         public float[] expectedMaxHealth = null;
         public float[] projectedDefensivePower = null;
         public float[] expectedHealthLoss = null;
         public float[] expectedPotionsAdded = null;
-        public int pathId;
+        public float[] expectedPotionsSpent = null;
+        public long pathId;
         public int jumps;
+        public float chanceToSurviveAct;
         protected static void CheckPathRelic(string relicId, ref bool hasWingBoots, ref List<FireChoice> fireChoices) {
             if (relicId.Equals("WingedGreaves")) {
                 hasWingBoots = true;
             }
         }
-        public static int CountNodeSequences(List<RewardOption> rewardOptions) {
+        public static long CountNodeSequences(List<RewardOption> rewardOptions) {
             availableFireOptions = new List<FireChoice>() {
                     FireChoice.Rest,
                     FireChoice.Upgrade,
@@ -83,9 +84,12 @@ namespace ProjectPumpernickle {
             var root = Save.state.GetCurrentNode();
             return CountNodeSequences(root);
         }
-        public static int CountNodeSequences(MapNode root) {
+        public static long CountNodeSequences(MapNode root) {
             if (root == null) {
                 return 1;
+            }
+            if (root.totalChildOptions.HasValue) {
+                return root.totalChildOptions.Value;
             }
             IEnumerable<MapNode> nextOptions = root.children;
             if (hasWingBoots && root.position.y < PumpernickelSaveState.MAX_MAP_Y - 1) {
@@ -100,9 +104,10 @@ namespace ProjectPumpernickle {
             if (root.nodeType == NodeType.Fire) {
                 subSequenceCount *= availableFireOptions.Count;
             }
+            root.totalChildOptions = subSequenceCount;
             return subSequenceCount;
         }
-        public static NodeSequence BuildNodeSequence(int pathIndex, MapNode root, bool skipFirstNode = false) {
+        public static NodeSequence BuildNodeSequence(long pathIndex, MapNode root, bool skipFirstNode = false) {
             var nextOptions = root.children;
             if (hasWingBoots && root.position.y < PumpernickelSaveState.MAX_MAP_Y - 1) {
                 nextOptions = Enumerable.Range(0, PumpernickelSaveState.MAX_MAP_X)
@@ -112,7 +117,7 @@ namespace ProjectPumpernickle {
             }
             var fireOptionIndex = -1;
             if (root.nodeType == NodeType.Fire) {
-                fireOptionIndex = pathIndex % availableFireOptions.Count;
+                fireOptionIndex = (int)(pathIndex % availableFireOptions.Count);
                 pathIndex /= availableFireOptions.Count;
             }
             var optionCount = nextOptions.Count;
@@ -124,7 +129,7 @@ namespace ProjectPumpernickle {
                 }
                 return r;
             }
-            var childIndex = pathIndex % optionCount;
+            var childIndex = (int)(pathIndex % optionCount);
             var residual = pathIndex / optionCount;
             var recur = BuildNodeSequence(residual, nextOptions[childIndex]);
             if (!skipFirstNode) {
@@ -142,7 +147,7 @@ namespace ProjectPumpernickle {
             }
             return recur;
         }
-        public static Path BuildPath(NodeSequence nodeSequence, int pathId) {
+        public static Path BuildPath(NodeSequence nodeSequence, long pathId) {
             Path path = new Path();
             path.pathId = pathId;
             path.jumps = nodeSequence.jumps;
@@ -181,7 +186,7 @@ namespace ProjectPumpernickle {
             r.shortTermShopPlan = path.shortTermShopPlan;
             r.remainingFloors = path.remainingFloors;
             r.EndOfActPath = path.EndOfActPath;
-            r.chanceToWin = path.chanceToWin;
+            r.chanceToSurviveAct = path.chanceToSurviveAct;
 
             r.nodes = path.nodes.ToArray();
             r.expectedGold = path.expectedGold?.ToArray();
@@ -202,6 +207,7 @@ namespace ProjectPumpernickle {
             r.projectedDefensivePower = path.projectedDefensivePower?.ToArray();
             r.expectedHealthLoss = path.expectedHealthLoss?.ToArray();
             r.expectedPotionsAdded = path.expectedPotionsAdded?.ToArray();
+            r.expectedPotionsSpent = path.expectedPotionsSpent?.ToArray();
 
             return r;
         }
@@ -233,6 +239,7 @@ namespace ProjectPumpernickle {
             projectedDefensivePower = new float[remainingFloors];
             expectedHealthLoss = new float[remainingFloors];
             expectedPotionsAdded = new float[remainingFloors];
+            expectedPotionsSpent = new float[remainingFloors];
         }
 
         public void InitFireChoices(FireChoice[] fireChoices) {
@@ -468,36 +475,35 @@ namespace ProjectPumpernickle {
         public static readonly Vector3 LATE_GAME_SHOP_PREFERENCE = new Vector3(.1f, .6f, .3f);
         public static readonly float CARD_SPEND_CAP = 180f;
         public static readonly float POTION_SPEND_CAP = AVG_POTION_PRICE * 2f;
-        public void ExpectedShopProgression(int i, out float cards, out float potions, out float relics) {
+        public void ExpectedShopProgression(int i, out float cards, out float potions, out float relics, bool limitPotionsToOpenSlots) {
+            var potionMax = limitPotionsToOpenSlots ? Save.state.EmptyPotionSlots() : int.MaxValue;
             var initialGold = i > 0 ? expectedGold[i - 1] : Save.state.gold;
             var spend = initialGold - expectedGold[i];
             var preferences = Lerp.From(EARLY_GAME_SHOP_PREFERENCE, LATE_GAME_SHOP_PREFERENCE, Evaluators.PercentGameOver(Path.PathIndexToFloorNum(i)));
-            cards = preferences.X * spend / AVG_CARD_PRICE;
-            var cardSpend = cards * AVG_CARD_PRICE;
-            var potionSpend = 0f;
-            if (cardSpend <= CARD_SPEND_CAP) {
-                potions = preferences.Y * spend / AVG_POTION_PRICE;
-                potionSpend = potions * AVG_POTION_PRICE;
-                if (potionSpend > POTION_SPEND_CAP) {
-                    potions = 2;
-                    potionSpend = POTION_SPEND_CAP;
-                }
+            var preferredSpend = preferences * spend;
+            if (preferredSpend.X > CARD_SPEND_CAP) {
+                var potionRelicRatio = preferences.Y / preferences.Z;
+                var residual = preferredSpend.X - CARD_SPEND_CAP;
+                preferredSpend.X = CARD_SPEND_CAP;
+                preferredSpend.Y += residual * potionRelicRatio;
+                preferredSpend.Z += residual * (1 - potionRelicRatio);
             }
-            else {
-                float residualPreference = preferences.X - CARD_SPEND_CAP / (spend / AVG_CARD_PRICE);
-                cards = CARD_SPEND_CAP / AVG_CARD_PRICE;
-                cardSpend = CARD_SPEND_CAP;
-                float potionRelicRatio = preferences.Y / preferences.Z;
-                preferences.Y += potionRelicRatio * residualPreference;
-                preferences.Z += (1 - potionRelicRatio) * residualPreference;
-                potions = preferences.Y * spend / AVG_POTION_PRICE;
-                potionSpend = potions * AVG_POTION_PRICE;
-                if (potionSpend > POTION_SPEND_CAP) {
-                    potions = 2;
-                    potionSpend = POTION_SPEND_CAP;
-                }
+            if (preferredSpend.Y > POTION_SPEND_CAP) {
+                var residual = preferredSpend.Y - POTION_SPEND_CAP;
+                preferredSpend.Y = POTION_SPEND_CAP;
+                preferredSpend.Z += residual;
+                // Slight bugabo here: this doesn't redistribute towards cards.
+                // Usually not a problem, since shop cards are generally only important early.
             }
-            relics = (spend - cardSpend - potionSpend) / AVG_RELIC_PRICE;
+            cards = preferredSpend.X / AVG_CARD_PRICE;
+            potions = preferredSpend.Y / AVG_POTION_PRICE;
+            relics = preferredSpend.Z / AVG_RELIC_PRICE;
+            if (potions > potionMax) {
+                var excess = potions - potionMax;
+                potions = potionMax;
+                var residual = excess * AVG_POTION_PRICE;
+                relics += residual / AVG_RELIC_PRICE;
+            }
         }
         public static readonly float SHOP_CARD_VALUE_FACTOR = 1.3f;
         public static readonly float CARD_PICK_RATE_OVER_BOWL = .3f;
@@ -509,7 +515,9 @@ namespace ProjectPumpernickle {
             // We need this so that we know a floor 10 elite won't kill us
             float fightsSoFar = 0f;
             float relicsSoFar = 0f;
-            float potionsSoFar = 0f;
+            float potionAddsSoFar = 0f;
+            var potionSlots = Save.state.relics.Contains("Potion Belt") ? 4 : 2;
+            float residualPotions = potionSlots - Save.state.EmptyPotionSlots();
             float potionChance = (40 + Save.state.potion_chance) * 0.01f;
             float cardRewardsSoFar = startingCardRewards;
             float floorFightChance = Save.state.event_chances == null ? PER_QUESTION_FIGHT_CHANCE : Save.state.event_chances[1];
@@ -517,9 +525,11 @@ namespace ProjectPumpernickle {
             float shopsSoFar = 0f;
             float upgrades = 0f;
             var hasSingingBowl = Save.state.relics.Contains("Singing Bowl");
+            var hasPrayerWheel = Save.state.relics.Contains("Prayer Wheel");
             var feed = Save.state.cards.Where(x => x.id.Equals("Feed"));
             var hasFeed = feed.Any();
             var feedHealth = hasFeed ? feed.Select(x => x.upgrades > 0 ? 5f : 3f).Max() : 0f;
+            var limitPotionsToOpenSlots = true;
             if (Save.state.cards.Any(x => x.id.Equals("Armaments")) && feedHealth == 3f) {
                 feedHealth = 4f; // 50% chance to upgrade
             }
@@ -532,49 +542,56 @@ namespace ProjectPumpernickle {
             }
 
             for (int i = 0; i < expectedCardRewards.Length; i++) {
+                float potionsSpentThisFloor = 0f;
+                float chancePotionBarFull = MathF.Max(residualPotions - potionSlots + 1, 0);
                 fightChance[i] = 0f;
                 switch (nodeTypes[i]) {
                     case NodeType.MegaElite:
-                    case NodeType.Elite: {
-                        fightsSoFar++;
-                        relicsSoFar++;
-                        cardRewardsSoFar++;
-                        fightChance[i] = 1f;
-                        if (hasFeed) {
-                            maxHp += FEED_HIT_RATE * feedHealth;
-                        }
-                        potionsSoFar += potionChance;
-                        if (potionChance > .51f) {
-                            potionChance -= .1f;
-                        }
-                        if (potionChance < .49f) {
-                            potionChance += .1f;
-                        }
-                        break;
-                    }
+                    case NodeType.Elite:
                     case NodeType.Boss:
                     case NodeType.Fight: {
+                        if (nodeTypes[i] == NodeType.Elite || nodeTypes[i] == NodeType.MegaElite) {
+                            relicsSoFar++;
+                            if (residualPotions >= 1f) {
+                                potionsSpentThisFloor++;
+                                residualPotions--;
+                            }
+                        }
+                        else if (nodeTypes[i] == NodeType.Boss) {
+                            potionsSpentThisFloor = residualPotions;
+                            residualPotions = 0f;
+                        }
+                        else {
+                            potionsSpentThisFloor += chancePotionBarFull;
+                            residualPotions -= chancePotionBarFull;
+                        }
                         fightsSoFar++;
                         cardRewardsSoFar++;
+                        if (hasPrayerWheel && nodeTypes[i] == NodeType.Fight) {
+                            cardRewardsSoFar++;
+                        }
                         fightChance[i] = 1f;
                         if (hasFeed) {
                             maxHp += FEED_HIT_RATE * feedHealth;
                         }
-                        potionsSoFar += potionChance;
+                        potionAddsSoFar += potionChance;
+                        residualPotions += potionChance;
                         if (potionChance > .51f) {
                             potionChance -= .1f;
                         }
                         if (potionChance < .49f) {
                             potionChance += .1f;
                         }
+                        limitPotionsToOpenSlots = false;
                         break;
                     }
                     case NodeType.Shop: {
-                        ExpectedShopProgression(i, out var cardRewards, out var potions, out var relics);
+                        ExpectedShopProgression(i, out var cardRewards, out var potions, out var relics, limitPotionsToOpenSlots);
                         shopsSoFar++;
                         cardRewardsSoFar += cardRewards * SHOP_CARD_VALUE_FACTOR;
                         relicsSoFar += relics;
-                        potionsSoFar += potions;
+                        potionAddsSoFar += potions;
+                        residualPotions += potions;
                         break;
                     }
                     case NodeType.Question: {
@@ -584,10 +601,14 @@ namespace ProjectPumpernickle {
                         }
                         shopsSoFar += shopChance;
                         cardRewardsSoFar += floorFightChance;
+                        if (hasPrayerWheel) {
+                            cardRewardsSoFar += floorFightChance;
+                        }
                         fightChance[i] = floorFightChance;
                         floorFightChance = PER_QUESTION_FIGHT_CHANCE * floorFightChance + (floorFightChance + PER_QUESTION_FIGHT_CHANCE) * (1f - floorFightChance);
                         shopChance = PER_QUESTION_SHOP_CHANCE * shopChance + (shopChance + PER_QUESTION_SHOP_CHANCE) * (1f - shopChance);
-                        potionsSoFar += floorFightChance * potionChance;
+                        potionAddsSoFar += floorFightChance * potionChance;
+                        residualPotions += floorFightChance * potionChance;
                         // potionChance could now be the same, higher, or lower.  We'll leave it the same.
                         break;
                     }
@@ -607,7 +628,8 @@ namespace ProjectPumpernickle {
                 expectedRewardRelics[i] = relicsSoFar;
                 expectedShops[i] = shopsSoFar;
                 expectedMaxHealth[i] = maxHp;
-                expectedPotionsAdded[i] = potionsSoFar;
+                expectedPotionsAdded[i] = potionAddsSoFar;
+                expectedPotionsSpent[i] = potionsSpentThisFloor;
                 expectedUpgrades[i] = upgrades;
             }
         }
@@ -717,6 +739,25 @@ namespace ProjectPumpernickle {
                 }
             }
         }
+        public static readonly float AVERAGE_POTION_DEFENSIVE_VALUE = 0.2f;
+        public void AdjustDefensivePowerForPotion(int index, ref float floorPower) {
+            // Sometimes you save ghost in a jar for the heart, this is wrong long term
+            var assumeCurrentPotion = index <= 3;
+            var consumed = expectedPotionsSpent[index];
+            if (assumeCurrentPotion) {
+                var potions = Save.state.Potions().ToArray();
+                var weight = potions.Length / consumed;
+                foreach (var potion in potions) {
+                    floorPower += weight * potion switch {
+                        "PowerPotion" => .5f,
+                        _ => AVERAGE_POTION_DEFENSIVE_VALUE,
+                    };
+                }
+            }
+            else {
+                floorPower += consumed * AVERAGE_POTION_DEFENSIVE_VALUE;
+            }
+        }
         public void ProjectDefensivePower() {
             var easyPoolLeft = Save.state.act_num == 1 ? 3 : 2;
             var lastAct = Save.state.act_num;
@@ -735,6 +776,7 @@ namespace ProjectPumpernickle {
                 }
                 else {
                     AdjustDefensivePowerForNodeType(residualPower, nodeTypes[i], i, easyPoolLeft, out projectedDefensivePower[i], out residualPower);
+                    AdjustDefensivePowerForPotion(i, ref projectedDefensivePower[i]);
                 }
                 if (nodeTypes[i] == NodeType.Fight) {
                     easyPoolLeft--;
@@ -749,21 +791,15 @@ namespace ProjectPumpernickle {
             for (int i = floorsFromNow; i < possibleThreats.Length; i++) {
                 var estimatedDamageThisFloor = FightSimulator.ProjectDamageForFutureFloor(currentDamagePerTurn, i);
                 var lastExpectedHealth = i == 0 ? Evaluators.GetCurrentEffectiveHealth() : expectedHealth[i - 1];
-                // Worst case doesn't continue to stack every floor
-                // You start at the expected health, and then ONE bad thing happens, not the worst case every floor
-                var lastWorstCaseHealth = i == 0 ? Evaluators.GetCurrentEffectiveHealth() : expectedHealth[i - 1];
                 if (fireChoices[i] == FireChoice.Rest) {
                     lastExpectedHealth += Save.state.max_health * .3f;
-                    lastWorstCaseHealth += Save.state.max_health * .3f;
                     lastExpectedHealth = MathF.Min(Save.state.max_health, lastExpectedHealth);
-                    lastWorstCaseHealth = MathF.Min(Save.state.max_health, lastWorstCaseHealth);
                 }
                 var floor = PathIndexToFloorNum(i);
                 if (Evaluators.FloorsIntoAct(floor) == 0) {
                     var missing = Save.state.max_health - lastExpectedHealth;
                     var healing = (int)((missing * .75) + 0.9999f);
                     lastExpectedHealth += healing;
-                    lastWorstCaseHealth += healing;
                 }
                 float averageExpectedHealthLoss = 0f;
                 float worstWorstCaseHealthLoss = 0f;
@@ -781,9 +817,11 @@ namespace ProjectPumpernickle {
                 var expectedPotionHealth = Evaluators.RandomPotionHealthValue() * marginalPotions;
                 expectedHealthLoss[i] = averageExpectedHealthLoss;
                 expectedHealth[i] = Math.Max(lastExpectedHealth - averageExpectedHealthLoss + expectedPotionHealth, healthFloor);
-                worstCaseHealth[i] = lastWorstCaseHealth - worstWorstCaseHealthLoss;
+                // Worst case doesn't continue to stack every floor
+                // You start at the expected health, and then ONE bad thing happens, not the worst case every floor
+                worstCaseHealth[i] = lastExpectedHealth - worstWorstCaseHealthLoss;
             }
-            chanceToWin = Evaluators.EstimateChanceToWin(chanceOfDeath);
+            SetChanceToSurviveAct();
         }
         public static float THREAT_PRIORITIZATION_POWER = 4f;
         public void NormalizeThreats() {
@@ -862,7 +900,8 @@ namespace ProjectPumpernickle {
                     }
                     else if (remainingShops == 2 || floorsTillNextShop < 10) {
                         var totalGold = expectedGold[nextShopIndex - 1];
-                        return totalGold / 2f;
+                        var desiredSpend = totalGold / 2f;
+                        return MathF.Min(desiredSpend, expectedGoldForFloor);
                     }
                     else {
                         return Math.Min(expectedGoldForFloor - 15f, 400f);
@@ -902,6 +941,7 @@ namespace ProjectPumpernickle {
         }
         public float ExpectedGoldGain(int index) {
             var nodeType = nodeTypes[index];
+            var act = Evaluators.FloorToAct(PathIndexToFloorNum(index));
             switch (nodeType) {
                 case NodeType.Fight: {
                     return 15f;
@@ -913,6 +953,9 @@ namespace ProjectPumpernickle {
                     return 30 + Evaluators.ExpectedGoldFromRandomRelic();
                 }
                 case NodeType.Boss: {
+                    if (act > 2) {
+                        return 0;
+                    }
                     return 75;
                 }
                 case NodeType.Question: {
@@ -1114,18 +1157,16 @@ namespace ProjectPumpernickle {
                 }
             }
         }
-        public float ChanceToSurviveAct(int act) {
-            if (Save.state.act_num > act) {
-                return 1f;
-            }
+        public void SetChanceToSurviveAct() {
             float totalChance = 1f;
             for (int i = 0; i < remainingFloors; i++) {
-                if (Evaluators.FloorToAct(PathIndexToFloorNum(i)) == act + 1) {
-                    return totalChance;
+                if (Evaluators.FloorToAct(PathIndexToFloorNum(i)) == Save.state.act_num + 1) {
+                    chanceToSurviveAct = totalChance;
+                    return;
                 }
                 totalChance *= (1f - chanceOfDeath[i]);
             }
-            return totalChance;
+            chanceToSurviveAct = totalChance;
         }
     }
     public struct Vector2Int {
@@ -1159,6 +1200,7 @@ namespace ProjectPumpernickle {
         Upgrade,
         Key,
         Lift,
+        COUNT,
     }
     public static class FirstIndexOfExtension {
         public static int FirstIndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate) {

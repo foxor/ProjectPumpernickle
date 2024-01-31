@@ -1,42 +1,71 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Text;
 
 namespace ProjectPumpernickle {
     public class Advice {
-        public static Evaluation[] perThreadEvaluations;
+        public static Dictionary<long, Evaluation> perThreadEvaluations;
         public static List<RewardOption> rewardOptions;
+        public static IEnumerable<string> previousAdvice;
         public static bool eligibleForBlueKey;
         public static bool isShop;
-        protected static IEnumerable<Evaluation> MultiplexRewards(List<RewardOption> rewardOptions, bool eligibleForBlueKey, bool isShop) {
+        public static bool needsMoreInfo;
+        protected static long threadsOutstanding;
+        protected static void MultiplexRewards(List<RewardOption> rewardOptions, bool eligibleForBlueKey, bool isShop, IEnumerable<string> previousAdvice, bool needsMoreInfo) {
             Advice.rewardOptions = rewardOptions;
             Advice.eligibleForBlueKey = eligibleForBlueKey;
             Advice.isShop = isShop;
+            Advice.previousAdvice = previousAdvice;
+            Advice.needsMoreInfo = needsMoreInfo;
             var totalRewardOptions = rewardOptions.Select(x => x.values.Length + 1).Aggregate(1, (a, x) => a * x);
             var pathingOptions = Path.CountNodeSequences(rewardOptions);
-            perThreadEvaluations = new Evaluation[totalRewardOptions * pathingOptions];
-            PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Creating {0} threads", perThreadEvaluations.Length);
+            var totalEvals = totalRewardOptions * pathingOptions;
+            perThreadEvaluations = new Dictionary<long, Evaluation>();
+            PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Creating {0} threads", totalEvals);
             Application.DoEvents();
-            for (int i = 0; i < totalRewardOptions; i++) {
-                for (int p = 0; p < pathingOptions; p++) {
-                    var optionIndexCapture = i;
-                    var pathIndexCapture = p;
-                    var threadId = (optionIndexCapture * pathingOptions) + pathIndexCapture;
-                    ThreadPool.QueueUserWorkItem((_) => GenerateEvaluation(optionIndexCapture, pathIndexCapture, threadId));
+
+            var workChunks = NeededWorkChunks(totalEvals);
+            for (long i = 0; i < workChunks; i++) {
+                QueueWorkChunk(i, workChunks, totalEvals, pathingOptions);
+                AwaitWorkChunk(i == 0);
+                MergeChunks(i, workChunks, totalRewardOptions);
+                Application.DoEvents();
+            }
+        }
+
+
+        protected static void QueueWorkChunk(long workChunk, long totalChunks, long totalEvals, long pathingOptions) {
+            var stride = totalChunks;
+            var offset = workChunk;
+            for (long i = offset; i < totalEvals; i += stride) {
+                var optionIndex = i / pathingOptions;
+                var pathIndex = i % pathingOptions;
+                var threadId = i;
+                ThreadPool.QueueUserWorkItem((_) => GenerateEvaluation(optionIndex, pathIndex, threadId));
+                Interlocked.Increment(ref threadsOutstanding);
+            }
+        }
+        protected static void AwaitWorkChunk(bool firstChunk) {
+            while (threadsOutstanding != 0) {
+                if (firstChunk) {
+                    PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Working...");
                 }
                 Application.DoEvents();
-            }
-            var totalThreads = perThreadEvaluations.Length;
-            while (ThreadPool.PendingWorkItemCount != 0) {
                 Thread.Sleep(10);
-                var done = ThreadPool.PendingWorkItemCount - totalThreads;
-                PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("{0:P2} complete", (done * 1f / totalThreads));
                 Application.DoEvents();
             }
-            PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Finalizing results");
-            Application.DoEvents();
-            var validEvaluations = perThreadEvaluations.Where(x => x != null);
-            SetEvaluationOffRamps(Save.state.GetCurrentNode(), validEvaluations, totalRewardOptions);
+        }
+        protected static void MergeChunks(long chunksComplete, long totalChunks, int totalRewardOptions) {
+            if (chunksComplete == 0) {
+                PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Finalizing results");
+                Application.DoEvents();
+            }
+            var validEvaluations = perThreadEvaluations.Values;
+            if (!validEvaluations.Any()) {
+                return;
+            }
+            SetEvaluationOffRamps(validEvaluations);
             foreach (var eval in validEvaluations) {
                 Scoring.ScoreAfterOffRampDetermined(eval);
             }
@@ -45,74 +74,92 @@ namespace ProjectPumpernickle {
             }
             // For debugging determinism
             //var rewardsChosenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(',', validEvaluations.Select(x => x.Score)))));
-            return validEvaluations;
+            var sorted = validEvaluations.OrderByDescending(x => x.Score).ToArray();
+            PumpernickelAdviceWindow.instance.SetEvaluations(sorted, chunksComplete + 1, totalChunks);
         }
-        public static void GenerateEvaluation(int optionIndex, int pathIndex, int threadId) {
+        public static void GenerateEvaluation(long optionIndex, long pathIndex, long threadId) {
             var skipFirstNode = true;
             var nodeSequence = Path.BuildNodeSequence(pathIndex, Save.state.GetCurrentNode(), skipFirstNode);
             if (!nodeSequence.IsValid()) {
+                Interlocked.Decrement(ref threadsOutstanding);
                 return;
             }
             PumpernickelSaveState.instance = new PumpernickelSaveState(PumpernickelSaveState.parsed);
             List<int> rewardIndicies = new List<int>();
-            int residual = optionIndex;
+            long residual = optionIndex;
             for (int j = 0; j < rewardOptions.Count; j++) {
                 var optionCount = rewardOptions[j].values.Length + 1;
-                rewardIndicies.Add(residual % optionCount);
+                rewardIndicies.Add((int)(residual % optionCount));
                 residual /= optionCount;
             }
             using (var context = new RewardContext(rewardOptions, rewardIndicies, eligibleForBlueKey, isShop)) {
-                if (!context.IsValid(threadId)) {
+                if (!context.IsValid()) {
+                    Interlocked.Decrement(ref threadsOutstanding);
                     return;
                 }
-                var eval = new Evaluation(context, threadId, optionIndex);
+                var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
+                eval.NeedsMoreInfo = Advice.needsMoreInfo;
                 var path = Path.BuildPath(nodeSequence, pathIndex);
                 eval.SetPath(path, context.bonusCardRewards);
+                context.UpdateRewardPopulationStatistics(eval);
                 Scoring.Score(eval);
-                perThreadEvaluations[threadId] = eval;
+                lock (perThreadEvaluations) {
+                    perThreadEvaluations[threadId] = eval;
+                }
             }
+            Interlocked.Decrement(ref threadsOutstanding);
         }
-        public static Evaluation[] AdviseOnRewards(List<RewardOption> rewardOptions) {
+        public static void AdviseOnRewards(List<RewardOption> rewardOptions = null, IEnumerable<string> previousAdvice = null, bool needsMoreInfo = false) {
             var isShop = rewardOptions.Any(x => x.cost != 0);
             var currentNode = Save.state.GetCurrentNode();
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;
             Evaluators.ReorderOptions(rewardOptions);
             Evaluators.SkipUnpalatableOptions(rewardOptions);
-            var evaluations = MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop).ToArray();
-            Scoring.ApplyVariance(evaluations);
-            var sorted = evaluations.OrderByDescending(x => x.Score).ToArray();
-            return sorted;
+            MultiplexRewards(rewardOptions, eligibleForBlueKey, isShop, previousAdvice, needsMoreInfo);
         }
-        public static Evaluation[] AdviseOnRewards(List<RewardOption> rewardOptions, IEnumerable<string> previousAdvice) {
-            var evaluations = AdviseOnRewards(rewardOptions);
-            foreach (var evaluation in evaluations) {
-                evaluation.Advice = previousAdvice.Concat(evaluation.Advice).ToList();
-            }
-            return evaluations;
-        }
-        public static Evaluation[] CreateEventEvaluations(IEnumerable<string> previousAdvice, bool NeedsMoreInfo = false) {
-            var rewards = new List<RewardOption>();
-            var evals = AdviseOnRewards(rewards);
-            foreach(var eval in evals) {
-                eval.Advice = previousAdvice.Concat(eval.Advice).ToList();
-                eval.NeedsMoreInfo = NeedsMoreInfo;
-            }
-            return evals;
-        }
-        protected static void SetEvaluationOffRamps(MapNode root, IEnumerable<Evaluation> evaluations, int totalRewardOptions) {
-            if (root != null) {
-                foreach (var child in root.children) {
-                    for (int i = 0; i < totalRewardOptions; i++) {
-                        var pathsThatGoThisWay = evaluations.Where(x => x != null && x.Path.nodes[0] == child && x.RewardIndex == i);
-                        if (pathsThatGoThisWay.Any()) {
-                            var safestPathThisWay = pathsThatGoThisWay.OrderByDescending(x => x.Path.chanceToWin).First();
-                            foreach (var path in pathsThatGoThisWay) {
-                                path.OffRamp = safestPathThisWay;
-                            }
-                        }
+        protected struct OfframpGroup {
+            public MapNode finalPosition;
+            public long rewardOption;
+            public int fireChoice;
+            public OfframpGroup(Evaluation evaluation) {
+                fireChoice = 0;
+                rewardOption = evaluation.RewardIndex;
+                finalPosition = null;
+                for (int i = 0; i < evaluation.Path.nodes.Length; i++) {
+                    var node = evaluation.Path.nodes[i];
+                    if (node.nodeType == NodeType.Fire) {
+                        fireChoice *= ((int)FireChoice.COUNT) - 1;
+                        fireChoice += (int)evaluation.Path.fireChoices[i];
+                    }
+                    else {
+                        finalPosition = node;
+                        break;
                     }
                 }
             }
+            public override bool Equals([NotNullWhen(true)] object? obj) {
+                if (obj is OfframpGroup other) {
+                    return other.finalPosition == this.finalPosition &&
+                        other.rewardOption == this.rewardOption &&
+                        other.fireChoice == this.fireChoice;
+                }
+                return base.Equals(obj);
+            }
+        }
+        protected static void SetEvaluationOffRamps(IEnumerable<Evaluation> evaluations) {
+            foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {
+                var safestPathThisWay = offRampGroup.OrderByDescending(x => x.Path.chanceToSurviveAct).First();
+                foreach (var path in offRampGroup) {
+                    path.OffRamp = safestPathThisWay;
+                }
+            }
+        }
+        protected static readonly int WORK_CHUNK_SIZE = 10000;
+        protected static long NeededWorkChunks(long totalEvaluations) {
+            if (totalEvaluations % WORK_CHUNK_SIZE == 0) {
+                return totalEvaluations / WORK_CHUNK_SIZE;
+            }
+            return (totalEvaluations / WORK_CHUNK_SIZE) + 1;
         }
     }
 }

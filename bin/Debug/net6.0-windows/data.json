@@ -355,6 +355,9 @@
          "mod":"Slay the Spire",
          "bias": -0.2,
          "upgradePowerMultiplier": 1.4,
+         "setup": {
+            "SelfHarm": 1,
+         },
       },
       {
          "id":"Dark Embrace",
@@ -614,6 +617,9 @@
          "mod":"Slay the Spire",
          "bias": 0.9,
          "upgradePowerMultiplier": 2,
+         "payoffs": {
+            "SelfHarm": 3.0,
+         },
       },
       {
          "id":"Searing Blow",

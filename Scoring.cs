@@ -23,36 +23,6 @@ namespace ProjectPumpernickle {
                 }
             }
         }
-
-        public static void ApplyVariance(Evaluation[] evaluations) {
-            // Evaluations are projected optimistically
-            // Normally, we want to punish overly optimistic evaluations,
-            // however, if all the evaluations are risky, we want to pick 
-            // evaluations that actually have a shot
-            var highestLikelihood = evaluations.Select(x => x.Likelihood).Max();
-            var defaultEval = evaluations.Where(x => x.Likelihood == highestLikelihood).OrderByDescending(x => x.Score).First();
-            var defaultChanceToSurvive = defaultEval.Path.chanceToWin;
-            var defaultScore = defaultEval.Score;
-            var availableSafetyFactor = MathF.Pow(defaultChanceToSurvive, 2f);
-            foreach (var evaluation in evaluations) {
-                if (evaluation.Likelihood != 1f) {
-                    // Our current score is proportional to the best case reward
-                    // The goal here is to interpolate towards a more average result
-                    // We took a sample of the probability distribution when we allocated the rewards
-                    // We will assume that the score probability distribution is similarly shaped
-                    var worstCaseEstimatedScore = Lerp.FromUncapped(defaultScore, evaluation.Score, evaluation.WorstCaseRewardFactor);
-                    var maxScoreLoss = worstCaseEstimatedScore - evaluation.Score;
-
-                    var replacementProposition = evaluation.AverageCaseRewardFactor * (1f - availableSafetyFactor);
-                    // best case value proportion is bestValue / bestValue => 1
-                    var failureProportion = 1f - Lerp.Inverse(evaluation.WorstCaseRewardFactor, 1f, replacementProposition);
-                    var variancePenalty = maxScoreLoss * failureProportion * (1f - evaluation.Likelihood);
-                    
-                    evaluation.AddScore(ScoreReason.Variance, variancePenalty);
-                    evaluation.NeedsMoreInfo = true;
-                }
-            }
-        }
         public static readonly float MAX_SHOP_VALUE = 5f;
         public static float PointsForShop(float goldBrought) {
             if (goldBrought < 180f) {
@@ -78,9 +48,7 @@ namespace ProjectPumpernickle {
             var cardRewardValue = 1f - (Lerp.Inverse(0f, 40f, Save.state.floor_num) * .8f);
             evaluation.AddScore(ScoreReason.CardReward, .1f * expectedCardRewards * cardRewardValue);
 
-            evaluation.AddScore(ScoreReason.Key, Save.state.has_emerald_key ? .1f : 0);
-            evaluation.AddScore(ScoreReason.Key, Save.state.has_ruby_key ? .1f : 0);
-            evaluation.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? .1f : 0);
+            evaluation.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? .5f : 0);
 
             var effectiveHealth = Evaluators.GetCurrentEffectiveHealth();
             evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 30f);
@@ -111,6 +79,13 @@ namespace ProjectPumpernickle {
                 evaluation.AddScore(ScoreReason.BadBottle, -5f);
             }
         }
+        public static void ScoreBasedOnWinPerception(Evaluation evaluation) {
+            var stats = evaluation.RewardStats ?? new RewardOutcomeStatistics();
+            var winChance = stats.ChanceToWin(evaluation);
+            evaluation.SetScore(ScoreReason.MeanCorrection , -(stats.chosenValue - stats.rewardOutcomeMean));
+            evaluation.SetScore(ScoreReason.WinChance, winChance * 1f);
+            evaluation.SetScore(ScoreReason.Variance, -stats.rewardOutcomeStd / 5f);
+        }
         public static void Score(Evaluation evaluation) {
             for (int i = 0; i < Save.state.cards.Count; i++) {
                 var card = Save.state.cards[i];
@@ -125,12 +100,13 @@ namespace ProjectPumpernickle {
             }
             EvaluateGlobalRules(evaluation);
             ScorePath(evaluation);
+            ScoreBasedOnWinPerception(evaluation);
         }
         public static void ScoreAfterOffRampDetermined(Evaluation evaluation) {
             var offRamp = evaluation.OffRamp?.Path ?? evaluation.Path;
             // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
             // but that's kinda the right way to play the game
-            evaluation.AddScore(ScoreReason.ActSurvival, 10f * offRamp.ChanceToSurviveAct(Save.state.act_num));
+            evaluation.SetScore(ScoreReason.ActSurvival, 10f * offRamp.chanceToSurviveAct);
         }
     }
 }

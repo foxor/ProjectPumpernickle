@@ -86,6 +86,9 @@ namespace ProjectPumpernickle {
         PickedNeededCard,
         WingedBootsCharges,
         WingedBootsFlexibility,
+        SelfHarm,
+        MeanCorrection,
+        WinChance,
         COUNT,
     }
     public class Evaluation {
@@ -94,30 +97,28 @@ namespace ProjectPumpernickle {
 
         [ThreadStatic]
         public static Evaluation Active;
+        private float[] InternalScores = new float[(byte)ScoreReason.COUNT];
         public float[] Scores = new float[(byte)ScoreReason.COUNT];
-        public List<string> Advice = new List<string>();
+        public List<string> Advice;
         public Path Path = null;
-        public float Likelihood = 1f;
-        public float WorstCaseRewardFactor;
-        public float AverageCaseRewardFactor;
+        public RewardOutcomeStatistics RewardStats;
         public int BonusCardRewards;
         public Evaluation OffRamp;
         public bool NeedsMoreInfo = false;
-        public int RewardIndex;
-        public int Id;
+        public long RewardIndex;
+        public long Id;
 
         protected bool hasDescribedPathing;
 
-        public Evaluation(RewardContext context = null, int Id = -1, int RewardIndex = -1) {
+        public Evaluation(RewardContext context = null, long Id = -1, long RewardIndex = -1, IEnumerable<string> previousAdvice = null) {
             Active = this;
             this.Id = Id;
             this.RewardIndex = RewardIndex;
 
+            Advice = previousAdvice == null ? new List<string>() : previousAdvice.ToList();
+
             if (context != null) {
-                Advice = context.description.ToList();
-                Likelihood = context.chanceOfOutcome;
-                WorstCaseRewardFactor = context.worstCaseValueProportion;
-                AverageCaseRewardFactor = context.averageCaseValueProportion;
+                Advice.AddRange(context.description);
                 BonusCardRewards = context.bonusCardRewards;
             }
 
@@ -134,13 +135,13 @@ namespace ProjectPumpernickle {
             if (OffRamp == null) {
                 return;
             }
-            float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - Path.chanceToWin);
-            float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToWin);
+            float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - Path.chanceToSurviveAct);
+            float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToSurviveAct);
             var dT = riskT - offRampRiskT;
             var sigmoidX = -5f + dT * 10f;
             float riskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
             for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
-                Scores[i] = Lerp.From(Scores[i], OffRamp.Scores[i], riskRelevance);
+                Scores[i] = Lerp.From(InternalScores[i], OffRamp.InternalScores[i], riskRelevance);
             }
         }
 
@@ -152,12 +153,20 @@ namespace ProjectPumpernickle {
         }
 
         public void AddScore(ScoreReason reason, float delta) {
-            Scores[(byte)reason] += delta;
+            InternalScores[(byte)reason] += delta;
+        }
+        public void SetScore(ScoreReason reason, float score) {
+            InternalScores[(byte)reason] = score;
         }
 
         public float Score {
             get {
                 return Enum.GetValues<ScoreReason>().Where(x => x != ScoreReason.EVENT_SUM && x != ScoreReason.COUNT).Select(x => Scores[(byte)x]).Sum();
+            }
+        }
+        public float InternalScore {
+            get {
+                return Enum.GetValues<ScoreReason>().Where(x => x != ScoreReason.EVENT_SUM && x != ScoreReason.COUNT).Select(x => InternalScores[(byte)x]).Sum();
             }
         }
         public static string DescribeOffMapPathing(NodeType nodeType) {

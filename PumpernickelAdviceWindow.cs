@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Windows.Forms;
 
 namespace ProjectPumpernickle {
@@ -12,6 +13,8 @@ namespace ProjectPumpernickle {
         protected System.Drawing.Color defaultColor;
         public Evaluation[] Evaluations = null;
         public Evaluation[] FilteredEvaluations = null;
+        public long ChunksComplete;
+        public long TotalChunks;
         protected PumpernickelExplanation explainForm;
         protected Evaluation ChosenEvaluation;
         protected List<Vector2Int> RequiredCoords = new List<Vector2Int>();
@@ -138,8 +141,10 @@ namespace ProjectPumpernickle {
             lastHoveredIndex = -1;
         }
 
-        public void SetEvaluations(Evaluation[] evaluations) {
+        public void SetEvaluations(Evaluation[] evaluations, long chunksComplete, long totalChunks) {
             Evaluations = evaluations;
+            TotalChunks = totalChunks;
+            ChunksComplete = chunksComplete;
             RequiredCoords.Clear();
             SetFiltererdEvaluations(evaluations);
         }
@@ -154,11 +159,19 @@ namespace ProjectPumpernickle {
 
         public void SetChosenEvaluation(Evaluation chosenEvaluation) {
             ChosenEvaluation = chosenEvaluation;
-            instance.AdviceBox.Text = chosenEvaluation.ToString();
+            var adviceText = new StringBuilder();
+            if (TotalChunks > 1 && ChunksComplete < TotalChunks) {
+                adviceText.AppendLine(String.Format("Still thinking, {0:P2} complete", (ChunksComplete * 1f / TotalChunks)));
+            }
+            adviceText.Append(chosenEvaluation.ToString());
+            instance.AdviceBox.Text = adviceText.ToString();
             UpdateAct();
             if (chosenEvaluation.Path != null) {
                 foreach (var pathNode in chosenEvaluation.Path.nodes) {
                     var charIndex = PositionToIndex(pathNode.position);
+                    if (charIndex < 0) {
+                        continue;
+                    }
                     PathPreview.SelectionStart = charIndex;
                     PathPreview.SelectionLength = 1;
                     PathPreview.SelectionColor = System.Drawing.Color.Red;

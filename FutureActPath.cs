@@ -44,11 +44,8 @@ namespace ProjectPumpernickle {
                 fights = 5;
             }
             switch (floorIntoAct) {
-                case 1: {
-                    return wantsEarlyShop ? NodeType.Shop : NodeType.Question;
-                }
                 case 2: {
-                    return NodeType.Fight;
+                    return wantsEarlyShop ? NodeType.Shop : NodeType.Question;
                 }
                 case 3: {
                     return fights >= 4 ? NodeType.Fight : NodeType.Question;
@@ -88,53 +85,6 @@ namespace ProjectPumpernickle {
 
         protected static NodeType Act1(int localFloor) {
             switch (localFloor) {
-                case 0: {
-                    return NodeType.Fight;
-                }
-                case 1: {
-                    // InitializePossibleThreats is using fight nodes to consume the easy pool,
-                    // so we'll use those up early in acts 2 and 3
-                    return NodeType.Fight;
-                }
-                case 2: {
-                    return NodeType.Unknown;
-                }
-                case 3: {
-                    return NodeType.Unknown;
-                }
-                case 4: {
-                    return NodeType.Unknown;
-                }
-                case 5: {
-                    return NodeType.Unknown;
-                }
-                case 6: {
-                    return NodeType.Unknown;
-                }
-                case 7: {
-                    return NodeType.Unknown;
-                }
-                case 8: {
-                    return NodeType.Chest;
-                }
-                case 9: {
-                    return NodeType.Unknown;
-                }
-                case 10: {
-                    return NodeType.Unknown;
-                }
-                case 11: {
-                    return NodeType.Unknown;
-                }
-                case 12: {
-                    return NodeType.Unknown;
-                }
-                case 13: {
-                    return NodeType.Unknown;
-                }
-                case 14: {
-                    return NodeType.Fire;
-                }
                 case 15: {
                     return NodeType.Boss;
                 }

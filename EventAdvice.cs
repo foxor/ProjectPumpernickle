@@ -6,77 +6,77 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class EventAdvice {
-        public static Evaluation[] AccursedBlacksmith(IEnumerable<string> arguments) {
+        public static void AccursedBlacksmith(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Rummage around in the forge",
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] PleadingVagrant(IEnumerable<string> arguments) {
+        public static void PleadingVagrant(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] BackToBasics(IEnumerable<string> arguments) {
+        public static void BackToBasics(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] OldBeggar(IEnumerable<string> arguments) {
+        public static void OldBeggar(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] BigFish(IEnumerable<string> arguments) {
+        public static void BigFish(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Eat the bananna",
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] BonfireSpirits(IEnumerable<string> arguments) {
+        public static void BonfireSpirits(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] DeadAdventurer(IEnumerable<string> arguments) {
+        public static void DeadAdventurer(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] DrugDealer(IEnumerable<string> arguments) {
+        public static void DrugDealer(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Ingest Mutagens"
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Duplicator(IEnumerable<string> arguments) {
+        public static void Duplicator(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Duplicate " + Database.instance.cardsDict[Evaluators.BestCopyTarget()].name
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Falling(IEnumerable<string> arguments) {
+        public static void Falling(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] ForgottenAltar(IEnumerable<string> arguments) {
+        public static void ForgottenAltar(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheDivineFountain(IEnumerable<string> arguments) {
+        public static void TheDivineFountain(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] CouncilofGhosts(IEnumerable<string> arguments) {
+        public static void CouncilofGhosts(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] GoldenIdolEvent(IEnumerable<string> arguments) {
+        public static void GoldenIdolEvent(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Take the golden idol, give up max hp"
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] GoldenShrine(IEnumerable<string> arguments) {
+        public static void GoldenShrine(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] GoldenWing(IEnumerable<string> arguments) {
+        public static void GoldenWing(IEnumerable<string> arguments) {
             var preRewardEvaluation = new Evaluation();
             Scoring.Score(preRewardEvaluation);
             var cardRemoveIndex = Evaluators.CardRemoveTarget();
@@ -84,52 +84,52 @@ namespace ProjectPumpernickle {
                 "Pray, removing " + Save.state.cards[cardRemoveIndex].name,
             };
             Save.state.current_health -= 7;
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] KnowingSkull(IEnumerable<string> arguments) {
+        public static void KnowingSkull(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Lab(IEnumerable<string> arguments) {
+        public static void Lab(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheSsssserpent(IEnumerable<string> arguments) {
+        public static void TheSsssserpent(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] LivingWall(IEnumerable<string> arguments) {
+        public static void LivingWall(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] MaskedBandits(IEnumerable<string> arguments) {
+        public static void MaskedBandits(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Fight!",
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] MatchandKeep(IEnumerable<string> arguments) {
+        public static void MatchandKeep(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Mushrooms(IEnumerable<string> arguments) {
+        public static void Mushrooms(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] MysteriousSphere(IEnumerable<string> arguments) {
+        public static void MysteriousSphere(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Nloth(IEnumerable<string> arguments) {
+        public static void Nloth(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Purifier(IEnumerable<string> arguments) {
+        public static void Purifier(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static int SCRAP_OOZE_CLICKS_EXPECTED = -1;
-        public static Evaluation[] ScrapOoze(IEnumerable<string> arguments) {
+        public static void ScrapOoze(IEnumerable<string> arguments) {
             var adviceList = new List<string>();
             var hpCostList = new List<int>();
             var relicChanceList = new List<float>();
@@ -165,115 +165,116 @@ namespace ProjectPumpernickle {
             var rewardOptions = new List<RewardOption>() {
                 option
             };
-            var evaluations = Advice.AdviseOnRewards(rewardOptions);
-            SCRAP_OOZE_CLICKS_EXPECTED = evaluations[0].RewardIndex;
-            return evaluations;
+            Advice.AdviseOnRewards(rewardOptions);
+            SCRAP_OOZE_CLICKS_EXPECTED = (int)PumpernickelAdviceWindow.instance.Evaluations[0].RewardIndex;
         }
-        public static Evaluation[] SecretPortal(IEnumerable<string> arguments) {
+        public static void SecretPortal(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] SensoryStone(IEnumerable<string> arguments) {
+        public static void SensoryStone(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] ShiningLight(IEnumerable<string> arguments) {
+        public static void ShiningLight(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheCleric(IEnumerable<string> arguments) {
+        public static void TheCleric(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheJoust(IEnumerable<string> arguments) {
+        public static void TheJoust(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheLibrary(IEnumerable<string> arguments) {
+        public static void TheLibrary(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Let's read some books"
             };
             var needsMoreInfo = true;
-            return Advice.CreateEventEvaluations(existingAdvice, needsMoreInfo);
+            Advice.AdviseOnRewards(null, existingAdvice, needsMoreInfo);
         }
-        public static Evaluation[] TheMausoleum(IEnumerable<string> arguments) {
+        public static void TheMausoleum(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Leave the Mausoleum"
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheMoaiHead(IEnumerable<string> arguments) {
+        public static void TheMoaiHead(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TheWomaninBlue(IEnumerable<string> arguments) {
+        public static void TheWomaninBlue(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] TombRedMask(IEnumerable<string> arguments) {
+        public static void TombRedMask(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Leave",
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Transmogrifier(IEnumerable<string> arguments) {
-            var advice = Advice.CreateEventEvaluations(new string[0]);
-            var remove = Evaluators.CardRemoveTarget();
-            // This could lead to remove advice "double coverage" where the above path also prioritizes removing this card
-            advice[0].Advice.Insert(0, "Transform the " + Save.state.cards[remove].name);
-            return advice;
+        public static void Transmogrifier(IEnumerable<string> arguments) {
+            var targets = Evaluators.ReasonableRemoveTargets();
+            var rewardOption = new RewardOption() {
+                rewardType = RewardType.Event,
+                advice = targets.Select(x => "Transform the " + Save.state.cards[x].name).ToArray(),
+                values = targets.Select(x => EventRewardElement.TRANSFORM_CARD.ToString() + ": " + x).ToArray(),
+                skippable = true,
+            };
+            Advice.AdviseOnRewards(new List<RewardOption>() { rewardOption }, needsMoreInfo: true);
         }
-        public static Evaluation[] UpgradeShrine(IEnumerable<string> arguments) {
+        public static void UpgradeShrine(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Vampires(IEnumerable<string> arguments) {
+        public static void Vampires(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Refuse the bites"
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] GremlinWheelGame(IEnumerable<string> arguments) {
+        public static void GremlinWheelGame(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] WindingHalls(IEnumerable<string> arguments) {
+        public static void WindingHalls(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Retrace your steps",
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] WorldofGoop(IEnumerable<string> arguments) {
+        public static void WorldofGoop(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] MindBloom(IEnumerable<string> arguments) {
+        public static void MindBloom(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Fight the act 1 boss"
             };
             var needsMoreInfo = true;
-            var evals = Advice.CreateEventEvaluations(existingAdvice, needsMoreInfo);
-            return evals;
+            Advice.AdviseOnRewards(null, existingAdvice, needsMoreInfo);
         }
-        public static Evaluation[] Nest(IEnumerable<string> arguments) {
+        public static void Nest(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
                 "Take the gold"
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] FaceTrader(IEnumerable<string> arguments) {
+        public static void FaceTrader(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] ANoteForYourself(IEnumerable<string> arguments) {
+        public static void ANoteForYourself(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] WeMeetAgain(IEnumerable<string> arguments) {
+        public static void WeMeetAgain(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){};
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] Designer(IEnumerable<string> arguments) {
+        public static void Designer(IEnumerable<string> arguments) {
             var adjustmentUpgradesOne = bool.Parse(arguments.First());
             var cleanUpRemovesCards = bool.Parse(arguments.Skip(1).First());
             var existingAdvice = new List<string>() {
@@ -306,20 +307,20 @@ namespace ProjectPumpernickle {
                     skippable = false,
                 }
             };
-            return Advice.AdviseOnRewards(rewardOption, existingAdvice);
+            Advice.AdviseOnRewards(rewardOption, existingAdvice);
         }
-        public static Evaluation[] Colosseum(IEnumerable<string> arguments) {
+        public static void Colosseum(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Win the fight",
                 "Choose victory",
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static Evaluation[] CursedTome(IEnumerable<string> arguments) {
+        public static void CursedTome(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
                 "Read the book"
             };
-            return Advice.CreateEventEvaluations(existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);
         }
     }
 }

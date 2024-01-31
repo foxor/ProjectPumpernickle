@@ -175,7 +175,7 @@ namespace ProjectPumpernickle {
                 rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
             }
             argumentBuilder.Clear();
-            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(rewardOptions));
+            Advice.AdviseOnRewards(rewardOptions);
         }
 
         protected static void ParseGreenKeyMessage(IEnumerable<string> floorCoordinate) {
@@ -188,13 +188,8 @@ namespace ProjectPumpernickle {
             var eventName = javaClassPath.Substring(javaClassPath.LastIndexOf('.') + 1);
             var eventFn = typeof(EventAdvice).GetMethod(eventName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
             var eventFnArguments = new object[] { eventArguments.Skip(1) };
-            var evaluations = (Evaluation[])eventFn.Invoke(null, eventFnArguments);
-            PumpernickelAdviceWindow.instance.SetEvaluations(evaluations);
+            eventFn.Invoke(null, eventFnArguments);
         }
-        protected static void GivePathingAdvice() {
-            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(new List<RewardOption>()));
-        }
-
         protected static void ParseNewDungeonMessage(IEnumerable<string> parameters) {
             var lines = parameters.ToArray();
             var actLine = lines.First();
@@ -237,15 +232,16 @@ namespace ProjectPumpernickle {
             if (greenKeyHeaderIndex >= 0) {
                 ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..(greenKeyHeaderIndex + 3)]);
             }
-            GivePathingAdvice();
+            Advice.AdviseOnRewards(new List<RewardOption>());
         }
         protected static void ParseShopMessage(IEnumerable<string> shopOptionLines) {
             RewardType activeRewardType = RewardType.None;
             List<RewardOption> rewardOptions = new List<RewardOption>();
+            var shopRemoveOptions = Evaluators.ReasonableRemoveTargets();
             rewardOptions.Add(new RewardOption() {
                 rewardType = RewardType.CardRemove,
                 cost = Save.state.purgeCost,
-                values = new string[] { "CardRemove" },
+                values = shopRemoveOptions.Select(x => x.ToString()).ToArray(),
                 skippable = true,
             });
             foreach (var line in shopOptionLines) {
@@ -277,7 +273,7 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
-            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(rewardOptions));
+            Advice.AdviseOnRewards(rewardOptions);
         }
         protected static void ParseNeowMessage(IEnumerable<string> neowOptionLines) {
             List<string> neowCost = new List<string>();
@@ -296,7 +292,7 @@ namespace ProjectPumpernickle {
                     skippable = false,
                 },
             };
-            PumpernickelAdviceWindow.instance.SetEvaluations(Advice.AdviseOnRewards(rewardOptions));
+            Advice.AdviseOnRewards(rewardOptions);
         }
     }
 }

@@ -115,7 +115,7 @@ namespace ProjectPumpernickle {
             return 10f;
         }
 
-        public static float GetPotionHealthValue(string potionId, float expectedHealth) {
+        public static float GetPotionHealthValue(string potionId, float literalHealth) {
             var potionValue = RandomPotionHealthValue();
             switch (potionId) {
                 case "Ancient Potion": {
@@ -126,7 +126,7 @@ namespace ProjectPumpernickle {
                     return 5f;
                 }
             }
-            var healthFactor = Lerp.Inverse(10f, 30f, expectedHealth);
+            var healthFactor = Lerp.Inverse(10f, 30f, literalHealth);
             var healthEfficiencyMultiplier = Lerp.From(1f/3f, 1f, healthFactor);
             return potionValue * healthEfficiencyMultiplier;
         }
@@ -262,7 +262,7 @@ namespace ProjectPumpernickle {
 
         public static float ChanceOfSpecificCard(Color color, Rarity rarity) {
             // This code doesn't handle duplicates correctly.  The abstraction used here is mostly incompatible with that feature, and the math gets hard
-            var populationSize = Database.instance.cards.Where(x => x.cardColor == color && x.cardRarity == rarity).Count();
+            var populationSize = Database.instance.cards.Where(x => x.cardColor == color && x.cardRarity.Is(rarity)).Count();
             var hitDensity = 1f / populationSize;
             return hitDensity;
         }
@@ -619,37 +619,11 @@ namespace ProjectPumpernickle {
         public static IEnumerable<string> GetEligibleEventNames(Path path, int i) {
             return Database.instance.events.Where(x => x.eligible).Select(x => x.name);
         }
-        public static float AverageTransformValue(out string averageCardId) {
-            var bestRemoveOfColor = CardRemoveTarget();
-            return Save.state.GetTransformValue(Save.state.cards[bestRemoveOfColor].cardColor, out averageCardId, bestRemoveOfColor);
-        }
-        public static float AverageTransformValue(Color color, out string averageCardId, int removeIndex = -1) {
-            averageCardId = "";
-            if (removeIndex == -1) {
-                removeIndex = CardRemoveTarget(color);
-            }
-            var removeTarget = Save.state.cards[removeIndex];
-            Save.state.cards.RemoveAt(removeIndex);
-
-            var validTransforms = Database.instance.cards.Where(x => x.cardColor == color).ToArray();
-            var cardValues = new float[validTransforms.Count()];
-            for (int i = 0; i < validTransforms.Length; i++) {
-                var added = Save.state.AddCardById(validTransforms[i].id);
-                cardValues[i] = EvaluationFunctionReflection.GetCardEvalFunctionCached(validTransforms[i].id)(Save.state.cards[added], added);
-                Save.state.cards.RemoveAt(added);
-            }
-            var average = cardValues.Average();
-            var bestDelta = float.MaxValue;
-            for (int i = 0; i < validTransforms.Length; i++) {
-                var localDelta = Math.Abs(cardValues[i] - average);
-                if (localDelta < bestDelta) {
-                    bestDelta = localDelta;
-                    averageCardId = validTransforms[i].id;
-                }
-            }
-
-            Save.state.cards.Insert(removeIndex, removeTarget);
-            return average;
+        public static string AverageTransformValue(Color color) {
+            return color switch {
+                Color.Red => "Metallicize",
+                _ => throw new System.NotImplementedException(),
+            };
         }
         public static float EstimateFutureAddedCards() {
             var floorsLeft = 55f - Save.state.floor_num;
@@ -703,23 +677,6 @@ namespace ProjectPumpernickle {
             var cardAddressesWeakness = new Weakness(c);
             return deckWeakness * cardAddressesWeakness;
         }
-        public static readonly float TARGET_WIN_RATE = .5f;
-        public static readonly float ESTIMATE_ACCURACY_WINDOW = 15;
-        // https://www.wolframalpha.com/input?i=sigmoid%28x*.3%29+from+0+to+30
-        public static readonly float FUTURE_FLOOR_SIGMOID_FACTOR = 0.3f;
-        public static float AdjustChanceOfDeath(float chance, int floorsInFuture, float defaultDeathChance) {
-            var sigmoidFactor = floorsInFuture * FUTURE_FLOOR_SIGMOID_FACTOR;
-            var t = PumpernickelMath.Sigmoid(sigmoidFactor);
-            return Lerp.From(chance, defaultDeathChance, t);
-        }
-        public static float DefaultChanceOfDeath(int floorsLeft) {
-            return 1f - MathF.Pow(TARGET_WIN_RATE, 1f / floorsLeft);
-        }
-        public static float EstimateChanceToWin(float[] ChanceOfDeath) {
-            var defaultChanceOfDeath = DefaultChanceOfDeath(ChanceOfDeath.Length);
-            var adjustedChances = Enumerable.Range(0, ChanceOfDeath.Length).Select(i => AdjustChanceOfDeath(ChanceOfDeath[i], i, defaultChanceOfDeath));
-            return adjustedChances.Aggregate(1f, (s, d) => s * (1f - d));
-        }
         public static int PoolBegins(NodeType pool, bool easyPool, int act) {
             var firstFloor = ActToFirstFloor(act);
             switch (pool) {
@@ -759,10 +716,16 @@ namespace ProjectPumpernickle {
             return false;
         }
         public static bool ShouldConsiderSkippingRelic() {
+            if (Save.state.GetCurrentNode().nodeType == NodeType.Chest && !Save.state.has_sapphire_key) {
+                return true;
+            }
             return false;
         }
         public static bool ShouldConsiderSkippingPotion() {
             return Save.state.EmptyPotionSlots() == 0;
+        }
+        public static bool ShouldConsiderSkippingKey() {
+            return false;
         }
         public static void SkipUnpalatableOptions(List<RewardOption> rewardOptions) {
             if (!ShouldConsiderSkippingGold()) {
@@ -782,6 +745,13 @@ namespace ProjectPumpernickle {
             if (!ShouldConsiderSkippingPotion()) {
                 foreach (var option in rewardOptions) {
                     if (option.rewardType == RewardType.Potion && option.cost == 0) {
+                        option.skippable = false;
+                    }
+                }
+            }
+            if (!ShouldConsiderSkippingKey()) {
+                foreach (var option in rewardOptions) {
+                    if (option.rewardType == RewardType.Key && option.cost == 0) {
                         option.skippable = false;
                     }
                 }
@@ -810,6 +780,34 @@ namespace ProjectPumpernickle {
                 return 3;
             }
             return Save.state.relic_counters[wingedBootsIndex];
+        }
+        public static bool ShouldConsiderRemovingNonCurse() {
+            return !Save.state.cards.Any(x => x.cardType == CardType.Curse && !x.tags.ContainsKey(Tags.Unpurgeable.ToString()));
+        }
+        public static bool ShouldConsiderRemovingNonBasic() {
+            return !Save.state.cards.Any(x => x.cardRarity == Rarity.Basic);
+        }
+        public static IEnumerable<int> ReasonableRemoveTargets() {
+            List<string> unupgradedRemoves = new List<string>();
+            List<string> upgradedRemoves = new List<string>();
+            var shouldConsiderNonCurse = ShouldConsiderRemovingNonCurse();
+            var shouldConsiderNonBasic = ShouldConsiderRemovingNonBasic();
+            for (int i = 0; i < Save.state.cards.Count; i++) {
+                var card = Save.state.cards[i];
+                if (card.cardRarity != Rarity.Basic && !shouldConsiderNonBasic) {
+                    continue;
+                }
+                if (card.cardType == CardType.Curse && !shouldConsiderNonCurse) {
+                    continue;
+                }
+                var relevantList = (card.upgrades == 0 ? unupgradedRemoves : upgradedRemoves);
+                var hasConsidered = relevantList.Contains(card.id);
+                if (hasConsidered && card.id != "Searing Blow") {
+                    continue;
+                }
+                relevantList.Add(card.id);
+                yield return i;
+            }
         }
     }
 }

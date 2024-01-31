@@ -59,6 +59,8 @@ namespace ProjectPumpernickle {
         public Rarity cardRarity;
         public Color cardColor;
         public bool isNew;
+        public Dictionary<string, float> setup;
+        public Dictionary<string, float> payoff;
 
         public void CopyFrom(Card other) {
             this.name = other.name;
@@ -77,11 +79,19 @@ namespace ProjectPumpernickle {
             this.cardRarity = other.cardRarity;
             this.cardColor = other.cardColor;
             this.isNew = other.isNew;
+            this.setup = other.setup;
+            this.payoff = other.payoff;
         }
 
         public void OnLoad() {
             if (tags == null) {
                 tags = new Dictionary<string, float>();
+            }
+            if (setup == null) {
+                setup = new Dictionary<string, float>();
+            }
+            if (payoff == null) {
+                payoff = new Dictionary<string, float>();
             }
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
@@ -203,6 +213,7 @@ namespace ProjectPumpernickle {
         public NodeType nodeType;
         public List<MapNode> children = new List<MapNode>();
         public Vector2Int position;
+        public long? totalChildOptions;
     }
     public enum PlayerCharacter {
         Ironclad,
@@ -267,8 +278,6 @@ namespace ProjectPumpernickle {
         public float addedDamagePerTurn;
         public float addedBlockPerTurn;
         public bool badBottle;
-        public float[] transformValues = new float[0];
-        public string[] averageTransformValueIds = new string[0];
         public bool addedSkill;
         public PumpernickelSaveState() {
             parsed = this;
@@ -324,8 +333,6 @@ namespace ProjectPumpernickle {
             relic_counters = original.relic_counters.ToList();
             potions = original.potions.ToArray();
             huntingCards = original.huntingCards.ToList();
-            transformValues = original.transformValues.ToArray();
-            averageTransformValueIds = original.averageTransformValueIds.ToArray();
         }
 
         public int AddCardById(string name) {
@@ -465,7 +472,7 @@ namespace ProjectPumpernickle {
                 return fakeNode;
             }
             if (bossChest) {
-                return null;
+                return new MapNode() { nodeType = NodeType.BossChest, position = new Vector2Int(-1, 16) };
             }
             if (Save.state.act_num == 4) {
                 return Act4()[room_y];
@@ -492,6 +499,9 @@ namespace ProjectPumpernickle {
             }
             return potions.Where(x => x.Equals("Potion Slot")).Count();
         }
+        public IEnumerable<string> Potions() {
+            return potions.Except(x => x.Equals("Potion Slot"));
+        }
 
         public void HuntForCard(string cardId) {
             if (huntingCards == null) {
@@ -500,23 +510,6 @@ namespace ProjectPumpernickle {
             if (!huntingCards.Contains(cardId)) {
                 huntingCards.Add(cardId);
             }
-        }
-
-        public float GetTransformValue(Color color, out string averageCardId, int removeIndex = -1) {
-            var index = (byte)color;
-            if (transformValues == null) {
-                transformValues = new float[(byte)Color.COUNT];
-                averageTransformValueIds = new string[transformValues.Length];
-                for (int i = 0; i < transformValues.Length; i++) {
-                    transformValues[i] = float.NaN;
-                }
-            }
-            if (float.IsNaN(transformValues[index])) {
-                transformValues[index] = Evaluators.AverageTransformValue(color, out averageCardId, removeIndex);
-                averageTransformValueIds[index] = averageCardId;
-            }
-            averageCardId = averageTransformValueIds[index];
-            return transformValues[index];
         }
     }
 }

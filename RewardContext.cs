@@ -27,10 +27,6 @@ namespace ProjectPumpernickle {
         public List<int> removedCardIndicies = new List<int>();
         public int maxHealthLost;
         public int healthLost;
-        // If we have multiple possible rewards available, choose the best one, and a chanceOfOutCome proportionate to how likely that is
-        public float chanceOfOutcome = 1f;
-        public float worstCaseValueProportion = 1f;
-        public float averageCaseValueProportion = 1f;
         public int bonusCardRewards;
         public List<int> upgradeIndicies = new List<int>();
         public string relicRemoved = null;
@@ -38,6 +34,7 @@ namespace ProjectPumpernickle {
         public bool isInvalid;
         public Card bottled;
         public bool gainedMembershipCard;
+        public IRewardStatisticsGroup statisticsGroup;
         public RewardContext(in List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop) {
             for (int i = 0; i < rewardIndicies.Count; i++) {
                 var rewardGroup = rewardOptions[i];
@@ -72,8 +69,10 @@ namespace ProjectPumpernickle {
                 goldAdded -= cost;
                 Save.state.current_health -= rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
                 healthLost += rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
+                bool alreadyAdvised = false;
                 if (rewardGroup.advice != null && !string.IsNullOrEmpty(rewardGroup.advice[index])) {
                     description.Add(rewardGroup.advice[index]);
+                    alreadyAdvised = true;
                 }
                 switch (rewardGroup.rewardType) {
                     case RewardType.Cards: {
@@ -129,7 +128,7 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case RewardType.CardRemove: {
-                        var removeIndex = Evaluators.CardRemoveTarget();
+                        var removeIndex = int.Parse(chosen);
                         cardsRemoved.Add(Save.state.cards[removeIndex]);
                         removedCardIndicies.Add(removeIndex);
                         description.Add("Remove the " + Save.state.cards[removeIndex].name);
@@ -137,13 +136,13 @@ namespace ProjectPumpernickle {
                         break;
                     }
                     case RewardType.Event: {
-                        var eventCost = rewardGroup.eventCost[index];
+                        var eventCost = rewardGroup.eventCost == null ? "NONE" : rewardGroup.eventCost[index];
                         var rewardHeader = chosen;
                         var colonIndex = chosen.IndexOf(":");
                         if (colonIndex != -1) {
                             rewardHeader = rewardHeader.Substring(0, colonIndex);
                         }
-                        HandleEvent(Enum.GetValues<EventRewardElement>().Where(x => x.ToString().Equals(rewardHeader)).Single(), chosen, eventCost);
+                        HandleEvent(Enum.GetValues<EventRewardElement>().Where(x => x.ToString().Equals(rewardHeader)).Single(), chosen, eventCost, alreadyAdvised);
                         break;
                     }
                     default: {
@@ -153,7 +152,7 @@ namespace ProjectPumpernickle {
             }
         }
 
-        protected void HandleEvent(EventRewardElement reward, string rewardValue, string cost) {
+        protected void HandleEvent(EventRewardElement reward, string rewardValue, string cost, bool alreadyAdvised) {
             var line1 = new StringBuilder("Take ");
             var line2 = new StringBuilder();
             switch (reward) {
@@ -161,9 +160,9 @@ namespace ProjectPumpernickle {
                     line1.Append("the rare colorless");
                     Evaluators.BestAndWorstRewardResults(Color.Colorless, out var bestCard, out var bestValue, out float worstCaseValue, out float averageCaseValue, Rarity.Rare);
                     addedCardIndicies.Add(Save.state.AddCardById(bestCard.id));
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificCardInReward(Color.Colorless, Rarity.Rare, 1f);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
-                    averageCaseValueProportion = averageCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificCardInReward(Color.Colorless, Rarity.Rare, 1f);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
+                    //averageCaseValueProportion = averageCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.THREE_CARDS: {
@@ -175,9 +174,9 @@ namespace ProjectPumpernickle {
                     line1.Append("the random rare card");
                     Evaluators.BestAndWorstRewardResults(Save.state.character.ToColor(), out var bestCard, out var bestValue, out float worstCaseValue, out float averageCaseValue, Rarity.Rare);
                     addedCardIndicies.Add(Save.state.AddCardById(bestCard.id));
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificCard(Save.state.character.ToColor(), Rarity.Rare);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
-                    averageCaseValueProportion = averageCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificCard(Save.state.character.ToColor(), Rarity.Rare);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
+                    //averageCaseValueProportion = averageCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.REMOVE_CARD: {
@@ -202,21 +201,26 @@ namespace ProjectPumpernickle {
                     line1.Append("the colorless card reward");
                     Evaluators.BestAndWorstRewardResults(Color.Colorless, out var bestCard, out var bestValue, out float worstCaseValue, out float averageCaseValue, Rarity.Uncommon);
                     addedCardIndicies.Add(Save.state.AddCardById(bestCard.id));
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificCard(Color.Colorless, Rarity.Uncommon);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
-                    averageCaseValueProportion = averageCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificCard(Color.Colorless, Rarity.Uncommon);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
+                    //averageCaseValueProportion = averageCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.TRANSFORM_CARD: {
-                    line1.Append("transform");
-                    var removeIndex = Evaluators.CardRemoveTarget();
-                    cardsRemoved.Add(Save.state.cards[removeIndex]);
+                    line1.Append("the transform");
+                    var removeIndex = int.Parse(rewardValue.Substring(rewardValue.IndexOf(" ") + 1));
+                    var card = Save.state.cards[removeIndex];
+                    cardsRemoved.Add(card);
                     removedCardIndicies.Add(removeIndex);
-                    line2.Append("Transform the " + Save.state.cards[removeIndex].name);
+                    line2.Append("Transform the " + card.name);
                     Save.state.cards.RemoveAt(removeIndex);
 
-                    Evaluators.AverageTransformValue(out var averageCardId);
+                    var averageCardId = Evaluators.AverageTransformValue(card.cardColor);
                     addedCardIndicies.Add(Save.state.AddCardById(averageCardId));
+                    statisticsGroup = new TransformStatisticsGroup() {
+                        transformColor = card.cardColor,
+                        transformId = averageCardId,
+                    };
                     break;
                 }
                 case EventRewardElement.THREE_SMALL_POTIONS: {
@@ -229,8 +233,8 @@ namespace ProjectPumpernickle {
                     Evaluators.RandomRelicValue(Save.state.character, out var bestRelic, out var bestValue, out float worstCaseValue, Rarity.Common);
                     relics.Add(bestRelic.id);
                     Save.state.relics.Add(bestRelic.id);
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Common);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Common);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.TEN_PERCENT_HP_BONUS: {
@@ -273,7 +277,7 @@ namespace ProjectPumpernickle {
                 case EventRewardElement.TRANSFORM_TWO_CARDS: {
                     line1.Append("transforms");
                     description.Add(line1.ToString());
-                    Evaluators.AverageTransformValue(out var averageCard);
+                    //Evaluators.AverageTransformValue(out var averageCard);
 
                     line2.Append("Transform the ");
                     var firstRemoveIndex = Evaluators.CardRemoveTarget();
@@ -287,8 +291,8 @@ namespace ProjectPumpernickle {
                     Save.state.cards.RemoveAt(secondRemoveIndex);
                     line2.Append(Save.state.cards[secondRemoveIndex].name);
 
-                    addedCardIndicies.Add(Save.state.AddCardById(averageCard));
-                    addedCardIndicies.Add(Save.state.AddCardById(averageCard));
+                    //addedCardIndicies.Add(Save.state.AddCardById(averageCard));
+                    //addedCardIndicies.Add(Save.state.AddCardById(averageCard));
                     break;
                 }
                 case EventRewardElement.ONE_RARE_RELIC: {
@@ -296,17 +300,17 @@ namespace ProjectPumpernickle {
                     Evaluators.RandomRelicValue(Save.state.character, out var bestRelic, out var bestValue, out float worstCaseValue, Rarity.Rare);
                     relics.Add(bestRelic.id);
                     Save.state.relics.Add(bestRelic.id);
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Rare);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Rare);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.THREE_RARE_CARDS: {
                     line1.Append("the rare card reward");
                     Evaluators.BestAndWorstRewardResults(Save.state.character.ToColor(), out var bestCard, out var bestValue, out float worstCaseValue, out float averageCaseValue, Rarity.Rare);
                     addedCardIndicies.Add(Save.state.AddCardById(bestCard.id));
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificCardInReward(Save.state.character.ToColor(), Rarity.Rare, 1f);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
-                    averageCaseValueProportion = averageCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificCardInReward(Save.state.character.ToColor(), Rarity.Rare, 1f);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
+                    //averageCaseValueProportion = averageCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.TWO_FIFTY_GOLD: {
@@ -334,14 +338,14 @@ namespace ProjectPumpernickle {
                         Save.state.relics.RemoveAt(0);
                     }
                     Save.state.relics.Add(bestRelic.id);
-                    chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Boss);
-                    worstCaseValueProportion = worstCaseValue / bestValue;
+                    //chanceOfOutcome = Evaluators.ChanceOfSpecificRelic(Save.state.character, Rarity.Boss);
+                    //worstCaseValueProportion = worstCaseValue / bestValue;
                     break;
                 }
                 case EventRewardElement.TWO_RANDOM_UPGRADES: {
                     line1.Append("the upgrades");
-                    worstCaseValueProportion = 1f;
-                    chanceOfOutcome = 1f;
+                    //worstCaseValueProportion = 1f;
+                    //chanceOfOutcome = 1f;
                     for (int a = 0; a < 2; a++) {
                         var priorUpgrades = 0;
                         Evaluators.ChooseBestAndWorstUpgrade(priorUpgrades, out var bestUpgrade, out var bestValue, out var worstUpgrade, out var worstValue);
@@ -351,8 +355,8 @@ namespace ProjectPumpernickle {
                         var upgradeIndex = Save.state.cards.FirstIndexOf(x => x.id.Equals(bestUpgrade));
                         upgradeIndicies.Add(upgradeIndex);
                         Save.state.cards[upgradeIndex].upgrades++;
-                        worstCaseValueProportion *= worstValue / bestValue;
-                        chanceOfOutcome *= (2 - a) * 1f / Save.state.cards.Where(x => x.upgrades == 0).Count();
+                        //worstCaseValueProportion *= worstValue / bestValue;
+                        //chanceOfOutcome *= (2 - a) * 1f / Save.state.cards.Where(x => x.upgrades == 0).Count();
                     }
                     break;
                 }
@@ -364,10 +368,10 @@ namespace ProjectPumpernickle {
                         var upgradeIndex = Save.state.cards.FirstIndexOf(x => x.id.Equals(bestUpgrade));
                         upgradeIndicies.Add(upgradeIndex);
                         Save.state.cards[upgradeIndex].upgrades++;
-                        worstCaseValueProportion *= worstValue / bestValue;
+                        //worstCaseValueProportion *= worstValue / bestValue;
                         // Adding one to denominator because card remove happens first in game
                         // Upgrading before remove because of dispose order
-                        chanceOfOutcome *= 1f / (Save.state.cards.Where(x => x.upgrades == 0).Count() + 1);
+                        //chanceOfOutcome *= 1f / (Save.state.cards.Where(x => x.upgrades == 0).Count() + 1);
                     }
 
                     var removeIndex = Evaluators.CardRemoveTarget();
@@ -384,9 +388,9 @@ namespace ProjectPumpernickle {
                         Evaluators.ChooseBestRelic(out var bestRelic, out var bestValue, out var averageValue, out var count);
                         relics.Add(bestRelic);
                         Save.state.relics.Add(bestRelic);
-                        worstCaseValueProportion = 0f;
-                        averageCaseValueProportion = (averageValue / bestValue) * chance;
-                        chanceOfOutcome = (1f / count) * chance;
+                        //worstCaseValueProportion = 0f;
+                        //averageCaseValueProportion = (averageValue / bestValue) * chance;
+                        //chanceOfOutcome = (1f / count) * chance;
                     }
                     break;
                 }
@@ -432,14 +436,20 @@ namespace ProjectPumpernickle {
                     break;
                 }
             }
-            if (!line1.ToString().Equals("Take ")) {
-                description.Add(line1.ToString());
-            }
-            if (line2.Length > 0) {
-                description.Add(line2.ToString());
+            if (!alreadyAdvised) {
+                if (!line1.ToString().Equals("Take ")) {
+                    description.Add(line1.ToString());
+                }
+                if (line2.Length > 0) {
+                    description.Add(line2.ToString());
+                }
             }
         }
-
+        public void UpdateRewardPopulationStatistics(Evaluation eval) {
+            if (statisticsGroup != null) {
+                eval.RewardStats = statisticsGroup.Evaluate();
+            }
+        }
         public void Dispose() {
             foreach (var relic in relics) {
                 Save.state.relics.Remove(relic);
@@ -480,7 +490,7 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public bool IsValid(int threadId) {
+        public bool IsValid() {
             var valid = true;
             valid &= Save.state.gold >= 0;
             valid &= !potionIndicies.Any(x => x == -1);
