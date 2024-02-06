@@ -87,6 +87,8 @@ namespace ProjectPumpernickle {
         WingedBootsCharges,
         WingedBootsFlexibility,
         SelfHarm,
+        ExhaustSelf,
+        ExhaustOther,
         MeanCorrection,
         WinChance,
         COUNT,
@@ -97,7 +99,7 @@ namespace ProjectPumpernickle {
 
         [ThreadStatic]
         public static Evaluation Active;
-        private float[] InternalScores = new float[(byte)ScoreReason.COUNT];
+        public float[] InternalScores = new float[(byte)ScoreReason.COUNT];
         public float[] Scores = new float[(byte)ScoreReason.COUNT];
         public List<string> Advice;
         public Path Path = null;
@@ -181,11 +183,14 @@ namespace ProjectPumpernickle {
             };
         }
         public static string DescribePathing(Vector2Int? currentNode, Span<MapNode> pathNodes) {
+            if (pathNodes.Length == 1 && pathNodes[0].nodeType == NodeType.BossChest) {
+                return "Go to the next act";
+            }
             var moveToPos = pathNodes[0].position;
             var moveFromPos = currentNode.Value;
             var direction = moveFromPos.x > moveToPos.x ? "left" :
                 (moveFromPos.x < moveToPos.x ? "right" : "up");
-            if (moveFromPos.y == Evaluators.ActToFirstFloor(Save.state.act_num) - 1) {
+            if (moveFromPos.y == -1) {
                 direction = "as marked";
             }
             var destination = pathNodes[0].nodeType.ToString();

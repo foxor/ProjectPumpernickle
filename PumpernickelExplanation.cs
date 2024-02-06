@@ -19,6 +19,7 @@ namespace ProjectPumpernickle {
         Path,
     }
     public partial class PumpernickelExplanation : Form {
+        public static bool BlockPartialUpdates = false;
         public static readonly byte EVENT_BEGIN = (byte)ScoreReason.EVENT_BEGIN;
         public static readonly byte EVENT_NUM = ScoreReason.EVENT_END - ScoreReason.EVENT_BEGIN - 1;
         private int lastMouseOver = 0;
@@ -183,6 +184,7 @@ namespace ProjectPumpernickle {
         }
 
         public void Explain(ExplanationGroupMode mode) {
+            BlockPartialUpdates = true;
             btnGroupByPath.Enabled = mode != ExplanationGroupMode.Path;
             btnGroupByReward.Enabled = mode != ExplanationGroupMode.Reward;
             btnUngroup.Enabled = mode != ExplanationGroupMode.Ungrouped;
@@ -197,7 +199,7 @@ namespace ProjectPumpernickle {
                 ExplanationGroupMode.Ungrouped => filtered
             };
             var filteredArray = filtered.ToArray();
-            PumpernickelAdviceWindow.instance.SetFiltererdEvaluations(filteredArray, false);
+            PumpernickelAdviceWindow.instance.SetFiltererdEvaluations(filteredArray);
             var actualBest = PumpernickelAdviceWindow.instance.Evaluations[0];
             if (filteredArray[0] != actualBest) {
                 filteredArray = filteredArray.Prepend(actualBest).ToArray();

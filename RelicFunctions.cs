@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -522,9 +523,16 @@ namespace ProjectPumpernickle {
             var value = r.bias;
             return value;
         }
+        public static readonly float NECRO_ACTIVE_FLOOR = 2.2f;
+        public static readonly float NECRO_PER_CARD = 0.4f;
+        public static readonly float NECRO_MAX = 6f;
         public static float Necronomicon(Relic r) {
-            var value = r.bias;
-            return value;
+            var targets = Evaluators.NecronomiconTargets();
+            if (!targets.Any()) {
+                return r.bias;
+            }
+            var value = NECRO_ACTIVE_FLOOR + NECRO_PER_CARD * targets.Count();
+            return MathF.Min(value, NECRO_MAX);
         }
         public static float NeowsBlessing(Relic r) {
             var value = r.bias;
@@ -659,9 +667,18 @@ namespace ProjectPumpernickle {
             var value = r.bias;
             return value;
         }
+        public static readonly float SNECKO_OFFSET = 6f;
         public static float SneckoEye(Relic r) {
-            var value = r.bias;
-            return value;
+            var netCost = 0f;
+            foreach (var card in Save.state.cards) {
+                if (card.intCost == int.MaxValue) {
+                    continue;
+                }
+                netCost += 1.5f - card.intCost;
+            }
+            var expectedCardsPlayed = Evaluators.AverageCardsPerFight();
+            var playsPerCard = expectedCardsPlayed / Save.state.cards.Count;
+            return -netCost * Scoring.VALUE_PER_NET_SAVING * playsPerCard + SNECKO_OFFSET;
         }
         public static float Sozu(Relic r) {
             var value = r.bias;

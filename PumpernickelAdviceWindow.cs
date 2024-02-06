@@ -18,6 +18,7 @@ namespace ProjectPumpernickle {
         protected PumpernickelExplanation explainForm;
         protected Evaluation ChosenEvaluation;
         protected List<Vector2Int> RequiredCoords = new List<Vector2Int>();
+        protected int lastAct = -1;
 
         public PumpernickelAdviceWindow() {
             InitializeComponent();
@@ -60,10 +61,12 @@ namespace ProjectPumpernickle {
         }
 
         public void UpdateAct() {
-            if (PumpernickelSaveState.parsed.act_num == 4) {
+            if (Save.state.act_num == 4 || Save.state.act_num == lastAct) {
                 return;
             }
-            PathPreview.Text = PathTexts[PumpernickelSaveState.parsed.act_num - 1];
+            lastAct = Save.state.act_num;
+            RequiredCoords.Clear();
+            PathPreview.Text = PathTexts[Save.state.act_num - 1];
         }
 
         public static Vector2Int IndexToPosition(int index, out bool IsValid) {
@@ -142,31 +145,49 @@ namespace ProjectPumpernickle {
         }
 
         public void SetEvaluations(Evaluation[] evaluations, long chunksComplete, long totalChunks) {
-            Evaluations = evaluations;
             TotalChunks = totalChunks;
             ChunksComplete = chunksComplete;
-            RequiredCoords.Clear();
-            SetFiltererdEvaluations(evaluations);
-        }
-
-        public void SetFiltererdEvaluations(Evaluation[] evaluations, bool shouldExplain = true) {
-            FilteredEvaluations = evaluations;
-            SetChosenEvaluation(evaluations.First());
-            if (explainForm != null && !explainForm.IsDisposed && shouldExplain) {
-                explainForm.Explain(ExplanationGroupMode.Reward);
+            if (chunksComplete < totalChunks && PumpernickelExplanation.BlockPartialUpdates) {
+                return;
+            }
+            PumpernickelExplanation.BlockPartialUpdates = false;
+            Evaluations = evaluations;
+            if (RequiredCoords.Count > 0) {
+                PickBestEvalThroughCoords();
+            }
+            else {
+                SetFiltererdEvaluations(evaluations);
             }
         }
 
+        public void SetFiltererdEvaluations(Evaluation[] evaluations) {
+            FilteredEvaluations = evaluations;
+            SetChosenEvaluation(evaluations.First());
+        }
+
         public void SetChosenEvaluation(Evaluation chosenEvaluation) {
-            ChosenEvaluation = chosenEvaluation;
             var adviceText = new StringBuilder();
             if (TotalChunks > 1 && ChunksComplete < TotalChunks) {
                 adviceText.AppendLine(String.Format("Still thinking, {0:P2} complete", (ChunksComplete * 1f / TotalChunks)));
             }
             adviceText.Append(chosenEvaluation.ToString());
+            if (ChosenEvaluation == chosenEvaluation) {
+                return;
+            }
+            ChosenEvaluation = chosenEvaluation;
             instance.AdviceBox.Text = adviceText.ToString();
             UpdateAct();
+            PathPreview.Text = PathTexts[Save.state.act_num - 1];
             if (chosenEvaluation.Path != null) {
+                foreach (var pathNode in chosenEvaluation.OffRamp.Path.nodes) {
+                    var charIndex = PositionToIndex(pathNode.position);
+                    if (charIndex < 0) {
+                        continue;
+                    }
+                    PathPreview.SelectionStart = charIndex;
+                    PathPreview.SelectionLength = 1;
+                    PathPreview.SelectionColor = System.Drawing.Color.Blue;
+                }
                 foreach (var pathNode in chosenEvaluation.Path.nodes) {
                     var charIndex = PositionToIndex(pathNode.position);
                     if (charIndex < 0) {

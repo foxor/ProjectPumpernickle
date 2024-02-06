@@ -127,10 +127,19 @@ namespace ProjectPumpernickle {
                 if (root.nodeType == NodeType.Fire) {
                     r.fireChoices.Add(availableFireOptions[fireOptionIndex]);
                 }
+                if (pathIndex != 0) {
+                    Console.WriteLine();
+                }
                 return r;
             }
-            var childIndex = (int)(pathIndex % optionCount);
-            var residual = pathIndex / optionCount;
+            int childIndex = 0;
+            var residual = pathIndex;
+            for (; childIndex < nextOptions.Count; childIndex++) {
+                if (nextOptions[childIndex].totalChildOptions > residual) {
+                    break;
+                }
+                residual -= nextOptions[childIndex].totalChildOptions.Value;
+            }
             var recur = BuildNodeSequence(residual, nextOptions[childIndex]);
             if (!skipFirstNode) {
                 recur.nodes.Add(root);
@@ -142,7 +151,7 @@ namespace ProjectPumpernickle {
                 recur.jumps++;
                 recur.invalidJump |= root.children.Any(x => x.nodeType == nextOptions[childIndex].nodeType);
             }
-            if (nextOptions[childIndex].children == null && root.children.Any(x => x.position.x < nextOptions[childIndex].position.x)) {
+            if (!nextOptions[childIndex].children.Any() && root.children.Any(x => x.position.x < nextOptions[childIndex].position.x)) {
                 recur.invalidFireWalk = true;
             }
             return recur;
@@ -215,7 +224,7 @@ namespace ProjectPumpernickle {
         public static int PathIndexToFloorNum(int index) {
             return Save.state.floor_num + 1 + index;
         }
-        public int FloorNumToPathIndex(int floor) {
+        public static int FloorNumToPathIndex(int floor) {
             return floor - Save.state.floor_num - 1;
         }
 
@@ -545,6 +554,11 @@ namespace ProjectPumpernickle {
                 float potionsSpentThisFloor = 0f;
                 float chancePotionBarFull = MathF.Max(residualPotions - potionSlots + 1, 0);
                 fightChance[i] = 0f;
+                if (Evaluators.IsFirstFloorOfAnAct(Path.PathIndexToFloorNum(i))) {
+                    potionChance = 0.4f;
+                    floorFightChance = PER_QUESTION_FIGHT_CHANCE;
+                    shopChance = PER_QUESTION_SHOP_CHANCE;
+                }
                 switch (nodeTypes[i]) {
                     case NodeType.MegaElite:
                     case NodeType.Elite:
@@ -1004,90 +1018,6 @@ namespace ProjectPumpernickle {
                     yield return expectedGold[i];
                 }
             }
-        }
-        public static float ExpectedFutureActCardRewards() {
-            return 8.5f;
-        }
-        public static float ExpectedHuntedCardsFoundInFutureActs() {
-            var normalActCardRewards = ExpectedFutureActCardRewards();
-            var normalActShops = .85f;
-            var normalActsLeft = Evaluators.NormalFutureActsLeft();
-            if (!Save.state.huntingCards.Any()) {
-                return 0f;
-            }
-            // +1 from spire elites
-            var totalCardRewards = (normalActCardRewards * normalActsLeft) + 1;
-            var totalShopsLeft = (normalActShops * normalActsLeft) + 1;
-
-            var totalChance = 0f;
-            foreach (var huntedCard in Save.state.huntingCards) {
-                var card = Database.instance.cardsDict[huntedCard];
-                var rarity = card.cardRarity;
-                var color = card.cardColor;
-                var cardType = card.cardType;
-                var chanceToFind = 0f;
-                if (color == Color.Colorless) {
-                    chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * totalShopsLeft;
-                }
-                else {
-                    switch (rarity) {
-                        case Rarity.Common:
-                        case Rarity.Uncommon:
-                        case Rarity.Rare: {
-                            chanceToFind += Evaluators.ChanceOfSpecificCardInReward(color, rarity, totalCardRewards);
-                            chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * totalShopsLeft;
-                            break;
-                        }
-                        case Rarity.Special: {
-                            // god help you
-                            break;
-                        }
-                    }
-                }
-                totalChance += chanceToFind;
-            }
-            return totalChance;
-        }
-        public float ExpectedHuntedCardsFound() {
-            if (!Save.state.huntingCards.Any()) {
-                return 0f;
-            }
-            var totalChance = 0f;
-            var totalExpectedCardRewards = expectedCardRewards[^1];
-            foreach (var huntedCard in Save.state.huntingCards) {
-                var card = Database.instance.cardsDict[huntedCard];
-                var rarity = card.cardRarity;
-                var color = card.cardColor;
-                var cardType = card.cardType;
-                var shopsWithGold = 0f;
-                var previousFloorShopChance = 0f;
-                for (int i = 0; i < nodes.Length; i++) {
-                    var marginalShopChance = expectedShops[i] - previousFloorShopChance;
-                    previousFloorShopChance = expectedShops[i];
-                    shopsWithGold += Evaluators.IsEnoughToBuyCard(expectedGold[i], rarity) * marginalShopChance;
-                }
-                var chanceToFind = 0f;
-                if (color == Color.Colorless) {
-                    chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * shopsWithGold;
-                }
-                else {
-                    switch (rarity) {
-                        case Rarity.Common:
-                        case Rarity.Uncommon:
-                        case Rarity.Rare: {
-                            chanceToFind += Evaluators.ChanceOfSpecificCardInReward(color, rarity, totalExpectedCardRewards);
-                            chanceToFind += Evaluators.ChanceOfAppearingInShop(color, rarity, cardType) * shopsWithGold;
-                            break;
-                        }
-                        case Rarity.Special: {
-                            // god help you
-                            break;
-                        }
-                    }
-                }
-                totalChance += chanceToFind;
-            }
-            return totalChance + ExpectedHuntedCardsFoundInFutureActs();
         }
 
         public static IEnumerable<float> ExpectedFutureUpgradesDuringFights(float endOfActUpgrades) {

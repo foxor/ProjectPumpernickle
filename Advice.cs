@@ -31,6 +31,9 @@ namespace ProjectPumpernickle {
                 AwaitWorkChunk(i == 0);
                 MergeChunks(i, workChunks, totalRewardOptions);
                 Application.DoEvents();
+                if (TcpListener.WaitingCount != 0) {
+                    break;
+                }
             }
         }
 
@@ -44,6 +47,48 @@ namespace ProjectPumpernickle {
                 var threadId = i;
                 ThreadPool.QueueUserWorkItem((_) => GenerateEvaluation(optionIndex, pathIndex, threadId));
                 Interlocked.Increment(ref threadsOutstanding);
+            }
+        }
+        public static void GenerateEvaluation(long optionIndex, long pathIndex, long threadId) {
+            try {
+                // The thread statics leak through from one task to another
+                Evaluation.Active = null;
+                PumpernickelSaveState.instance = null;
+
+                var skipFirstNode = true;
+                var nodeSequence = Path.BuildNodeSequence(pathIndex, PumpernickelSaveState.parsed.GetCurrentNode(), skipFirstNode);
+                if (!nodeSequence.IsValid()) {
+                    return;
+                }
+                PumpernickelSaveState.instance = new PumpernickelSaveState(PumpernickelSaveState.parsed);
+                List<int> rewardIndicies = new List<int>();
+                long residual = optionIndex;
+                for (int j = 0; j < rewardOptions.Count; j++) {
+                    var optionCount = rewardOptions[j].values.Length + 1;
+                    rewardIndicies.Add((int)(residual % optionCount));
+                    residual /= optionCount;
+                }
+                using (var context = new RewardContext(rewardOptions, rewardIndicies, eligibleForBlueKey, isShop)) {
+                    if (!context.IsValid()) {
+                        return;
+                    }
+                    var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
+                    eval.NeedsMoreInfo = Advice.needsMoreInfo;
+                    var path = Path.BuildPath(nodeSequence, pathIndex);
+                    eval.SetPath(path, context.bonusCardRewards);
+                    Scoring.ScoreBasedOnEvaluation(eval);
+                    context.UpdateRewardPopulationStatistics(eval);
+                    Scoring.ScoreBasedOnStatistics(eval);
+                    lock (perThreadEvaluations) {
+                        perThreadEvaluations[threadId] = eval;
+                    }
+                }
+            }
+            catch (Exception e) {
+                Console.WriteLine(e);
+            }
+            finally {
+                Interlocked.Decrement(ref threadsOutstanding);
             }
         }
         protected static void AwaitWorkChunk(bool firstChunk) {
@@ -67,7 +112,7 @@ namespace ProjectPumpernickle {
             }
             SetEvaluationOffRamps(validEvaluations);
             foreach (var eval in validEvaluations) {
-                Scoring.ScoreAfterOffRampDetermined(eval);
+                Scoring.ScoreBasedOnOffRamp(eval);
             }
             foreach (var eval in validEvaluations) {
                 eval.MergeScoreWithOffRamp();
@@ -77,39 +122,10 @@ namespace ProjectPumpernickle {
             var sorted = validEvaluations.OrderByDescending(x => x.Score).ToArray();
             PumpernickelAdviceWindow.instance.SetEvaluations(sorted, chunksComplete + 1, totalChunks);
         }
-        public static void GenerateEvaluation(long optionIndex, long pathIndex, long threadId) {
-            var skipFirstNode = true;
-            var nodeSequence = Path.BuildNodeSequence(pathIndex, Save.state.GetCurrentNode(), skipFirstNode);
-            if (!nodeSequence.IsValid()) {
-                Interlocked.Decrement(ref threadsOutstanding);
-                return;
-            }
-            PumpernickelSaveState.instance = new PumpernickelSaveState(PumpernickelSaveState.parsed);
-            List<int> rewardIndicies = new List<int>();
-            long residual = optionIndex;
-            for (int j = 0; j < rewardOptions.Count; j++) {
-                var optionCount = rewardOptions[j].values.Length + 1;
-                rewardIndicies.Add((int)(residual % optionCount));
-                residual /= optionCount;
-            }
-            using (var context = new RewardContext(rewardOptions, rewardIndicies, eligibleForBlueKey, isShop)) {
-                if (!context.IsValid()) {
-                    Interlocked.Decrement(ref threadsOutstanding);
-                    return;
-                }
-                var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
-                eval.NeedsMoreInfo = Advice.needsMoreInfo;
-                var path = Path.BuildPath(nodeSequence, pathIndex);
-                eval.SetPath(path, context.bonusCardRewards);
-                context.UpdateRewardPopulationStatistics(eval);
-                Scoring.Score(eval);
-                lock (perThreadEvaluations) {
-                    perThreadEvaluations[threadId] = eval;
-                }
-            }
-            Interlocked.Decrement(ref threadsOutstanding);
+        public static void AdviceOnReward(RewardOption option) {
+            AdviseOnRewards(new List<RewardOption>() { option });
         }
-        public static void AdviseOnRewards(List<RewardOption> rewardOptions = null, IEnumerable<string> previousAdvice = null, bool needsMoreInfo = false) {
+        public static void AdviseOnRewards(List<RewardOption> rewardOptions, IEnumerable<string> previousAdvice = null, bool needsMoreInfo = false) {
             var isShop = rewardOptions.Any(x => x.cost != 0);
             var currentNode = Save.state.GetCurrentNode();
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;

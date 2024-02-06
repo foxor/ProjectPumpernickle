@@ -85,12 +85,12 @@ namespace ProjectPumpernickle {
             }).Sum();
         }
 
-        public static float ExtraPerFightEnergy() {
-            return 0f;
+        public static int ExtraPerFightEnergy() {
+            return 0;
         }
 
-        public static float PerTurnEnergy() {
-            return 3f;
+        public static int PerTurnEnergy() {
+            return 3;
         }
 
         public static IEnumerable<Card> GetCardDrawCards() {
@@ -150,7 +150,7 @@ namespace ProjectPumpernickle {
             if (path == null) {
                 return GetCurrentEffectiveHealth();
             }
-            var index = path.FloorNumToPathIndex(floor);
+            var index = Path.FloorNumToPathIndex(floor);
             if (index == -1) {
                 return GetCurrentEffectiveHealth();
             }
@@ -221,6 +221,9 @@ namespace ProjectPumpernickle {
             var actStart = ActToFirstFloor(act);
             return floorNum - actStart;
         }
+        public static bool IsFirstFloorOfAnAct(int floorNum) {
+            return FloorsIntoAct(floorNum) == 0;
+        }
         public static int LastFloorThisAct(int actNum) {
             return actNum switch {
                 4 => 55,
@@ -236,11 +239,11 @@ namespace ProjectPumpernickle {
 
         public static void UpdateCardRarityChances(float[] cardsOfRarity, float cardBlizz, float remainingRewards) {
             // FIXME: this doesn't work very well.  It ends up with fewer cards of rarity than the total cards???
-            float marginalProbability = MathF.Min(1f, remainingRewards - 1);
-            var rareChance = (BASE_RARE_CHANCE + cardBlizz) / 100f;
-            var uncommonChance = (BASE_UNCOMMON_CHANCE + cardBlizz) / 100f;
+            float marginalProbability = MathF.Min(1f, remainingRewards);
+            var rareChance = MathF.Max(0f, (BASE_RARE_CHANCE - cardBlizz) / 100f);
+            var uncommonChance = MathF.Max(0f, (BASE_UNCOMMON_CHANCE - cardBlizz) / 100f);
             if (rareChance + uncommonChance > 1f) {
-                uncommonChance -= (rareChance + uncommonChance) - 1f;
+                uncommonChance = 1f - rareChance;
             }
             var commonChance = 1f - (rareChance + uncommonChance);
 
@@ -253,9 +256,8 @@ namespace ProjectPumpernickle {
                 return;
             }
 
-            var commonBlizz = Math.Min(40, cardBlizz + 1);
+            var commonBlizz = cardBlizz - 1;
             var initialBlizz = 5;
-            // This should be a slight overestimate, since the average cardBlizz is very unlikely to be 40
             var averageBlizz = (commonBlizz * commonChance) + (cardBlizz * uncommonChance) + (initialBlizz * rareChance);
             UpdateCardRarityChances(cardsOfRarity, averageBlizz, remainingRewards);
         }
@@ -273,8 +275,9 @@ namespace ProjectPumpernickle {
             return hitDensity;
         }
 
-        public static float ChanceOfSpecificCardInReward(Color color, Rarity rarity, float expectedCardRewards) {
-            var cardBlizzRandomizer = Save.state.card_random_seed_randomizer;
+        public static float[] ExpectedCardRewardAppearances(float expectedCardRewards, bool useCurrentRandomizer) {
+            // AbstractDungeon static initializer is the source of the 5
+            var cardBlizzRandomizer = useCurrentRandomizer ? Save.state.card_random_seed_randomizer : 5;
             var cardsOfRarity = new float[] {
                 0f,
                 0f,
@@ -283,27 +286,7 @@ namespace ProjectPumpernickle {
             // FIXME: you don't always get 3 cards
             UpdateCardRarityChances(cardsOfRarity, cardBlizzRandomizer, expectedCardRewards * 3f);
 
-            var cardsOfThisRarity = 0f;
-            switch (rarity) {
-                case Rarity.Common: {
-                    cardsOfThisRarity = cardsOfRarity[0];
-                    break;
-                }
-                case Rarity.Uncommon: {
-                    cardsOfThisRarity = cardsOfRarity[1];
-                    break;
-                }
-                case Rarity.Rare: {
-                    cardsOfThisRarity = cardsOfRarity[2];
-                    break;
-                }
-                default: {
-                    throw new System.NotImplementedException();
-                }
-            }
-
-            var hitDensity = ChanceOfSpecificCard(color, rarity);
-            return hitDensity * cardsOfThisRarity;
+            return cardsOfRarity;
         }
 
         public static float ChanceOfAppearingInShop(Color color, Rarity rarity, CardType cardType) {
@@ -462,6 +445,10 @@ namespace ProjectPumpernickle {
             if (a == Color.Any || b == Color.Any) {
                 return true;
             }
+            if (a == Color.Eligible || b == Color.Eligible) {
+                var other = a == Color.Eligible ? b : a;
+                return Save.state.character.ToColor() == other || other == Color.Colorless;
+            }
             return a == b;
         }
         public static bool IsRandomable(this Rarity r) {
@@ -477,49 +464,6 @@ namespace ProjectPumpernickle {
         }
         public static bool Is(this PlayerCharacter a, PlayerCharacter b) {
             return (a == b) || (a == PlayerCharacter.Any || b == PlayerCharacter.Any);
-        }
-
-        public static void BestAndWorstRewardResults(Color color, out Card bestCard, out float bestValue, out float worstValue, out float averageValue, Rarity rarity = Rarity.Randomable) {
-            bestValue = float.MinValue;
-            worstValue = float.MaxValue;
-            bestCard = null;
-            Card worstCard;
-            float totalValue = 0f;
-            int qualifyingCards = 0;
-            foreach (var card in Database.instance.cards) {
-                if (card.cardColor.Is(color) && card.cardRarity.Is(rarity)) {
-                    qualifyingCards++;
-                    var cardScore = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, -1);
-                    totalValue += cardScore;
-                    if (cardScore > bestValue) {
-                        bestValue = cardScore;
-                        bestCard = card;
-                    }
-                    if (cardScore < worstValue) {
-                        worstValue = cardScore;
-                        worstCard = card;
-                    }
-                }
-            }
-            averageValue = totalValue / qualifyingCards;
-        }
-
-        public static void RandomRelicValue(PlayerCharacter forCharacter, out Relic bestRelic, out float bestValue, out float worstValue, Rarity rarity = Rarity.Randomable) {
-            bestValue = float.MinValue;
-            worstValue = float.MaxValue;
-            bestRelic = null;
-            foreach (var relic in Database.instance.relics) {
-                if (relic.forCharacter.Is(forCharacter) && relic.rarity.Is(rarity)) {
-                    var cardScore = EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
-                    if (cardScore > bestValue) {
-                        bestValue = cardScore;
-                        bestRelic = relic;
-                    }
-                    if (cardScore < worstValue) {
-                        worstValue = cardScore;
-                    }
-                }
-            }
         }
 
         public static Color ToColor(this PlayerCharacter character) {
@@ -619,11 +563,15 @@ namespace ProjectPumpernickle {
         public static IEnumerable<string> GetEligibleEventNames(Path path, int i) {
             return Database.instance.events.Where(x => x.eligible).Select(x => x.name);
         }
-        public static string AverageTransformValue(Color color) {
-            return color switch {
-                Color.Red => "Metallicize",
-                _ => throw new System.NotImplementedException(),
-            };
+        public static readonly string[] AverageCardOptions = new string[] {
+            "Metallicize",
+            "Deflect",
+            "Bullet Time",
+        };
+        public static string AverageRandomCard(Color color, Rarity rarity) {
+            return AverageCardOptions.Select(x => Database.instance.cardsDict[x]).Where(x => {
+                return x.cardRarity.Is(rarity) && x.cardColor.Is(color);
+            }).Select(x => x.id).First();
         }
         public static float EstimateFutureAddedCards() {
             var floorsLeft = 55f - Save.state.floor_num;
@@ -644,7 +592,10 @@ namespace ProjectPumpernickle {
             return upgradeWeight / (upgradeWeight + denominatorOffset);
         }
         public static float AverageCardsPerTurn() {
-            return 5f;
+            return 3.5f;
+        }
+        public static float AverageCardsPerFight() {
+            return 15f;
         }
         public static readonly float LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY = .3f;
         public static float ExtraCardValue(Card c, float value, int index) {
@@ -808,6 +759,44 @@ namespace ProjectPumpernickle {
                 relevantList.Add(card.id);
                 yield return i;
             }
+        }
+        public static int MaxCost(Card c) {
+            if (Save.state.relics.Contains("Snecko Eye")) {
+                return 3;
+            }
+            if (c.intCost == int.MaxValue) {
+                return PerTurnEnergy();
+            }
+            return c.intCost;
+        }
+        public static int MinCost(Card c) {
+            if (Save.state.relics.Contains("Snecko Eye")) {
+                return 0;
+            }
+            if (c.intCost == int.MaxValue) {
+                return 0;
+            }
+            return c.intCost;
+        }
+        public static IEnumerable<int> NecronomiconTargets() {
+            return Enumerable.Range(0, Save.state.cards.Count)
+                .Where(x => Save.state.cards[x].cardType == CardType.Attack && MaxCost(Save.state.cards[x]) >= 2);
+        }
+        public static float AverageCost(Card c) {
+            if (Save.state.relics.Contains("Snecko Eye")) {
+                return 1.5f;
+            }
+            else if (c.intCost != int.MaxValue) {
+                return c.intCost;
+            }
+            else {
+                return 3f;
+            }
+        }
+        public static float DensityOfRarity(Color color, Rarity rarity) {
+            // Does this matter?
+            // If so, pre-compute it on library load
+            return 1f/3f;
         }
     }
 }

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace ProjectPumpernickle {
     class TcpListener {
         public static Control control;
+        public static int WaitingCount;
         public static void Run() {
             System.Net.Sockets.TcpListener server = null;
             try {
@@ -49,8 +50,10 @@ namespace ProjectPumpernickle {
             }
         }
         protected static void HandleString(string fromJava) {
-            Console.WriteLine(fromJava);
-            control.Invoke(() => {
+            Interlocked.Increment(ref WaitingCount);
+            control.BeginInvoke(() => {
+                Interlocked.Decrement(ref WaitingCount);
+                PumpernickelExplanation.BlockPartialUpdates = false;
                 var capture = fromJava;
                 try {
                     PumpernickelMessage.HandleMessages(capture);

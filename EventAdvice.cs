@@ -78,7 +78,7 @@ namespace ProjectPumpernickle {
         }
         public static void GoldenWing(IEnumerable<string> arguments) {
             var preRewardEvaluation = new Evaluation();
-            Scoring.Score(preRewardEvaluation);
+            Scoring.ScoreBasedOnEvaluation(preRewardEvaluation);
             var cardRemoveIndex = Evaluators.CardRemoveTarget();
             var existingAdvice = new List<string>(){
                 "Pray, removing " + Save.state.cards[cardRemoveIndex].name,
@@ -317,10 +317,14 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void CursedTome(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){
-                "Read the book"
+            var option = new RewardOption() {
+                advice = new string[] { "Read the book", "Leave" },
+                hpCost = new int[] { 21, 0 },
+                rewardType = RewardType.Event,
+                values = new string[] { EventRewardElement.CURSED_TOME.ToString(), EventRewardElement.None.ToString() },
+                skippable = false,
             };
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviceOnReward(option);
         }
     }
 }

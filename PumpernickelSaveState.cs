@@ -35,6 +35,7 @@ namespace ProjectPumpernickle {
         Colorless,
         Curse,
         Any,
+        Eligible,
         COUNT,
     }
     public class Card {
@@ -131,6 +132,10 @@ namespace ProjectPumpernickle {
                 }
                 case "Curse": {
                     cardType = CardType.Curse;
+                    break;
+                }
+                case "Status": {
+                    cardType = CardType.Status;
                     break;
                 }
             }
@@ -263,6 +268,7 @@ namespace ProjectPumpernickle {
         public int card_random_seed_randomizer;
         public bool chose_neow_reward;
         public int potion_chance;
+        public int card_seed_count;
 
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, MAX_MAP_X, MAX_MAP_Y];
@@ -279,6 +285,7 @@ namespace ProjectPumpernickle {
         public float addedBlockPerTurn;
         public bool badBottle;
         public bool addedSkill;
+        public List<string> availableCardIds;
         public PumpernickelSaveState() {
             parsed = this;
         }
@@ -328,11 +335,14 @@ namespace ProjectPumpernickle {
             map = original.map;
 
             // deep copied
-            cards = original.cards.ToList();
-            relics = original.relics.ToList();
-            relic_counters = original.relic_counters.ToList();
-            potions = original.potions.ToArray();
-            huntingCards = original.huntingCards.ToList();
+            cards = original.cards?.ToList();
+            relics = original.relics?.ToList();
+            relic_counters = original.relic_counters?.ToList();
+            potions = original.potions?.ToArray();
+            huntingCards = original.huntingCards?.ToList();
+
+            // not initialized
+            availableCardIds = null;
         }
 
         public int AddCardById(string name) {
@@ -468,16 +478,17 @@ namespace ProjectPumpernickle {
             var bossChest = (room_x == -1 && room_y > 10);
             if (talkingToNeow || newAct) {
                 var fakeNode = new MapNode();
-                fakeNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[Save.state.act_num, x, 0]).Where(x => x != null).ToList();
+                fakeNode.position = new Vector2Int(3, -1);
+                fakeNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[act_num, x, 0]).Where(x => x != null).ToList();
                 return fakeNode;
             }
             if (bossChest) {
                 return new MapNode() { nodeType = NodeType.BossChest, position = new Vector2Int(-1, 16) };
             }
-            if (Save.state.act_num == 4) {
+            if (act_num == 4) {
                 return Act4()[room_y];
             }
-            var CurrentNode = map[Save.state.act_num, room_x, room_y];
+            var CurrentNode = map[act_num, room_x, room_y];
             return CurrentNode;
         }
 
@@ -510,6 +521,15 @@ namespace ProjectPumpernickle {
             if (!huntingCards.Contains(cardId)) {
                 huntingCards.Add(cardId);
             }
+        }
+        public void AddChoosingNow(string cardId) {
+            if (availableCardIds == null) {
+                availableCardIds = new List<string>();
+            }
+            availableCardIds.Add(cardId);
+        }
+        public bool ChoosingNow(string cardId) {
+            return availableCardIds?.Contains(cardId) == true;
         }
     }
 }

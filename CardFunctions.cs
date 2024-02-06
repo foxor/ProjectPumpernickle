@@ -68,8 +68,9 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float PSTRIKE_SCORE_VALUE_PER_STRIKE = 0.2f;
         public static float PerfectedStrike(Card c, int index) {
-            var value = 0f;
+            var value = Save.state.cards.Where(x => x.name.Contains("Strike")).Count() * PSTRIKE_SCORE_VALUE_PER_STRIKE;
             return value;
         }
         public static float PommelStrike(Card c, int index) {
@@ -274,9 +275,21 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float CORRUPTION_OFFSET = -1.25f;
         public static float Corruption(Card c, int index) {
-            var value = 0f;
-            return value;
+            var first = Save.state.cards.FirstIndexOf(x => x.id.Equals(c.id)) == index;
+            if (first) {
+                var netCost = Evaluators.AverageCost(c);
+                foreach (var card in Save.state.cards) {
+                    if (card.cardType == CardType.Skill) {
+                        netCost -= Evaluators.AverageCost(card);
+                    }
+                }
+                return -netCost * Scoring.VALUE_PER_NET_SAVING + CORRUPTION_OFFSET;
+            }
+            else {
+                return 0.3f;
+            }
         }
         public static float DemonForm(Card c, int index) {
             var value = 0f;

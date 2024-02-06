@@ -131,6 +131,9 @@
          "mod":"Slay the Spire",
          "bias": -0.4,
          "upgradePowerMultiplier": 1.7,
+         "setup": {
+            "ExhaustOther": 1.7
+         },
       },
       {
          "id":"Headbutt",
@@ -246,6 +249,9 @@
          "mod":"Slay the Spire",
          "bias": 0.6,
          "upgradePowerMultiplier": 1.8,
+         "setup": {
+            "ExhaustOther": 2.5
+         },
       },
       {
          "id":"Twin Strike",
@@ -271,6 +277,9 @@
          "upgradeBias": 1,
          "upgradePowerMultiplier": 1,
          "bias": -0.5,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Wild Strike",
@@ -307,6 +316,9 @@
          "mod":"Slay the Spire",
          "bias": 0,
          "upgradePowerMultiplier": 1.5,
+         "payoffs": {
+            "SelfHarm": 0.2,
+         },
       },
       {
          "id":"Bloodletting",
@@ -319,6 +331,9 @@
          "mod":"Slay the Spire",
          "bias": 1.8,
          "upgradePowerMultiplier": 1.5,
+         "setup": {
+            "SelfHarm": 2.3,
+         },
       },
       {
          "id":"Burning Pact",
@@ -331,6 +346,9 @@
          "mod":"Slay the Spire",
          "bias": 1.4,
          "upgradePowerMultiplier": 1.7,
+         "setup": {
+            "ExhaustOther": 1.5
+         },
       },
       {
          "id":"Carnage",
@@ -343,6 +361,9 @@
          "mod":"Slay the Spire",
          "bias": 0,
          "upgradePowerMultiplier": 1.4,
+         "setup": {
+            "ExhaustSelf": 0.7
+         },
       },
       {
          "id":"Combust",
@@ -370,6 +391,10 @@
          "mod":"Slay the Spire",
          "bias": 2.5,
          "upgradePowerMultiplier": 2,
+         "payoffs": {
+            "ExhaustSelf": 1.8,
+            "ExhaustOther": 1.8,
+         }
       },
       {
          "id":"Disarm",
@@ -386,6 +411,9 @@
             "NonPermanent": 1,
          },
          "upgradePowerMultiplier": 1.5,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Dropkick",
@@ -446,6 +474,10 @@
          "mod":"Slay the Spire",
          "bias": 3.1,
          "upgradePowerMultiplier": 1.3,
+         "payoffs": {
+            "ExhaustSelf": 0.5,
+            "ExhaustOther": 0.5,
+         },
       },
       {
          "id":"Fire Breathing",
@@ -482,6 +514,9 @@
          "mod":"Slay the Spire",
          "bias": 0.7,
          "upgradePowerMultiplier": 1.3,
+         "setup": {
+            "ExhaustSelf": 0.8
+         },
       },
       {
          "id":"Hemokinesis",
@@ -508,7 +543,10 @@
          "upgradePowerMultiplier": 1.25,
          "tags": {
             "damage": 10,
-         }
+         },
+         "setup": {
+            "Exhaust": 1
+         },
       },
       {
          "id":"Inflame",
@@ -533,6 +571,9 @@
          "mod":"Slay the Spire",
          "bias": -0.3,
          "upgradePowerMultiplier": 2,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Metallicize",
@@ -569,6 +610,9 @@
          "mod":"Slay the Spire",
          "bias": -0.3,
          "upgradePowerMultiplier": 1.2,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Rage",
@@ -605,6 +649,9 @@
          "mod":"Slay the Spire",
          "bias": -0.5,
          "upgradePowerMultiplier": 1.5,
+         "setup": {
+            "ExhaustSelf": 1.5
+         },
       },
       {
          "id":"Rupture",
@@ -644,6 +691,9 @@
          "mod":"Slay the Spire",
          "bias": 1.3,
          "upgradePowerMultiplier": 1.4,
+         "setup": {
+            "ExhaustOther": 5
+         },
       },
       {
          "id":"Seeing Red",
@@ -656,6 +706,9 @@
          "mod":"Slay the Spire",
          "bias": 0.8,
          "upgradePowerMultiplier": 2,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Sentinel",
@@ -668,6 +721,9 @@
          "mod":"Slay the Spire",
          "bias": 1.6,
          "upgradePowerMultiplier": 1.6,
+         "payoffs": {
+            "ExhaustOther": 1
+         },
       },
       {
          "id":"Sever Soul",
@@ -680,6 +736,9 @@
          "mod":"Slay the Spire",
          "bias": -0.8,
          "upgradePowerMultiplier": 1.1,
+         "setup": {
+            "ExhaustOther": 2.2
+         },
       },
       {
          "id":"Shockwave",
@@ -694,6 +753,9 @@
          "upgradePowerMultiplier": 1.5,
          "tags": {
             "NonPermanent": 1,
+         },
+         "setup": {
+            "ExhaustSelf": 1
          },
       },
       {
@@ -779,6 +841,9 @@
          "mod":"Slay the Spire",
          "bias": 1.1,
          "upgradePowerMultiplier": 1.1,
+         "setup": {
+            "SelfHarm": 3,
+         },
       },
       {
          "id":"Corruption",
@@ -791,6 +856,9 @@
          "mod":"Slay the Spire",
          "bias": 5,
          "upgradePowerMultiplier": 1.5,
+         "setup": {
+            "ExhaustOther": 10
+         },
       },
       {
          "id":"Demon Form",
@@ -827,6 +895,13 @@
          "mod":"Slay the Spire",
          "bias": 4,
          "upgradePowerMultiplier": 1.7,
+         "setup": {
+            "ExhaustSelf": 1
+         },
+         "payoffs": {
+            "ExhaustSelf": 1.8,
+            "ExhaustOther": 0.4
+         },
       },
       {
          "id":"Feed",
@@ -839,6 +914,9 @@
          "mod":"Slay the Spire",
          "bias": 4.5,
          "upgradePowerMultiplier": 1.9,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Fiend Fire",
@@ -851,6 +929,9 @@
          "mod":"Slay the Spire",
          "bias": 4.2,
          "upgradePowerMultiplier": 1.6,
+         "setup": {
+            "ExhaustOther": 6
+         },
       },
       {
          "id":"Immolate",
@@ -878,6 +959,9 @@
             "NonPermanent": 1,
          },
          "upgradePowerMultiplier": 1.3,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Juggernaut",
@@ -902,6 +986,9 @@
          "mod":"Slay the Spire",
          "bias": -0.5,
          "upgradePowerMultiplier": 1.25,
+         "setup": {
+            "ExhaustSelf": 0.3
+         },
       },
       {
          "id":"Offering",
@@ -914,6 +1001,10 @@
          "mod":"Slay the Spire",
          "bias": 4,
          "upgradePowerMultiplier": 1.2,
+         "setup": {
+            "ExhaustSelf": 1,
+            "SelfHarm": 1,
+         },
       },
       {
          "id":"Reaper",
@@ -926,6 +1017,9 @@
          "mod":"Slay the Spire",
          "bias": 1.7,
          "upgradePowerMultiplier": 1.8,
+         "setup": {
+            "ExhaustSelf": 1
+         },
       },
       {
          "id":"Defend_G",
@@ -3814,7 +3908,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Heal 4 (6) HP.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.0,
       },
       {
          "id":"Blind",
@@ -3824,7 +3919,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Apply 2 Weak (to ALL enemies).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.2,
       },
       {
          "id":"Dark Shackles",
@@ -3834,7 +3930,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Enemy loses 9 (15) Strength this turn.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.2,
       },
       {
          "id":"Deep Breath",
@@ -3844,7 +3941,12 @@
          "type":"Skill",
          "cost":"0",
          "description":"Shuffle your discard pile into your draw pile.\nDraw 1 (2) card (cards).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.8,
+         "upgradePowerMultiplier": 2,
+         "tags": {
+            "CardDraw": 2,
+         },
       },
       {
          "id":"Discovery",
@@ -3854,7 +3956,8 @@
          "type":"Skill",
          "cost":"1",
          "description":"Choose 1 of 3 random cards to add into your hand. It costs 0 this turn.\n~~- Exhaust. -~~ ",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.7,
       },
       {
          "id":"Dramatic Entrance",
@@ -3864,7 +3967,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Innate.\nDeal 8 (12) damage to ALL enemies.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Enlightenment",
@@ -3874,7 +3978,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Reduce the cost of all cards in your hand to 1 this turn (combat).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.6,
       },
       {
          "id":"Finesse",
@@ -3884,7 +3989,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Gain 2 (4) Block.\nDraw 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Flash of Steel",
@@ -3894,7 +4000,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Deal 3 (6) damage.\nDraw 1 card.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Forethought",
@@ -3904,7 +4011,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Put a (any) card (number)  (of cards) from your hand to the bottom of your draw pile. It (They) costs (cost) 0 until played.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"Good Instincts",
@@ -3914,7 +4022,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Gain 6 (9) Block.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.3,
       },
       {
          "id":"Impatience",
@@ -3924,7 +4033,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"If you have no Attacks in your hand, draw 2 (3) cards.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.3,
       },
       {
          "id":"Jack Of All Trades",
@@ -3934,7 +4044,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Add 1 (2) random Colorless card (cards) into your hand.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.7,
       },
       {
          "id":"Madness",
@@ -3944,7 +4055,8 @@
          "type":"Skill",
          "cost":"1 (0)",
          "description":"Reduce the cost of a random card in your hand to 0 this combat.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
       },
       {
          "id":"Mind Blast",
@@ -3954,7 +4066,8 @@
          "type":"Attack",
          "cost":"2 (1)",
          "description":"Innate.\nDeal damage equal to the number of cards in your draw pile.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.8,
       },
       {
          "id":"Panacea",
@@ -3964,7 +4077,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Gain 1 (2) Artifact.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"PanicButton",
@@ -3974,7 +4088,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Gain 30 (40) Block. You cannot gain Block from cards for 2 turns.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.1,
       },
       {
          "id":"Purity",
@@ -3984,7 +4099,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Exhaust up to 3 (5) cards in your hand.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.1,
       },
       {
          "id":"Swift Strike",
@@ -3994,7 +4110,8 @@
          "type":"Attack",
          "cost":"0",
          "description":"Deal 7 (10) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.5,
       },
       {
          "id":"Trip",
@@ -4004,7 +4121,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Apply 2 Vulnerable (to ALL enemies).",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.8,
       },
       {
          "id":"Apotheosis",
@@ -4014,7 +4132,8 @@
          "type":"Skill",
          "cost":"2 (1)",
          "description":"Upgrade ALL your cards for the rest of combat.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5,
       },
       {
          "id":"Chrysalis",
@@ -4024,7 +4143,8 @@
          "type":"Skill",
          "cost":"2",
          "description":"Shuffle 3 (5) random Skills into your draw pile. They cost 0 this combat.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"HandOfGreed",
@@ -4034,7 +4154,8 @@
          "type":"Attack",
          "cost":"2",
          "description":"Deal 20 (25) damage.\nIf Fatal, gain 20 (25) Gold.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.8,
       },
       {
          "id":"Magnetism",
@@ -4044,7 +4165,8 @@
          "type":"Power",
          "cost":"2 (1)",
          "description":"At the start of your turn, add a random Colorless card into your hand.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.4,
       },
       {
          "id":"Master of Strategy",
@@ -4054,7 +4176,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Draw 3 (4) cards.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.1,
       },
       {
          "id":"Mayhem",
@@ -4064,7 +4187,8 @@
          "type":"Power",
          "cost":"2 (1)",
          "description":"At the start of your turn, play the top card of your draw pile.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.2,
       },
       {
          "id":"Metamorphosis",
@@ -4074,7 +4198,8 @@
          "type":"Skill",
          "cost":"2",
          "description":"Shuffle 3 (5) random Attacks into your draw pile. They cost 0 this combat.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1,
       },
       {
          "id":"Panache",
@@ -4084,7 +4209,8 @@
          "type":"Power",
          "cost":"0",
          "description":"Every time you play 5 cards in a single turn, deal 10 (14) damage to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Sadistic Nature",
@@ -4094,7 +4220,8 @@
          "type":"Power",
          "cost":"0",
          "description":"Whenever you apply a debuff to an enemy, they take 5 (7) damage.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.4,
       },
       {
          "id":"Secret Technique",
@@ -4104,7 +4231,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Put a Skill from your draw pile into your hand.\n~~- Exhaust. -~~ ",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.6,
       },
       {
          "id":"Secret Weapon",
@@ -4114,7 +4242,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Put an Attack from your draw pile into your hand.\n~~- Exhaust. -~~ ",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.9,
       },
       {
          "id":"The Bomb",
@@ -4124,7 +4253,8 @@
          "type":"Skill",
          "cost":"2",
          "description":"At the end of 3 turns, deal 40 (50) damage to ALL enemies.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.8,
       },
       {
          "id":"Thinking Ahead",
@@ -4134,7 +4264,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Draw 2 cards.\nPut a card from your hand on top of your draw pile.\n~~- Exhaust. -~~ ",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Transmutation",
@@ -4144,7 +4275,8 @@
          "type":"Skill",
          "cost":"X",
          "description":"Add X random  (Upgraded) Colorless cards into your hand. They cost 0 this turn.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.6,
       },
       {
          "id":"Violence",
@@ -4154,7 +4286,8 @@
          "type":"Skill",
          "cost":"0",
          "description":"Put 3 (4) random Attacks from your draw pile into your hand.\nExhaust.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.1,
       },
       {
          "id":"AscendersBane",
@@ -5424,7 +5557,8 @@
          "pool":"",
          "description":"Whenever you gain Gold, heal 5 HP.",
          "flavorText":"The idol now weeps a constant stream of blood.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.8,
       },
       {
          "id":"Circlet",
@@ -5433,7 +5567,8 @@
          "pool":"",
          "description":"Collect as many as you can.",
          "flavorText":"You ran out of relics to find. Impressive!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
       },
       {
          "id":"CultistMask",
@@ -5442,7 +5577,8 @@
          "pool":"",
          "description":"You feel more talkative.",
          "flavorText":"Part of the Flock!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.0,
       },
       {
          "id":"Enchiridion",
@@ -5451,7 +5587,8 @@
          "pool":"",
          "description":"At the start of each combat, add a random Power card into your hand. It costs 0 for that turn.",
          "flavorText":"The legendary journal of an ancient lich.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.8,
       },
       {
          "id":"FaceOfCleric",
@@ -5460,7 +5597,8 @@
          "pool":"",
          "description":"At the end of combat, raise your Max HP by 1.",
          "flavorText":"Everyone loves Cleric.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Golden Idol",
@@ -5469,7 +5607,8 @@
          "pool":"",
          "description":"Enemies drop 25% more Gold.",
          "flavorText":"Made of solid gold, you feel richer just holding it.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.0,
       },
       {
          "id":"GremlinMask",
@@ -5478,7 +5617,8 @@
          "pool":"",
          "description":"Start each combat with 1 Weak.",
          "flavorText":"Time to run.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -3,
       },
       {
          "id":"Mark of the Bloom",
@@ -5487,7 +5627,8 @@
          "pool":"",
          "description":"You can no longer heal.",
          "flavorText":"In the Beyond, thoughts and reality are one.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -8,
       },
       {
          "id":"MutagenicStrength",
@@ -5496,7 +5637,8 @@
          "pool":"",
          "description":"Start each combat with 3 Strength. At the end of your first turn, lose 3 Strength.",
          "flavorText":"\"The results seem fleeting, triggering when the subject is in danger.\" - Unknown",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Nloth's Gift",
@@ -5505,7 +5647,8 @@
          "pool":"",
          "description":"Triple the chance of finding Rare cards from combat rewards.",
          "flavorText":"The strange gift from N'loth. Whenever you try and unwrap it, another wrapped box of the same size lies within.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.5,
       },
       {
          "id":"NlothsMask",
@@ -5514,7 +5657,8 @@
          "pool":"",
          "description":"The next non-Boss chest you open is empty.",
          "flavorText":"You feel hungry.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -2.5,
       },
       {
          "id":"Necronomicon",
@@ -5523,7 +5667,8 @@
          "pool":"",
          "description":"The first Attack played each turn that costs 2 or more is played twice. Upon pickup, obtain a special Curse.",
          "flavorText":"Only a fool would try and harness this evil power. At night your dreams are haunted by images of the book devouring your mind.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -2,
       },
       {
          "id":"NeowsBlessing",
@@ -5532,7 +5677,8 @@
          "pool":"",
          "description":"Enemies in your first 3 combats will have 1 HP.",
          "flavorText":"The blessing of lamentation bestowed by Neow.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"Nilry's Codex",
@@ -5541,7 +5687,8 @@
          "pool":"",
          "description":"At the end of your turn, you may shuffle 1 of 3 random cards into your draw pile.",
          "flavorText":"Crafted by the infamous game master himself. Said to expand one's mind.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.1,
       },
       {
          "id":"Odd Mushroom",
@@ -5550,7 +5697,8 @@
          "pool":"",
          "description":"When Vulnerable, take 25% more attack damage rather than 50%.",
          "flavorText":"\"After consuming trichella parastius I felt larger and less... susceptible.\" - Ranwid",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.9,
       },
       {
          "id":"Red Circlet",
@@ -5559,7 +5707,8 @@
          "pool":"",
          "description":"Looks very pretty.",
          "flavorText":"You ran out of relics. Impressive!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
       },
       {
          "id":"Red Mask",
@@ -5568,7 +5717,8 @@
          "pool":"",
          "description":"At the start of each combat, apply 1 Weak to ALL enemies.",
          "flavorText":"This very stylish looking mask belongs to the leader of the Red Mask Bandits. Technically that makes you the leader now?",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.6,
       },
       {
          "id":"Spirit Poop",
@@ -5577,7 +5727,8 @@
          "pool":"",
          "description":"It's unpleasant.",
          "flavorText":"The charred remains of your offering to the spirits.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.0,
       },
       {
          "id":"SsserpentHead",
@@ -5586,7 +5737,8 @@
          "pool":"",
          "description":"Whenever you enter a ? room, gain 50 Gold.",
          "flavorText":"The most fulfilling of lives is that in which you can buy anything!",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.3,
       },
       {
          "id":"WarpedTongs",
@@ -5595,7 +5747,8 @@
          "pool":"",
          "description":"At the start of your turn, Upgrade a random card in your hand for the rest of combat.",
          "flavorText":"The cursed tongs emit a strong desire to return to where they were stolen from.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.7,
       },
       {
          "id":"Astrolabe",
@@ -5604,7 +5757,8 @@
          "pool":"",
          "description":"Upon pickup, Transform 3 cards, then Upgrade them.",
          "flavorText":"A tool to glean invaluable knowledge from the stars.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.5,
       },
       {
          "id":"Black Blood",
@@ -5613,7 +5767,8 @@
          "pool":"Red",
          "description":"Replaces Burning Blood. At the end of combat, heal 12 HP.",
          "flavorText":"The rage grows darker.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.2,
       },
       {
          "id":"Black Star",
@@ -5622,7 +5777,8 @@
          "pool":"",
          "description":"Elites drop an additional relic when defeated.",
          "flavorText":"Originally discovered in the town of the serpent, beside a solitary candle.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.5,
       },
       {
          "id":"Busted Crown",
@@ -5632,7 +5788,7 @@
          "description":"Gain [E] at the start of your turn. Future card rewards have 2 less cards to choose from.",
          "flavorText":"The Champ's crown... or a pale imitation?",
          "mod":"Slay the Spire",
-         "bias": -1.5,
+         "bias": -0.9,
       },
       {
          "id":"Calling Bell",
@@ -5641,7 +5797,8 @@
          "pool":"",
          "description":"Upon pickup, obtain a unique Curse and 3 relics.",
          "flavorText":"This dark iron bell rang 3 times when you found it, but now stays silent.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.0,
       },
       {
          "id":"Coffee Dripper",
@@ -5660,7 +5817,8 @@
          "pool":"",
          "description":"Gain [E] at the start of your turn. Whenever you open a non-Boss chest, obtain a Curse.",
          "flavorText":"You can feel the malicious energy emanating from the key. Power comes at a price.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Ectoplasm",
@@ -5669,7 +5827,8 @@
          "pool":"",
          "description":"Gain [E] at the start of your turn. You can no longer gain Gold.",
          "flavorText":"This blob of slime and energy seems to pulse with life.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -2,
       },
       {
          "id":"Empty Cage",
@@ -5679,7 +5838,7 @@
          "description":"Upon pickup, remove 2 cards from your deck.",
          "flavorText":"\"How unusual to cage that which you worship.\" - Ranwid",
          "mod":"Slay the Spire",
-         "bias": 6,
+         "bias": 3.2,
       },
       {
          "id":"FrozenCore",
@@ -5688,7 +5847,8 @@
          "pool":"Blue",
          "description":"Replaces Cracked Core. If you end your turn with any empty Orb slots, Channel 1 Frost.",
          "flavorText":"The crack in your core has been filled with a pulsating cold energy.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Fusion Hammer",
@@ -5697,7 +5857,8 @@
          "pool":"",
          "description":"Gain [E] at the start of your turn. You can no longer Smith at Rest Sites.",
          "flavorText":"Once wielded, the owner can never let go.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.8,
       },
       {
          "id":"HolyWater",
@@ -5706,7 +5867,8 @@
          "pool":"Purple",
          "description":"Replaces Pure Water. At the start of each combat, add 3 Miracles into your hand.",
          "flavorText":"Collected from a time before the Spire.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.2,
       },
       {
          "id":"HoveringKite",
@@ -5715,7 +5877,8 @@
          "pool":"Green",
          "description":"The first time you discard a card each turn, gain [E] .",
          "flavorText":"The Kite floats around you in battle, propelled by a mysterious force.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 5.3,
       },
       {
          "id":"Inserter",
@@ -5724,7 +5887,8 @@
          "pool":"Blue",
          "description":"Every 2 turns, gain 1 Orb slot.",
          "flavorText":"Push. Pull. Stack. Repeat.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.7,
       },
       {
          "id":"Mark of Pain",
@@ -5733,7 +5897,8 @@
          "pool":"Red",
          "description":"Gain [R] at the start of your turn. At the start of combat, shuffle 2 Wounds into your draw pile.",
          "flavorText":"This brand was used by the northern tribes to signify warriors who had mastered pain in battle.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -1.3,
       },
       {
          "id":"Nuclear Battery",
@@ -5742,7 +5907,8 @@
          "pool":"Blue",
          "description":"At the start of each combat, Channel 1 Plasma.",
          "flavorText":"Ooooh...",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.7,
       },
       {
          "id":"Pandora's Box",
@@ -5752,7 +5918,7 @@
          "description":"Upon pickup, Transform all Strike and Defend cards.",
          "flavorText":"You have a bad feeling about opening this.",
          "mod":"Slay the Spire",
-         "bias": 8,
+         "bias": 7.5,
       },
       {
          "id":"Philosopher's Stone",
@@ -5781,7 +5947,8 @@
          "pool":"Red",
          "description":"Whenever you lose HP, draw 1 card.",
          "flavorText":"The runes are indecipherable.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"Runic Dome",
@@ -5790,7 +5957,8 @@
          "pool":"",
          "description":"Gain [E] at the start of your turn. You can no longer see enemy intents.",
          "flavorText":"The runes are indecipherable.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.1,
       },
       {
          "id":"Runic Pyramid",
@@ -5799,7 +5967,8 @@
          "pool":"",
          "description":"At the end of your turn, you no longer discard your hand.",
          "flavorText":"The runes are indecipherable.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 6.9,
       },
       {
          "id":"SacredBark",
@@ -5808,7 +5977,8 @@
          "pool":"",
          "description":"Double the effectiveness of potions.",
          "flavorText":"A bark rumored to originate from the World tree.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.1,
       },
       {
          "id":"SlaversCollar",
@@ -5817,7 +5987,8 @@
          "pool":"",
          "description":"During Boss and Elite combats, gain [E] at the start of your turn.",
          "flavorText":"Rusty miserable chains.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.7,
       },
       {
          "id":"Snecko Eye",
@@ -5826,7 +5997,8 @@
          "pool":"",
          "description":"At the start of your turn, draw 2 additional cards. Start each combat Confused.",
          "flavorText":"An eye of a fallen snecko. Much larger than you imagined.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.3,
       },
       {
          "id":"Sozu",
@@ -5836,7 +6008,7 @@
          "description":"Gain [E] at the start of your turn. You can no longer obtain potions.",
          "flavorText":"You notice that magical liquids seem to lose their properties when near this relic.",
          "mod":"Slay the Spire",
-         "bias": -7,
+         "bias": -1.4,
       },
       {
          "id":"Tiny House",
@@ -5845,7 +6017,8 @@
          "pool":"",
          "description":"Upon pickup, obtain 1 potion.\nGain 50 Gold.\nRaise your Max HP by 5.\nObtain 1 card.\nUpgrade 1 random card.",
          "flavorText":"\"A near perfect implementation of miniaturization. My finest work to date, but still not adequate.\" - The Architect",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"Velvet Choker",
@@ -5864,7 +6037,8 @@
          "pool":"Purple",
          "description":"Whenever you exit Calm, gain an additional [E] .",
          "flavorText":"The old texts describe that the surface of \"mana pools\" were littered with these flowers.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4,
       },
       {
          "id":"WristBlade",
@@ -5873,7 +6047,8 @@
          "pool":"Green",
          "description":"Attacks that cost 0 deal 4 additional damage.",
          "flavorText":"Handy for assassinations.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.2,
       },
       {
          "id":"Brimstone",
@@ -5882,7 +6057,8 @@
          "pool":"Red",
          "description":"At the start of your turn, gain 2 Strength and ALL enemies gain 1 Strength.",
          "flavorText":"Emanates an infernal heat.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.1,
       },
       {
          "id":"Cauldron",
@@ -5891,7 +6067,8 @@
          "pool":"",
          "description":"Upon pickup, brews 5 random potions.",
          "flavorText":"The Merchant is actually a rather skilled potion brewer. Buy 4 get 1 free.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.6,
       },
       {
          "id":"Chemical X",
@@ -5900,7 +6077,8 @@
          "pool":"",
          "description":"The effects of your cost X cards are increased by 2.",
          "flavorText":"WARNING: Do not combine with sugar, spice, and everything nice.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       },
       {
          "id":"ClockworkSouvenir",
@@ -5909,7 +6087,8 @@
          "pool":"",
          "description":"Start each combat with 1 Artifact.",
          "flavorText":"\"So many intricate gears.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"DollysMirror",
@@ -5918,7 +6097,8 @@
          "pool":"",
          "description":"Upon pickup, obtain an additional copy of a card in your deck.",
          "flavorText":"\"I look funny in this.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.3,
       },
       {
          "id":"Frozen Eye",
@@ -5927,7 +6107,8 @@
          "pool":"",
          "description":"When viewing your Draw Pile, the cards are now shown in order.",
          "flavorText":"Staring into the eye, you see a glimpse of your future.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.2,
       },
       {
          "id":"HandDrill",
@@ -5936,7 +6117,8 @@
          "pool":"",
          "description":"Whenever you break an enemy's Block, apply 2 Vulnerable.",
          "flavorText":"\"Spirals are dangerous.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.1,
       },
       {
          "id":"Lee's Waffle",
@@ -5945,7 +6127,8 @@
          "pool":"",
          "description":"Upon pickup, raise your Max HP by 7 and heal all of your HP.",
          "flavorText":"\"Tastiest treat you will find in all the Spire! Baked today just for you.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.3,
       },
       {
          "id":"Medical Kit",
@@ -5954,7 +6137,8 @@
          "pool":"",
          "description":"Unplayable Status cards can now be played. Whenever you play a Status card, Exhaust it.",
          "flavorText":"\"Has everything you need! Anti-itch, anti-burn, anti-venom, and more!\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.6,
       },
       {
          "id":"Melange",
@@ -5963,7 +6147,8 @@
          "pool":"Purple",
          "description":"Whenever you shuffle your draw pile, Scry 3.",
          "flavorText":"Mysterious sands from an unknown origin. Smells of cinnamon.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.5,
       },
       {
          "id":"Membership Card",
@@ -5973,7 +6158,7 @@
          "description":"50% discount on all products!",
          "flavorText":"\"Bonus membership offer for my most valuable customers!\"",
          "mod":"Slay the Spire",
-         "bias": 3,
+         "bias": 5.5,
       },
       {
          "id":"OrangePellets",
@@ -5982,7 +6167,8 @@
          "pool":"",
          "description":"Whenever you play a Power, Attack, and Skill in the same turn, remove all of your debuffs.",
          "flavorText":"\"Made from various fungi found throughout the Spire, they will stave off any affliction.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 4.3,
       },
       {
          "id":"Orrery",
@@ -5991,7 +6177,8 @@
          "pool":"",
          "description":"Upon pickup, choose and add 5 cards to your deck.",
          "flavorText":"\"Once you understand the universe...\" - Zoroth",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.7,
       },
       {
          "id":"PrismaticShard",
@@ -6000,7 +6187,8 @@
          "pool":"",
          "description":"Combat reward screens now contain Colorless cards and cards from other colors.",
          "flavorText":"Looking through the shard, you are able to see entirely new perspectives.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": -0.4,
       },
       {
          "id":"Runic Capacitor",
@@ -6009,7 +6197,8 @@
          "pool":"Blue",
          "description":"Start each combat with 3 additional Orb slots.",
          "flavorText":"More is better.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 3.3,
       },
       {
          "id":"Sling",
@@ -6018,7 +6207,8 @@
          "pool":"",
          "description":"Start each Elite combat with 2 Strength.",
          "flavorText":"\"A handy tool for dealing with particularly tough opponents.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 1.1,
       },
       {
          "id":"Strange Spoon",
@@ -6027,7 +6217,8 @@
          "pool":"",
          "description":"Cards which Exhaust when played will instead discard 50% of the time.",
          "flavorText":"Staring at the spoon, it appears to bend and twist around before your eyes.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0,
       },
       {
          "id":"TheAbacus",
@@ -6036,7 +6227,8 @@
          "pool":"",
          "description":"Whenever you shuffle your draw pile, gain 6 Block.",
          "flavorText":"\"One...Two...Three...\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.5,
       },
       {
          "id":"Toolbox",
@@ -6045,7 +6237,8 @@
          "pool":"",
          "description":"At the start of each combat, choose 1 of 3 random Colorless cards and add the chosen card into your hand.",
          "flavorText":"A tool for every job.",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 2.9,
       },
       {
          "id":"TwistedFunnel",
@@ -6054,7 +6247,8 @@
          "pool":"Green",
          "description":"At the start of each combat, apply 4 Poison to ALL enemies.",
          "flavorText":"\"I wouldn't drink out of it.\"",
-         "mod":"Slay the Spire"
+         "mod":"Slay the Spire",
+         "bias": 0.4,
       }
    ],
    "blights":[
@@ -9189,7 +9383,7 @@
          "character":"",
          "campaign":"Slay the Spire",
          "shrine": true,
-         "bias": 0.0,
+         "bias": 1.5,
       },
       {
          "name":"Council of Ghosts",

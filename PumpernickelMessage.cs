@@ -43,18 +43,27 @@ namespace ProjectPumpernickle {
         REMOVE_AND_UPGRADE,
         TWO_RANDOM_UPGRADES,
         RELIC_CHANCE,
+        CURSED_TOME,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
         public static void HandleMessages(string fromJava) {
             stringBuilder.Append(fromJava);
             if (stringBuilder.ToString().EndsWith("Done\n")) {
-                var lines = stringBuilder.ToString().Split('\n');
-                var messages = lines.Where(x => !string.IsNullOrEmpty(x)).Split(x => x.Equals("Done"));
-                foreach (var message in messages) {
-                    HandleMessage(message.ToArray());
-                }
+                HandleMessagesInternal();
             }
+        }
+        protected static void HandleMessagesInternal() {
+            var lines = stringBuilder.ToString().Split('\n');
+            var messages = lines.Split(x => x.Equals("Done"));
+            foreach (var message in messages) {
+                var messageLines = message.ToArray();
+                if (messageLines.All(x => string.IsNullOrEmpty(x))) {
+                    continue;
+                }
+                HandleMessage(messageLines);
+            }
+            stringBuilder.Clear();
         }
         public static void HandleMessage(string[] lines) {
             switch (lines[0]) {
@@ -95,10 +104,10 @@ namespace ProjectPumpernickle {
                     break;
                 }
                 case "Neow": {
+                    var floor = 0;
+                    var didFight = false;
+                    Program.ParseNewFile(floor, didFight);
                     var seed = long.Parse(lines[1]);
-                    if (Save.state == null) {
-                        PumpernickelSaveState.parsed = new PumpernickelSaveState();
-                    }
                     Save.state.seed = seed;
                     Save.state.act_num = 1;
                     Save.state.room_x = 0;
@@ -112,7 +121,7 @@ namespace ProjectPumpernickle {
                     break;
                 }
                 case "Fight": {
-                    var floor = int.Parse(lines[1]);
+                    var floor = int.Parse(lines[1]) + 1;
                     var didFight = false;
                     Program.ParseNewFile(floor, didFight);
                     PumpernickelAdviceWindow.instance.AdviceBox.Text = "Your expected health loss: " + FightSimulator.SimulateFight(Database.instance.encounterDict[lines[2]]);
@@ -122,7 +131,6 @@ namespace ProjectPumpernickle {
                     throw new System.NotImplementedException("Unsupported message type: " + lines[0]);
                 }
             }
-            stringBuilder.Clear();
         }
         protected static void ParseRewardMessage(IEnumerable<string> rewardGroups) {
             List<RewardOption> rewardOptions = new List<RewardOption>();
@@ -193,7 +201,11 @@ namespace ProjectPumpernickle {
         protected static void ParseNewDungeonMessage(IEnumerable<string> parameters) {
             var lines = parameters.ToArray();
             var actLine = lines.First();
+            if (Save.state == null) {
+                PumpernickelSaveState.parsed = new PumpernickelSaveState();
+            }
             Save.state.act_num = int.Parse(actLine.Substring(actLine.LastIndexOf(" ") + 1));
+            Save.state.room_x = -1;
             Save.state.room_y = -1;
             Save.state.event_chances = new float[] {
                 0f,
@@ -281,8 +293,16 @@ namespace ProjectPumpernickle {
             foreach (var line in neowOptionLines) {
                 var cost = line.Substring(0, line.IndexOf(":"));
                 var reward = line.Substring(line.LastIndexOf(" ") + 1);
-                neowCost.Add(cost);
-                neowRewards.Add(reward);
+                if (reward.Equals(EventRewardElement.REMOVE_CARD.ToString())) {
+                    foreach (var possibleRemove in Evaluators.ReasonableRemoveTargets()) {
+                        neowCost.Add(cost);
+                        neowRewards.Add(reward + ": " + possibleRemove);
+                    }
+                }
+                else {
+                    neowCost.Add(cost);
+                    neowRewards.Add(reward);
+                }
             }
             List<RewardOption> rewardOptions = new List<RewardOption>() {
                 new RewardOption() {
