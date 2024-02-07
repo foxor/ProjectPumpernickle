@@ -9,7 +9,6 @@ using System.Xml.Linq;
 
 namespace ProjectPumpernickle {
     public interface IGlobalRule {
-        public bool ShouldApply { get; }
         public void Apply(Evaluation evaluation);
     }
     internal class Scoring {
@@ -22,9 +21,7 @@ namespace ProjectPumpernickle {
         }
         public static void EvaluateGlobalRules(Evaluation evaluation) {
             foreach (var globalRule in GlobalRules) {
-                if (globalRule.ShouldApply) {
-                    globalRule.Apply(evaluation);
-                }
+                globalRule.Apply(evaluation);
             }
         }
         public static readonly float MAX_SHOP_VALUE = 5f;
@@ -90,6 +87,7 @@ namespace ProjectPumpernickle {
                 this.score = score;
             }
         }
+        public static readonly float LAST_CHANCE_TO_PICK_VALUE = 0.25f;
         public static IEnumerable<CardScore> CardScoreProvider(float[] cardRarityAppearances, Color colorLimit = Color.Eligible, Rarity rarityLimit = Rarity.Randomable) {
             var path = Evaluation.Active.Path;
             var cardShopAppearances = new float[6];
@@ -150,6 +148,10 @@ namespace ProjectPumpernickle {
                 }
                 var densityIndex = (color == Color.Colorless ? 3 : 0) + rarityOffset;
                 var expectedFound = chanceToFind * hitDensity[densityIndex];
+                if (Save.state.ChoosingNow(card.id) && expectedFound < 2f) {
+                    var chanceToSee = expectedFound / 2f;
+                    Evaluation.Active.SetScore(ScoreReason.LastChanceToPick, LAST_CHANCE_TO_PICK_VALUE * (1f - chanceToSee));
+                }
                 // This is slightly wrong because multiplies of cards generally aren't as good
                 // This is why we don't include hypothetical points for cards that are available now
                 yield return new CardScore(card.id, ScoreValueOfCard(card) * expectedFound);

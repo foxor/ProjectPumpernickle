@@ -40,8 +40,8 @@ namespace ProjectPumpernickle {
                     }
                     var currentTime = DateTime.Now;
                     var deltaTime = currentTime - waitStartTime;
-                    if (deltaTime > TimeSpan.FromSeconds(3)) {
-                        throw new Exception("File wasn't updated within 3 seconds, when we expected it to be");
+                    if (deltaTime > TimeSpan.FromSeconds(10)) {
+                        throw new Exception("File wasn't updated within 10 seconds, when we expected it to be");
                     }
                     Thread.Sleep(10);
                 }

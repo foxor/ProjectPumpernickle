@@ -121,7 +121,7 @@ namespace ProjectPumpernickle {
                     break;
                 }
                 case "Fight": {
-                    var floor = int.Parse(lines[1]) + 1;
+                    var floor = int.Parse(lines[1]);
                     var didFight = false;
                     Program.ParseNewFile(floor, didFight);
                     PumpernickelAdviceWindow.instance.AdviceBox.Text = "Your expected health loss: " + FightSimulator.SimulateFight(Database.instance.encounterDict[lines[2]]);

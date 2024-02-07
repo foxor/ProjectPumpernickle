@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class PunishSkillIntoNob : IGlobalRule {
-        bool IGlobalRule.ShouldApply => true;
         public static readonly float FULL_PUNISHMENT = -30f;
         void IGlobalRule.Apply(Evaluation evaluation) {
             if (Save.state.addedSkill && evaluation.Path.Threats.TryGetValue("Gremlin Nob", out float nobThreat)) {

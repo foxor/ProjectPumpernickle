@@ -97,6 +97,12 @@ namespace ProjectPumpernickle {
             totalPower /= totalSignificance;
             return totalPower;
         }
+        public static readonly float GOOD_CARD_POINT_TO_POWER_RATIO = 1f / 8f;
+        public static float AdjustDefensivePowerBasedOnGoodCards(string encounterId, float defensivePower) {
+            var goodCardPoints = Save.state.cards.Select(x => x.goodAgainst.GetValueOrDefault(encounterId, 0f)).Sum();
+            var multiplier = 1f + (goodCardPoints * GOOD_CARD_POINT_TO_POWER_RATIO);
+            return defensivePower * multiplier;
+        }
         public static readonly float BEGINNING_OF_GAME_DAMAGE = 12f;
         public static readonly float BEGINNING_OF_GAME_DAMAGE_LOG = MathF.Log(BEGINNING_OF_GAME_DAMAGE);
         public static readonly float END_OF_GAME_DAMAGE_LOG = MathF.Log(100);
@@ -153,6 +159,7 @@ namespace ProjectPumpernickle {
             if (defensivePower - 0.02f <= 0f) {
                 return encounter.medianWorstCaseHealthLoss;
             }
+            defensivePower = AdjustDefensivePowerBasedOnGoodCards(encounter.id, defensivePower);
             estimatedDamagePerTurn *= ExpectedScalingFactor(floor, encounter.NodeType);
             var estimatedFightLength = AverageEnemyHealth(encounter) / estimatedDamagePerTurn;
             if (encounter.id.Equals("Transient")) {

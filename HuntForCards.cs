@@ -1,7 +1,6 @@
 ﻿namespace ProjectPumpernickle {
     internal class HuntForCards : IGlobalRule {
         public static readonly float PENALTY_MULTIPLIER = -8f;
-        bool IGlobalRule.ShouldApply => Save.state.huntingCards.Any();
 
         void IGlobalRule.Apply(Evaluation evaluation) {
             //var expectedHuntedCardsFound = evaluation.Path.EndOfActPath ? Path.ExpectedHuntedCardsFoundInFutureActs() : evaluation.Path.ExpectedHuntedCardsFound();

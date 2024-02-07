@@ -8,8 +8,7 @@ namespace ProjectPumpernickle {
     internal class EncourageCardRemove : IGlobalRule {
         public static readonly float NORMAL_DECK_SIZE = 25f;
         public static readonly float LARGE_DECK_SIZE = 40f;
-        public static readonly float REWARD_PER_CARD_SMALLER = .4f;
-        bool IGlobalRule.ShouldApply => true;
+        public static readonly float REWARD_PER_CARD_SMALLER = .15f;
 
         void IGlobalRule.Apply(Evaluation evaluation) {
             var deckSize = Save.state.cards.Count;

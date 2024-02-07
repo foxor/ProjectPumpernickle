@@ -35,6 +35,7 @@ namespace ProjectPumpernickle {
         public Card bottled;
         public bool gainedMembershipCard;
         public IRewardStatisticsGroup statisticsGroup;
+        public bool needsMoreInformation;
         public RewardContext(in List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop) {
             for (int i = 0; i < rewardIndicies.Count; i++) {
                 var rewardGroup = rewardOptions[i];
@@ -301,6 +302,7 @@ namespace ProjectPumpernickle {
                     var stats = new ChooseCardStatisticsGroup(new float[]{ 0f, 0f, 3f }, Save.state.character.ToColor(), Rarity.Rare);
                     statisticsGroup = stats;
                     addedCardIndicies.Add(Save.state.AddCardById(stats.cardId));
+                    needsMoreInformation = true;
                     break;
                 }
                 case EventRewardElement.TWO_FIFTY_GOLD: {

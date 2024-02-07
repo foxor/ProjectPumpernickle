@@ -62,6 +62,7 @@ namespace ProjectPumpernickle {
         public bool isNew;
         public Dictionary<string, float> setup;
         public Dictionary<string, float> payoff;
+        public Dictionary<string, float> goodAgainst;
 
         public void CopyFrom(Card other) {
             this.name = other.name;
@@ -82,6 +83,7 @@ namespace ProjectPumpernickle {
             this.isNew = other.isNew;
             this.setup = other.setup;
             this.payoff = other.payoff;
+            this.goodAgainst = other.goodAgainst;
         }
 
         public void OnLoad() {
@@ -93,6 +95,9 @@ namespace ProjectPumpernickle {
             }
             if (payoff == null) {
                 payoff = new Dictionary<string, float>();
+            }
+            if (goodAgainst == null) {
+                goodAgainst = new Dictionary<string, float>();
             }
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
@@ -473,7 +478,7 @@ namespace ProjectPumpernickle {
             };
         }
         public MapNode GetCurrentNode() {
-            var talkingToNeow = (room_x == 0 && room_y == -1);
+            var talkingToNeow = (room_x == 0 && room_y == -1) || (room_y != floor_num - 1 && act_num == 1);
             var newAct = (room_x == -1 && room_y == -1);
             var bossChest = (room_x == -1 && room_y > 10);
             if (talkingToNeow || newAct) {

@@ -91,6 +91,8 @@ namespace ProjectPumpernickle {
         ExhaustOther,
         MeanCorrection,
         WinChance,
+        LastChanceToPick,
+        GoodAnswers,
         COUNT,
     }
     public class Evaluation {

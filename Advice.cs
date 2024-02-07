@@ -73,7 +73,7 @@ namespace ProjectPumpernickle {
                         return;
                     }
                     var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
-                    eval.NeedsMoreInfo = Advice.needsMoreInfo;
+                    eval.NeedsMoreInfo = Advice.needsMoreInfo | context.needsMoreInformation;
                     var path = Path.BuildPath(nodeSequence, pathIndex);
                     eval.SetPath(path, context.bonusCardRewards);
                     Scoring.ScoreBasedOnEvaluation(eval);

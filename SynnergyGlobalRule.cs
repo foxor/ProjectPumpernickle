@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class SynnergyGlobalRule : IGlobalRule {
-        bool IGlobalRule.ShouldApply => true;
 
         void IGlobalRule.Apply(Evaluation evaluation) {
             var synnergies = new Dictionary<string, float>();

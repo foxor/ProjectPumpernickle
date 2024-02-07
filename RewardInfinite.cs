@@ -12,16 +12,14 @@ namespace ProjectPumpernickle {
         public static readonly float END_OF_GAME_POINTS = 12f;
         public static readonly float NEMESIS_POINTS = 6f;
         public static readonly float NOW_POINTS = 12f;
-        bool IGlobalRule.ShouldApply {
-            get {
-                return Save.state.buildingInfinite;
-            }
-        }
         public static float CurrentInfiniteRoom() {
             return Save.state.infiniteMaxSize - Evaluators.PermanentDeckSize() - Save.state.missingCardCount;
         }
 
         void IGlobalRule.Apply(Evaluation evaluation) {
+            if (!Save.state.buildingInfinite) {
+                return;
+            }
             var room = CurrentInfiniteRoom();
             var expectedCardRemoves = evaluation.Path.EndOfActPath ? Path.ExpectedFutureActCardRemoves() : evaluation.Path.ExpectedPossibleCardRemoves();
             var expectedPreNemesisRemoves = evaluation.Path.EndOfActPath ? Path.ExpectedFutureActCardRemovesBeforeNemesis() : evaluation.Path.ExpectedPossibleCardRemovesBeforeNemesis();
