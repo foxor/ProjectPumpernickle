@@ -156,27 +156,38 @@ namespace ProjectPumpernickle {
             }
             return path.expectedHealth[index];
         }
-
+        public static float ExpectedCardPickRate() {
+            return 0.4f;
+        }
         public static string ChooseBestUpgrade(out float bestValue, Path path = null, int index = -1) {
             var numPriorUpgrades = path == null ? 0 : (int)Math.Round(path.expectedUpgrades[index]);
-            ChooseBestAndWorstUpgrade(numPriorUpgrades, out var bestId, out bestValue, out var worstId, out var worstValue);
+            var numCardsAdded = path.expectedCardRewards[index] * ExpectedCardPickRate();
+            ChooseBestAndWorstUpgrade(numPriorUpgrades, numCardsAdded, out var bestId, out bestValue, out var worstId, out var worstValue);
             return bestId;
         }
 
-        public static void ChooseBestAndWorstUpgrade(int numPriorUpgrades, out string bestId, out float bestValue, out string worstId, out float worstValue) {
+        public static void ChooseBestAndWorstUpgrade(int numPriorUpgrades, float numAddedCards, out string bestId, out float bestValue, out string worstId, out float worstValue) {
             var unupgradedCards = Enumerable.Range(0, Save.state.cards.Count).Select(x => (Card: Save.state.cards[x], Index: x)).Where(x => x.Card.upgrades == 0 && x.Card.cardType != CardType.Curse).Select(x => {
                 var currentValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(x.Card.id)(x.Card, x.Index);
                 var upgradeValue = EvaluationFunctionReflection.GetUpgradeFunctionCached(x.Card.id)(x.Card, x.Index, currentValue);
                 return (Card: x.Card, Val: upgradeValue - currentValue);
             }).OrderByDescending(x => x.Val);
-            if (numPriorUpgrades >= unupgradedCards.Count()) {
+            var remainingUpgrades = unupgradedCards.Skip(numPriorUpgrades);
+            if (!remainingUpgrades.Any()) {
                 bestId = null;
-                bestValue = 0f;
                 worstId = null;
-                worstValue = 0f;
+                var futureAddUpgrades = unupgradedCards.Count() - numPriorUpgrades + numAddedCards;
+                if (futureAddUpgrades > 0f) {
+                    bestValue = 1.5f * 1.3f;
+                    worstValue = 0.8f * 1.2f;
+                }
+                else {
+                    bestValue = 0f;
+                    worstValue = 0f;
+                }
                 return;
             }
-            var anticipatedSelection = unupgradedCards.Skip(numPriorUpgrades).First();
+            var anticipatedSelection = remainingUpgrades.First();
             var worstSelection = unupgradedCards.LastOrDefault();
             bestId = anticipatedSelection.Card.id;
             bestValue = anticipatedSelection.Val;
@@ -270,6 +281,7 @@ namespace ProjectPumpernickle {
         }
 
         public static float ChanceOfSpecificRelic(PlayerCharacter character, Rarity rarity) {
+            // FIXME: this shouldn't count relics you've seen
             var populationSize = Database.instance.relics.Where(x => x.forCharacter.Is(character) && x.rarity.Is(rarity)).Count();
             var hitDensity = 1f / populationSize;
             return hitDensity;
@@ -565,7 +577,7 @@ namespace ProjectPumpernickle {
         }
         public static readonly string[] AverageCardOptions = new string[] {
             "Metallicize",
-            "Deflect",
+            "Dagger Throw",
             "Bullet Time",
         };
         public static string AverageRandomCard(Color color, Rarity rarity) {
@@ -578,11 +590,11 @@ namespace ProjectPumpernickle {
             return 17f * (floorsLeft / 55f);
         }
         // Roughly: https://www.wolframalpha.com/input?i=x%2F%28x%2B10%29+from+0+to+30
-        public static float PercentAllGreen(Evaluation evaluation) {
+        public static float UpgradeValueProportion(Evaluation evaluation) {
             var projectedCardAdds = Evaluators.EstimateFutureAddedCards();
-            var cardsByUpgradeWeight = Save.state.cards.Select(x => x.upgradePowerMultiplier).Concat(Enumerable.Range(0, (int)projectedCardAdds).Select(x => 1.3f)).OrderByDescending(x => x);
+            var cardsByUpgradeWeight = Save.state.cards.Select(x => x.upgradePowerMultiplier - 1f).Where(x => x > 0).Concat(Enumerable.Range(0, (int)projectedCardAdds).Select(x => 0.3f)).OrderByDescending(x => x);
             var totalWeight = cardsByUpgradeWeight.Sum();
-            var denominatorOffset = totalWeight / 2f;
+            var denominatorOffset = (totalWeight / 2f) + 3f;
             var endOfAct = evaluation.Path.nodes.Length - 1;
             var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
             var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
@@ -757,6 +769,24 @@ namespace ProjectPumpernickle {
                     continue;
                 }
                 relevantList.Add(card.id);
+                yield return i;
+            }
+        }
+        public static IEnumerable<int> ReasonableUpgradeTargets() {
+            List<string> considered = new List<string>();
+            for (int i = 0; i < Save.state.cards.Count; i++) {
+                var card = Save.state.cards[i];
+                if (card.cardType == CardType.Curse) {
+                    continue;
+                }
+                if (card.upgrades > 0 && card.id != "Searing Blow") {
+                    continue;
+                }
+                var hasConsidered = considered.Contains(card.id);
+                if (hasConsidered && card.id != "Searing Blow") {
+                    continue;
+                }
+                considered.Add(card.id);
                 yield return i;
             }
         }

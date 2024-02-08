@@ -16,6 +16,7 @@ namespace ProjectPumpernickle {
         Special,
         Randomable,
         Boss,
+        Shop,
     }
     public enum Tags {
         NonPermanent,
@@ -64,26 +65,26 @@ namespace ProjectPumpernickle {
         public Dictionary<string, float> payoff;
         public Dictionary<string, float> goodAgainst;
 
-        public void CopyFrom(Card other) {
-            this.name = other.name;
-            this.type = other.type;
-            this.cost = other.cost;
-            this.description = other.description;
-            this.bias = other.bias;
-            this.upgradePowerMultiplier = other.upgradePowerMultiplier;
-            this.upgradeBias = other.upgradeBias;
-            this.rarity = other.rarity;
-            this.color = other.color;
+        public void MergeWithDatabaseCard(Card fromDatabase) {
+            this.name = fromDatabase.name;
+            this.type = fromDatabase.type;
+            this.cost = fromDatabase.cost;
+            this.description = fromDatabase.description;
+            this.bias = fromDatabase.bias;
+            this.upgradePowerMultiplier = fromDatabase.upgradePowerMultiplier;
+            this.upgradeBias = fromDatabase.upgradeBias;
+            this.rarity = fromDatabase.rarity;
+            this.color = fromDatabase.color;
 
-            this.tags = other.tags;
-            this.cardType = other.cardType;
-            this.intCost = other.intCost;
-            this.cardRarity = other.cardRarity;
-            this.cardColor = other.cardColor;
-            this.isNew = other.isNew;
-            this.setup = other.setup;
-            this.payoff = other.payoff;
-            this.goodAgainst = other.goodAgainst;
+            this.tags = fromDatabase.tags;
+            this.cardType = fromDatabase.cardType;
+            this.intCost = fromDatabase.intCost;
+            this.cardRarity = fromDatabase.cardRarity;
+            this.cardColor = fromDatabase.cardColor;
+            this.isNew = fromDatabase.isNew;
+            this.setup = fromDatabase.setup;
+            this.payoff = fromDatabase.payoff;
+            this.goodAgainst = fromDatabase.goodAgainst;
         }
 
         public void OnLoad() {
@@ -194,6 +195,19 @@ namespace ProjectPumpernickle {
                     break;
                 }
             }
+        }
+        public static List<Card> DeepcopyList(List<Card> original) {
+            if (original == null) {
+                return null;
+            }
+            return original.Select(x => {
+                var c = new Card();
+                c.MergeWithDatabaseCard(x);
+                c.upgrades = x.upgrades;
+                c.misc = x.misc;
+                c.id = x.id;
+                return c;
+            }).ToList();
         }
     }
     public enum NodeType {
@@ -340,7 +354,7 @@ namespace ProjectPumpernickle {
             map = original.map;
 
             // deep copied
-            cards = original.cards?.ToList();
+            cards = Card.DeepcopyList(original.cards);
             relics = original.relics?.ToList();
             relic_counters = original.relic_counters?.ToList();
             potions = original.potions?.ToArray();
@@ -358,7 +372,7 @@ namespace ProjectPumpernickle {
                 upgrades = upgrades,
                 misc = 0
             };
-            card.CopyFrom(Database.instance.cardsDict[card.id]);
+            card.MergeWithDatabaseCard(Database.instance.cardsDict[card.id]);
             card.isNew = true;
             cards.Add(card);
             return cards.Count - 1;
@@ -450,7 +464,7 @@ namespace ProjectPumpernickle {
 
         public void OnLoad() {
             foreach (var card in cards) {
-                card.CopyFrom(Database.instance.cardsDict[card.id]);
+                card.MergeWithDatabaseCard(Database.instance.cardsDict[card.id]);
             }
         }
         public MapNode[] Act4() {

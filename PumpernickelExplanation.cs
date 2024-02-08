@@ -118,8 +118,12 @@ namespace ProjectPumpernickle {
         }
 
         public static void AddScoreExplanation(RichTextBuilder rtb, Evaluation evaluation, float[] winningScore, int evaluationIndex) {
-            foreach (var reasonIndex in Enumerable.Range(0, (byte)ScoreReason.COUNT).OrderByDescending(x => evaluation.Scores[x] - winningScore[x])) {
-                var isBest = evaluation.Equals(PumpernickelAdviceWindow.instance.Evaluations[0]);
+            var isBest = evaluation.Equals(PumpernickelAdviceWindow.instance.Evaluations[0]);
+            var sortedScoreIndicies = Enumerable.Range(0, (byte)ScoreReason.COUNT).OrderByDescending(x => evaluation.Scores[x] - winningScore[x]);
+            if (isBest) {
+                sortedScoreIndicies = Enumerable.Range(0, (byte)ScoreReason.COUNT).OrderByDescending(x => evaluation.Scores[x]);
+            }
+            foreach (var reasonIndex in sortedScoreIndicies) {
                 var score = evaluation.Scores[reasonIndex];
                 var delta = score - winningScore[reasonIndex];
                 var deltaIsSmall = MathF.Abs(delta) < 0.001f;

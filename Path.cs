@@ -66,6 +66,7 @@ namespace ProjectPumpernickle {
         public long pathId;
         public int jumps;
         public float chanceToSurviveAct;
+        public float[] expectedShopRelics = null;
         protected static void CheckPathRelic(string relicId, ref bool hasWingBoots, ref List<FireChoice> fireChoices) {
             if (relicId.Equals("WingedGreaves")) {
                 hasWingBoots = true;
@@ -167,7 +168,7 @@ namespace ProjectPumpernickle {
             return path;
         }
 
-        public void ExplorePath(int startingCardRewards) {
+        public void ExplorePath() {
             // Basic setup stuff
             InitArrays();
             InitNodeTypes();
@@ -179,7 +180,7 @@ namespace ProjectPumpernickle {
             // Make plans to get stronger
             ChooseShortTermShopPlan();
             ExpectShopProgression();
-            ExpectProgression(startingCardRewards);
+            ExpectProgression();
             ProjectDefensivePower();
 
             // Final health estimation for risk etc.
@@ -217,6 +218,7 @@ namespace ProjectPumpernickle {
             r.expectedHealthLoss = path.expectedHealthLoss?.ToArray();
             r.expectedPotionsAdded = path.expectedPotionsAdded?.ToArray();
             r.expectedPotionsSpent = path.expectedPotionsSpent?.ToArray();
+            r.expectedShopRelics = path.expectedShopRelics?.ToArray();
 
             return r;
         }
@@ -249,6 +251,7 @@ namespace ProjectPumpernickle {
             expectedHealthLoss = new float[remainingFloors];
             expectedPotionsAdded = new float[remainingFloors];
             expectedPotionsSpent = new float[remainingFloors];
+            expectedShopRelics = new float[remainingFloors];
         }
 
         public void InitFireChoices(FireChoice[] fireChoices) {
@@ -519,16 +522,17 @@ namespace ProjectPumpernickle {
         public static readonly float FEED_HIT_RATE = .8f;
         public static readonly float PER_QUESTION_FIGHT_CHANCE = 0.1f;
         public static readonly float PER_QUESTION_SHOP_CHANCE = 0.03f;
-        public void ExpectProgression(int startingCardRewards) {
+        public void ExpectProgression() {
             // Early in the run, every card reward is a huge impact on the deck quality.
             // We need this so that we know a floor 10 elite won't kill us
             float fightsSoFar = 0f;
-            float relicsSoFar = 0f;
+            float rewardRelicsSoFar = 0f;
+            float shopRelicsSoFar = 0f;
             float potionAddsSoFar = 0f;
             var potionSlots = Save.state.relics.Contains("Potion Belt") ? 4 : 2;
             float residualPotions = potionSlots - Save.state.EmptyPotionSlots();
             float potionChance = (40 + Save.state.potion_chance) * 0.01f;
-            float cardRewardsSoFar = startingCardRewards;
+            float cardRewardsSoFar = 0f;
             float floorFightChance = Save.state.event_chances == null ? PER_QUESTION_FIGHT_CHANCE : Save.state.event_chances[1];
             float shopChance = Save.state.event_chances == null ? PER_QUESTION_SHOP_CHANCE :Save.state.event_chances[2];
             float shopsSoFar = 0f;
@@ -546,9 +550,6 @@ namespace ProjectPumpernickle {
                 feedHealth = 4.8f;
             }
             var maxHp = (float)Save.state.max_health;
-            if (hasSingingBowl) {
-                maxHp += startingCardRewards * (1f - CARD_PICK_RATE_OVER_BOWL);
-            }
 
             for (int i = 0; i < expectedCardRewards.Length; i++) {
                 float potionsSpentThisFloor = 0f;
@@ -565,7 +566,7 @@ namespace ProjectPumpernickle {
                     case NodeType.Boss:
                     case NodeType.Fight: {
                         if (nodeTypes[i] == NodeType.Elite || nodeTypes[i] == NodeType.MegaElite) {
-                            relicsSoFar++;
+                            rewardRelicsSoFar++;
                             if (residualPotions >= 1f) {
                                 potionsSpentThisFloor++;
                                 residualPotions--;
@@ -603,7 +604,7 @@ namespace ProjectPumpernickle {
                         ExpectedShopProgression(i, out var cardRewards, out var potions, out var relics, limitPotionsToOpenSlots);
                         shopsSoFar++;
                         cardRewardsSoFar += cardRewards * SHOP_CARD_VALUE_FACTOR;
-                        relicsSoFar += relics;
+                        shopRelicsSoFar += relics;
                         potionAddsSoFar += potions;
                         residualPotions += potions;
                         break;
@@ -628,7 +629,7 @@ namespace ProjectPumpernickle {
                     }
                     case NodeType.Chest:
                     case NodeType.BossChest: {
-                        relicsSoFar++;
+                        rewardRelicsSoFar++;
                         break;
                     }
                     case NodeType.Fire: {
@@ -639,12 +640,13 @@ namespace ProjectPumpernickle {
                     }
                 }
                 expectedCardRewards[i] = cardRewardsSoFar;
-                expectedRewardRelics[i] = relicsSoFar;
+                expectedRewardRelics[i] = rewardRelicsSoFar;
                 expectedShops[i] = shopsSoFar;
                 expectedMaxHealth[i] = maxHp;
                 expectedPotionsAdded[i] = potionAddsSoFar;
                 expectedPotionsSpent[i] = potionsSpentThisFloor;
                 expectedUpgrades[i] = upgrades;
+                expectedShopRelics[i] = shopRelicsSoFar;
             }
         }
 

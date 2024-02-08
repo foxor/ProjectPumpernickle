@@ -99,8 +99,27 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void LivingWall(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            var validRemoveOptions = Evaluators.ReasonableRemoveTargets();
+            var validUpgradeOptions = Evaluators.ReasonableUpgradeTargets();
+            var removeOptions = validRemoveOptions.Select(x => new RewardOptionPart() {
+                advice = "Remove " + Save.state.cards[x].name,
+                eventCost = "NONE",
+                value = "REMOVE_CARD: " + x
+            });
+            var transformOptions = validRemoveOptions.Select(x => new RewardOptionPart() {
+                advice = "Transform " + Save.state.cards[x].name,
+                eventCost = "NONE",
+                value = "TRANSFORM_CARD: " + x
+            });
+            var upgradeOptions = validUpgradeOptions.Select(x => new RewardOptionPart() {
+                advice = "Upgrade " + Save.state.cards[x].name,
+                eventCost = "NONE",
+                value = "UPGRADE_CARD: " + x
+            });
+            var rewardOption = RewardOption.Build(removeOptions.Concat(transformOptions).Concat(upgradeOptions));
+            rewardOption.skippable = false;
+            rewardOption.rewardType = RewardType.Event;
+            Advice.AdviceOnReward(rewardOption);
         }
         public static void MaskedBandits(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){

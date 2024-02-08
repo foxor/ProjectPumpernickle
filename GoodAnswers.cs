@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 namespace ProjectPumpernickle {
     internal class GoodAnswers : IGlobalRule {
         public void Apply(Evaluation evaluation) {
-            Assert.Break(1057);
             var goodAgainstTotal = new Dictionary<string, float>();
             foreach (var card in Save.state.cards) {
                 foreach (var goodEntry in card.goodAgainst) {

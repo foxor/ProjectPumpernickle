@@ -1031,6 +1031,7 @@
          "description":"Gain 5 (8) Block.",
          "mod":"Slay the Spire",
          "bias": -1.2,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Neutralize",
@@ -1054,6 +1055,7 @@
          "description":"Deal 6 (9) damage.",
          "mod":"Slay the Spire",
          "bias": -1.5,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Survivor",
@@ -1077,6 +1079,7 @@
          "description":"Draw 3 (4) cards.\nDiscard 1 card.",
          "mod":"Slay the Spire",
          "bias": 1.2,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Backflip",
@@ -1088,6 +1091,7 @@
          "description":"Gain 5 (8) Block.\nDraw 2 cards.",
          "mod":"Slay the Spire",
          "bias": 0.8,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Bane",
@@ -1099,6 +1103,7 @@
          "description":"Deal 7 (10) damage.\nIf the enemy has Poison, deal 7 (10) damage again.",
          "mod":"Slay the Spire",
          "bias": -1,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Blade Dance",
@@ -1110,6 +1115,7 @@
          "description":"Add 3 (4) Shivs into your hand.",
          "mod":"Slay the Spire",
          "bias": 1.3,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Cloak And Dagger",
@@ -1121,6 +1127,7 @@
          "description":"Gain 6 Block.\nAdd 1 (2) Shiv (Shivs) into your hand.",
          "mod":"Slay the Spire",
          "bias": -0.2,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"Dagger Spray",
@@ -1132,6 +1139,7 @@
          "description":"Deal 4 (6) damage to ALL enemies twice.",
          "mod":"Slay the Spire",
          "bias": 0.2,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Dagger Throw",
@@ -1143,6 +1151,7 @@
          "description":"Deal 9 (12) damage.\nDraw 1 card.\nDiscard 1 card.",
          "mod":"Slay the Spire",
          "bias": -0.1,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Deadly Poison",
@@ -1154,6 +1163,7 @@
          "description":"Apply 5 (7) Poison.",
          "mod":"Slay the Spire",
          "bias": -0.3,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Deflect",
@@ -1165,6 +1175,7 @@
          "description":"Gain 4 (7) Block.",
          "mod":"Slay the Spire",
          "bias": 0.5,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Dodge and Roll",
@@ -1176,6 +1187,7 @@
          "description":"Gain 4 (6) Block.\nNext turn, gain 4 (6) Block.",
          "mod":"Slay the Spire",
          "bias": 0,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Flying Knee",
@@ -1187,6 +1199,7 @@
          "description":"Deal 8 (11) damage.\nNext turn, gain [G].",
          "mod":"Slay the Spire",
          "bias": -0.3,
+         "upgradePowerMultiplier": 1.1,
       },
       {
          "id":"Outmaneuver",
@@ -1198,6 +1211,7 @@
          "description":"Next turn,\ngain [G] [G] ([G]).",
          "mod":"Slay the Spire",
          "bias": -0.5,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"PiercingWail",
@@ -1209,6 +1223,7 @@
          "description":"ALL enemies lose 6 (8) Strength this turn.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 1.5,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Poisoned Stab",
@@ -1220,6 +1235,7 @@
          "description":"Deal 6 (8) damage.\nApply 3 (4) Poison.",
          "mod":"Slay the Spire",
          "bias": -0.3,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Prepared",
@@ -1232,6 +1248,7 @@
          "mod":"Slay the Spire",
          "bias": 0,
          "upgradeBias": 1.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Quick Slash",
@@ -1243,6 +1260,7 @@
          "description":"Deal 8 (12) damage.\nDraw 1 card.",
          "mod":"Slay the Spire",
          "bias": -0.6,
+         "upgradePowerMultiplier": 1.1,
       },
       {
          "id":"Slice",
@@ -1254,6 +1272,7 @@
          "description":"Deal 6 (9) damage.",
          "mod":"Slay the Spire",
          "bias": 0.1,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Underhanded Strike",
@@ -1265,6 +1284,7 @@
          "description":"Deal 12 (16) damage.\nIf you have discarded a card this turn,\ngain [G] [G].",
          "mod":"Slay the Spire",
          "bias": 0.5,
+         "upgradePowerMultiplier": 1.25,
       },
       {
          "id":"Sucker Punch",
@@ -1279,6 +1299,7 @@
             "Defensive": 4.5,
          },
          "bias": -0.3,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Accuracy",
@@ -1290,6 +1311,7 @@
          "description":"*Shivs deal 4 (6) additional damage.",
          "mod":"Slay the Spire",
          "bias": -0.6,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"All Out Attack",
@@ -1301,6 +1323,7 @@
          "description":"Deal 10 (14) damage to ALL enemies.\nDiscard 1 card at random.",
          "mod":"Slay the Spire",
          "bias": 0.4,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Backstab",
@@ -1312,6 +1335,7 @@
          "description":"Innate.\nDeal 11 (15) damage.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 1,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Blur",
@@ -1323,6 +1347,7 @@
          "description":"Gain 5 (8) Block.\nBlock is not removed at the start of your next turn.",
          "mod":"Slay the Spire",
          "bias": -0.5,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Bouncing Flask",
@@ -1334,6 +1359,7 @@
          "description":"Apply 3 Poison to a random enemy 3 (4) times.",
          "mod":"Slay the Spire",
          "bias": 0.8,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Calculated Gamble",
@@ -1345,6 +1371,7 @@
          "description":"Discard your hand,\nthen draw that many cards.\n~~- Exhaust. -~~ ",
          "mod":"Slay the Spire",
          "bias": 2.8,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Caltrops",
@@ -1356,6 +1383,7 @@
          "description":"Whenever you are attacked, deal 3 (5) damage back.",
          "mod":"Slay the Spire",
          "bias": -0.1,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Catalyst",
@@ -1379,6 +1407,7 @@
          "description":"Deal 12 damage.\nWhenever you play a card this turn, the enemy loses 3 (5) HP.",
          "mod":"Slay the Spire",
          "bias": -1,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Concentrate",
@@ -1393,6 +1422,7 @@
          "tags": {
             "greed": 1
          },
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Crippling Poison",
@@ -1404,6 +1434,7 @@
          "description":"Apply 4 (7) Poison and 2 Weak to ALL enemies.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": -0.3,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Dash",
@@ -1415,6 +1446,7 @@
          "description":"Gain 10 (13) Block.\nDeal 10 (13) damage.",
          "mod":"Slay the Spire",
          "bias": 0.6,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"Distraction",
@@ -1426,6 +1458,7 @@
          "description":"Add a random Skill into your hand.\nIt costs 0 this turn.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": -0.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Endless Agony",
@@ -1437,6 +1470,7 @@
          "description":"Deal 4 (6) damage.\nWhenever you draw this card, add a copy of it into your hand.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 0.6,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Escape Plan",
@@ -1448,6 +1482,7 @@
          "description":"Draw 1 card.\nIf you draw a Skill, gain 3 (5) Block.",
          "mod":"Slay the Spire",
          "bias": 0.4,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Eviscerate",
@@ -1459,6 +1494,7 @@
          "description":"Costs 1 less [G]\nfor each card discarded this turn.\nDeal 7 (9) damage 3 times.",
          "mod":"Slay the Spire",
          "bias": 2.2,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Expertise",
@@ -1470,6 +1506,7 @@
          "description":"Draw cards until you have 6 (7) in your hand.",
          "mod":"Slay the Spire",
          "bias": -1,
+         "upgradePowerMultiplier": 1.7,
       },
       {
          "id":"Finisher",
@@ -1481,6 +1518,7 @@
          "description":"Deal 6 (8) damage for each Attack played this turn.",
          "mod":"Slay the Spire",
          "bias": 0.8,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Flechettes",
@@ -1492,6 +1530,7 @@
          "description":"Deal 4 (6) damage for each Skill in your hand.",
          "mod":"Slay the Spire",
          "bias": -0.5,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Footwork",
@@ -1505,7 +1544,8 @@
          "bias": 0.3,
          "goodAgainst": {
             "The Guardian": 2.0,
-         }
+         },
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Heel Hook",
@@ -1517,6 +1557,7 @@
          "description":"Deal 5 (8) damage.\nIf the enemy has Weak,\ngain [G] and\ndraw 1 card.",
          "mod":"Slay the Spire",
          "bias": -0.1,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Infinite Blades",
@@ -1528,6 +1569,7 @@
          "description":" (Innate.)\nAt the start of your turn, add a Shiv into your hand.",
          "mod":"Slay the Spire",
          "bias": -0.3,
+         "upgradePowerMultiplier": 0.7,
       },
       {
          "id":"Leg Sweep",
@@ -1539,6 +1581,7 @@
          "description":"Apply 2 (3) Weak.\nGain 11 (14) Block.",
          "mod":"Slay the Spire",
          "bias": 1.4,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Masterful Stab",
@@ -1550,6 +1593,7 @@
          "description":"Costs 1 additional [G]\nfor each time you lose HP this combat.\nDeal 12 (16) damage.",
          "mod":"Slay the Spire",
          "bias": -0.3,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Noxious Fumes",
@@ -1561,6 +1605,7 @@
          "description":"At the start of your turn, apply 2 (3) Poison to ALL enemies.",
          "mod":"Slay the Spire",
          "bias": 0.6,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Predator",
@@ -1572,6 +1617,7 @@
          "description":"Deal 15 (20) damage.\nNext turn, draw 2 additional cards.",
          "mod":"Slay the Spire",
          "bias": -0.1,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Reflex",
@@ -1583,6 +1629,7 @@
          "description":"Unplayable.\nIf this card is discarded from your hand, draw 2 (3) cards.",
          "mod":"Slay the Spire",
          "bias": 2.1,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Riddle With Holes",
@@ -1594,6 +1641,7 @@
          "description":"Deal 3 (4) damage 5 times.",
          "mod":"Slay the Spire",
          "bias": -1,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Setup",
@@ -1605,6 +1653,7 @@
          "description":"Put a card from your hand on top of your draw pile.\nIt costs 0 until played.",
          "mod":"Slay the Spire",
          "bias": -1,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Skewer",
@@ -1616,6 +1665,7 @@
          "description":"Deal 7 (10) damage X times.",
          "mod":"Slay the Spire",
          "bias": -0.4,
+         "upgradePowerMultiplier": 1.3,
       },
       {
          "id":"Tactician",
@@ -1627,6 +1677,7 @@
          "description":"Unplayable.\nIf this card is discarded from your hand, gain [G] ([G]).",
          "mod":"Slay the Spire",
          "bias": 1.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Terror",
@@ -1638,6 +1689,7 @@
          "description":"Apply 99 Vulnerable.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 3,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Well Laid Plans",
@@ -1649,6 +1701,7 @@
          "description":"At the end of your turn, Retain up to 1 (2) card (cards).",
          "mod":"Slay the Spire",
          "bias": 2.3,
+         "upgradePowerMultiplier": 1.9,
       },
       {
          "id":"A Thousand Cuts",
@@ -1660,6 +1713,7 @@
          "description":"Whenever you play a card, deal 1 (2) damage to ALL enemies.",
          "mod":"Slay the Spire",
          "bias": -1.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Adrenaline",
@@ -1671,6 +1725,7 @@
          "description":"Gain [G] ([G]).\nDraw 2 cards.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 1.0,
+         "upgradePowerMultiplier": 1.6,
       },
       {
          "id":"After Image",
@@ -1682,6 +1737,7 @@
          "description":" (Innate.)\nWhenever you play a card, gain 1 Block.",
          "mod":"Slay the Spire",
          "bias": 0.8,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Venomology",
@@ -1693,6 +1749,7 @@
          "description":"Obtain a random potion.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 5.0,
+         "upgradePowerMultiplier": 1.8,
       },
       {
          "id":"Bullet Time",
@@ -1703,6 +1760,7 @@
          "cost":"3 (2)",
          "description":"You cannot draw additional cards this turn. Reduce the cost of all cards in your hand to 0 this turn.",
          "mod":"Slay the Spire",
+         "upgradePowerMultiplier": 1.6,
          "bias": 1.5,
       },
       {
@@ -1715,6 +1773,7 @@
          "description":"This turn, your next Skill is (2 Skills are) played twice.",
          "mod":"Slay the Spire",
          "bias": 2,
+         "upgradePowerMultiplier": 1.9,
       },
       {
          "id":"Corpse Explosion",
@@ -1726,6 +1785,7 @@
          "description":"Apply 6 (9) Poison.\nWhen the enemy dies, deal damage equal to its Max HP to ALL enemies.",
          "mod":"Slay the Spire",
          "bias": -0.4,
+         "upgradePowerMultiplier": 1.1,
       },
       {
          "id":"Die Die Die",
@@ -1737,6 +1797,7 @@
          "description":"Deal 13 (17) damage to ALL enemies.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 0.3,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Doppelganger",
@@ -1748,6 +1809,7 @@
          "description":"Next turn, draw X (+1) cards and gain X (+1) [G].\nExhaust.",
          "mod":"Slay the Spire",
          "bias": -0.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Envenom",
@@ -1759,7 +1821,7 @@
          "description":"Whenever an Attack deals unblocked damage, apply 1 Poison.",
          "mod":"Slay the Spire",
          "bias": -1,
-         "upgradeBias": 2.5,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Glass Knife",
@@ -1772,7 +1834,6 @@
          "mod":"Slay the Spire",
          "bias": 0.8,
          "upgradePowerMultiplier": 1.5,
-         "upgradeBias": 0,
       },
       {
          "id":"Grand Finale",
@@ -1784,8 +1845,7 @@
          "description":"Can only be played if there are no cards in your draw pile.\nDeal 50 (60) damage to ALL enemies.",
          "mod":"Slay the Spire",
          "bias": 0.5,
-         "upgradePowerMultiplier": 1,
-         "upgradeBias": 0.3,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Malaise",
@@ -1797,8 +1857,7 @@
          "description":"Enemy loses X (+1) Strength. Apply X (+1) Weak.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 0.9,
-         "upgradePowerMultiplier": 1,
-         "upgradeBias": 0.5,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Night Terror",
@@ -1810,8 +1869,7 @@
          "description":"Choose a card.\nNext turn, add 3 copies of that card into your hand. Exhaust.",
          "mod":"Slay the Spire",
          "bias": 2.1,
-         "upgradePowerMultiplier": 1.3,
-         "upgradeBias": 0,
+         "upgradePowerMultiplier": 1.5,
       },
       {
          "id":"Phantasmal Killer",
@@ -1824,7 +1882,6 @@
          "mod":"Slay the Spire",
          "bias": 2.7,
          "upgradePowerMultiplier": 1.5,
-         "upgradeBias": 0,
       },
       {
          "id":"Storm of Steel",
@@ -1836,8 +1893,7 @@
          "description":"Discard your hand.\nAdd 1 Shiv (+) into your hand for each card discarded.",
          "mod":"Slay the Spire",
          "bias": -0.5,
-         "upgradePowerMultiplier": 1,
-         "upgradeBias": 0.4,
+         "upgradePowerMultiplier": 1.4,
       },
       {
          "id":"Tools of the Trade",
@@ -1849,8 +1905,7 @@
          "description":"At the start of your turn, draw 1 card and discard 1 card.",
          "mod":"Slay the Spire",
          "bias": 0.5,
-         "upgradePowerMultiplier": 1,
-         "upgradeBias": 0.8,
+         "upgradePowerMultiplier": 1.2,
       },
       {
          "id":"Unload",
@@ -1863,7 +1918,6 @@
          "mod":"Slay the Spire",
          "bias": -0.1,
          "upgradePowerMultiplier": 1.2,
-         "upgradeBias": 0,
       },
       {
          "id":"Wraith Form v2",
@@ -1875,8 +1929,7 @@
          "description":"Gain 2 (3) Intangible.\nAt the end of your turn, lose 1 Dexterity.",
          "mod":"Slay the Spire",
          "bias": 4.1,
-         "upgradePowerMultiplier": 1.5,
-         "upgradeBias": 0,
+         "upgradePowerMultiplier": 2,
       },
       {
          "id":"Defend_B",

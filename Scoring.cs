@@ -88,9 +88,12 @@ namespace ProjectPumpernickle {
             }
         }
         public static readonly float LAST_CHANCE_TO_PICK_VALUE = 0.25f;
-        public static IEnumerable<CardScore> CardScoreProvider(float[] cardRarityAppearances, Color colorLimit = Color.Eligible, Rarity rarityLimit = Rarity.Randomable) {
+        public static IEnumerable<CardScore> CardScoreProvider(float[] cardRarityAppearances, float[] cardShopAppearances = null, Color colorLimit = Color.Eligible, Rarity rarityLimit = Rarity.Randomable) {
             var path = Evaluation.Active.Path;
-            var cardShopAppearances = new float[6];
+            if (cardShopAppearances == null) {
+                cardShopAppearances = new float[6];
+            }
+
             var hitDensity = new float[6];
             for (int i = 0; i < 6; i++) {
                 var rarity = (i % 3) switch {
@@ -106,19 +109,6 @@ namespace ProjectPumpernickle {
                     continue;
                 }
                 hitDensity[i] = Evaluators.ChanceOfSpecificCard(color, rarity);
-                var densityOfRarity = Evaluators.DensityOfRarity(color, rarity);
-                var classCardsPerShop = 5;
-                var seenPerShop = color == Color.Colorless ? 1 : (classCardsPerShop * densityOfRarity);
-                var previousFloorShopChance = 0f;
-                float previousFloorGold = Save.state.gold;
-                for (int n = 0; n < path.expectedShops.Length; n++) {
-                    var marginalShopChance = path.expectedShops[n] - previousFloorShopChance;
-                    if (marginalShopChance > 0f) {
-                        cardShopAppearances[i] += Evaluators.IsEnoughToBuyCard(previousFloorGold, rarity) * marginalShopChance * seenPerShop;
-                    }
-                    previousFloorShopChance = path.expectedShops[n];
-                    previousFloorGold = path.expectedGold[n];
-                }
             }
 
             foreach (var card in Database.instance.cards) {
@@ -157,14 +147,18 @@ namespace ProjectPumpernickle {
                 yield return new CardScore(card.id, ScoreValueOfCard(card) * expectedFound);
             }
         }
+        // Cards aren't good until you build a good deck
+        // Relics are good immediately
         public static readonly float FUTURE_CARD_CURRENT_POINT_MIN = 0.25f;
+        public static readonly float FUTURE_RELIC_CURRENT_POINT_MIN = 0.5f;
         protected static void ScoreFutureCardValue(Evaluation evaluation) {
+            var path = evaluation.Path;
             var rewards = Enumerable.Range(1, 4).Select(actNum => {
                 var index = Path.FloorNumToPathIndex(Evaluators.LastFloorThisAct(actNum));
                 if (index < 0) {
                     return 0f;
                 }
-                return evaluation.Path.expectedCardRewards[index];
+                return path.expectedCardRewards[index];
             }).ToArray();
             var cardRarityAppearances = Enumerable.Range(1, 4).Select(actNum => {
                 var beginningOfAct = actNum == 1 ? 0 : rewards[actNum - 2];
@@ -172,23 +166,125 @@ namespace ProjectPumpernickle {
                 var isCurrentAct = actNum == Save.state.act_num;
                 return Evaluators.ExpectedCardRewardAppearances(endOfAct - beginningOfAct, isCurrentAct);
             }).Sum();
-            var stats = new ChooseCardStatisticsGroup(cardRarityAppearances, Color.Eligible, Rarity.Randomable);
+            var cardShopAppearances = new float[6];
+            for (int i = 0; i < 6; i++) {
+                var rarity = (i % 3) switch {
+                    0 => Rarity.Common,
+                    1 => Rarity.Uncommon,
+                    2 => Rarity.Rare
+                };
+                var color = (i / 3) switch {
+                    0 => Save.state.character.ToColor(),
+                    1 => Color.Colorless,
+                };
+                if (rarity == Rarity.Common && color == Color.Colorless) {
+                    continue;
+                }
+                var densityOfRarity = Evaluators.DensityOfRarity(color, rarity);
+                var classCardsPerShop = 5;
+                var seenPerShop = color == Color.Colorless ? 1 : (classCardsPerShop * densityOfRarity);
+                var previousFloorShopChance = 0f;
+                float previousFloorGold = Save.state.gold;
+                for (int n = 0; n < path.expectedShops.Length; n++) {
+                    var marginalShopChance = path.expectedShops[n] - previousFloorShopChance;
+                    if (marginalShopChance > 0f) {
+                        cardShopAppearances[i] += Evaluators.IsEnoughToBuyCard(previousFloorGold, rarity) * marginalShopChance * seenPerShop;
+                    }
+                    previousFloorShopChance = path.expectedShops[n];
+                    previousFloorGold = path.expectedGold[n];
+                }
+            }
+            var stats = new ChooseCardsStatisticsGroup(cardRarityAppearances, cardShopAppearances);
             var outcome = stats.Evaluate();
             var cardRewardExpectedTotalValue = outcome.rewardOutcomeMean;
             var currentValueMultiplier = Lerp.From(FUTURE_CARD_CURRENT_POINT_MIN, 1f, Save.state.floor_num / 55f);
             evaluation.AddScore(ScoreReason.CardReward, cardRewardExpectedTotalValue * currentValueMultiplier);
+        }
+        protected static float ScoreValueOfRelic(Relic relicAdded) {
+            var pointDelta = 0f;
+            Save.state.relics.Add(relicAdded.id);
+            var addedIndex = Save.state.relics.Count - 1;
+            var cardQuality = 0f;
+            var relicQuality = 0f;
+            for (int i = 0; i < Save.state.cards.Count; i++) {
+                var card = Save.state.cards[i];
+                var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
+                cardQuality += cardValue;
+            }
+            for (int i = 0; i < Save.state.relics.Count; i++) {
+                var relicId = Save.state.relics[i];
+                // TODO: fix setup relics
+                var relic = Database.instance.relicsDict[relicId];
+                relicQuality += EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
+            }
+            Save.state.relics.RemoveAt(addedIndex);
+            pointDelta += cardQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.DeckQuality];
+            pointDelta += relicQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.RelicQuality];
+            return pointDelta;
+        }
+        public struct RelicScore {
+            public string relicId;
+            public float score;
+            public RelicScore(string cardId, float score) {
+                this.relicId = cardId;
+                this.score = score;
+            }
+        }
+        public static IEnumerable<RelicScore> RelicScoreProvider(float[] relicsByRarity, Rarity rarityLimit = Rarity.Randomable) {
+            var path = Evaluation.Active.Path;
+            var character = Save.state.character;
+
+            var hitDensity = new float[4];
+            for (int i = 0; i < 4; i++) {
+                var rarity = i switch {
+                    0 => Rarity.Common,
+                    1 => Rarity.Uncommon,
+                    2 => Rarity.Rare,
+                    3 => Rarity.Shop,
+                };
+                hitDensity[i] = Evaluators.ChanceOfSpecificRelic(Save.state.character, rarity);
+            }
+
+            foreach (var relic in Database.instance.relics) {
+                var color = relic.forCharacter;
+                var rarity = relic.rarity;
+                if (!character.Is(color)) {
+                    continue;
+                }
+                if (!rarityLimit.Is(rarity)) {
+                    continue;
+                }
+                // FIXME: we should skip relics you've seen
+                var rarityIndex = rarity switch {
+                    Rarity.Common => 0,
+                    Rarity.Uncommon => 1,
+                    Rarity.Rare => 2,
+                    Rarity.Shop => 3,
+                };
+                var chanceToFind = relicsByRarity[rarityIndex];
+                var expectedFound = chanceToFind * hitDensity[rarityIndex];
+                yield return new RelicScore(relic.id, ScoreValueOfRelic(relic) * expectedFound);
+            }
+        }
+        public static void ScoreFutureRelicValue(Evaluation evaluation) {
+            var path = evaluation.Path;
+            var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
+            var rewardRelics = path.expectedRewardRelics[floorsTillEndOfAct];
+            var shopRelics = path.expectedShopRelics[floorsTillEndOfAct];
+            var rewardRelicsByRarity = new float[] { rewardRelics * .5f, rewardRelics * .32f, rewardRelics * .18f, 0f };
+            var shopRelicsByRarity = new float[] { shopRelics * .5f * 2f / 3f, shopRelics * .32f * 2f / 3f, shopRelics * .18f * 2f / 3f, shopRelics * 1f / 3f };
+            var stats = new AddRelicsStatisticsGroup(rewardRelicsByRarity, shopRelicsByRarity);
+            var outcome = stats.Evaluate();
+            var relicTotalEV = outcome.rewardOutcomeMean;
+            var currentValueMultiplier = Lerp.From(FUTURE_RELIC_CURRENT_POINT_MIN, 1f, Save.state.floor_num / 55f);
+            evaluation.AddScore(ScoreReason.FutureRelics, relicTotalEV * currentValueMultiplier);
         }
         public static void ScorePath(Evaluation evaluation) {
             // This doesn't ever award points for future acts to avoid perverse incentives
             var path = evaluation.Path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
-
-            evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.PercentAllGreen(evaluation));
-
-            var expectedRelics = path.expectedRewardRelics[floorsTillEndOfAct];
-            // Should we take an average?
-            evaluation.AddScore(ScoreReason.RelicCount, expectedRelics);
+            evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.UpgradeValueProportion(evaluation));
 
             evaluation.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? .5f : 0);
 
@@ -236,6 +332,7 @@ namespace ProjectPumpernickle {
             EvaluateGlobalRules(evaluation);
             ScorePath(evaluation);
             ScoreFutureCardValue(evaluation);
+            ScoreFutureRelicValue(evaluation);
         }
         public static void ScoreBasedOnStatistics(Evaluation evaluation) {
             var stats = evaluation.RewardStats ?? new RewardOutcomeStatistics();

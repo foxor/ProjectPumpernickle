@@ -123,6 +123,10 @@ namespace ProjectPumpernickle {
                     rarity = Rarity.Boss;
                     break;
                 }
+                case "Shop": {
+                    rarity = Rarity.Shop;
+                    break;
+                }
             }
         }
     }

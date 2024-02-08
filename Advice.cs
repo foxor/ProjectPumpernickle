@@ -75,7 +75,7 @@ namespace ProjectPumpernickle {
                     var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
                     eval.NeedsMoreInfo = Advice.needsMoreInfo | context.needsMoreInformation;
                     var path = Path.BuildPath(nodeSequence, pathIndex);
-                    eval.SetPath(path, context.bonusCardRewards);
+                    eval.SetPath(path);
                     Scoring.ScoreBasedOnEvaluation(eval);
                     context.UpdateRewardPopulationStatistics(eval);
                     Scoring.ScoreBasedOnStatistics(eval);

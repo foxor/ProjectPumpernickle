@@ -21,7 +21,9 @@ namespace ProjectPumpernickle {
             var scores = optionArray.Select(scoreFn).ToArray();
             Build(scores);
             var chosenIndex = optionArray.FirstIndexOf(chosen);
-            chosenValue = scores[chosenIndex];
+            if (chosenIndex != -1) {
+                chosenValue = scores[chosenIndex];
+            }
         }
         public void Build(float[] scores) {
             rewardOutcomeMean = scores.Average();
@@ -80,19 +82,22 @@ namespace ProjectPumpernickle {
             return r;
         }
     }
-    public class ChooseCardStatisticsGroup : IRewardStatisticsGroup {
+    public class ChooseCardsStatisticsGroup : IRewardStatisticsGroup {
         public Color color;
-        public Rarity rarity;
         public string cardId { get; protected set; }
         protected float[] cardRarityAppearances;
-        public ChooseCardStatisticsGroup(float[] cardRarityAppearances, Color color, Rarity rarity) {
+        protected float[] cardShopAppearances;
+        public ChooseCardsStatisticsGroup(float[] cardRarityAppearances = null, float[] cardShopAppearances = null, Color color = Color.Eligible, Rarity rarity = Rarity.Randomable) {
             this.color = color;
-            this.rarity = rarity;
             this.cardRarityAppearances = cardRarityAppearances;
+            if (cardRarityAppearances == null) {
+                this.cardRarityAppearances = Evaluators.ExpectedCardRewardAppearances(1f, useCurrentRandomizer: true);
+            }
+            this.cardShopAppearances = cardShopAppearances;
             // This is assuming a kinda bad outcome.  This is the average card, not the average card you would choose
             cardId = Evaluators.AverageRandomCard(color, rarity);
         }
-        protected static float ReshapeMeanBySelecting(RewardOutcomeStatistics scoreStats, float numCards) {
+        public static float ReshapeMeanBySelecting(RewardOutcomeStatistics scoreStats, float numCards) {
             // The score stats are the number of points added by adding a certain card multiplied by
             // the number of that card we expect to see.  Therefore, the number of total points we 
             // expect to gain is both the sum of that distribution and the mean of these stats
@@ -104,7 +109,7 @@ namespace ProjectPumpernickle {
         }
         public RewardOutcomeStatistics Evaluate() {
             var r = new RewardOutcomeStatistics();
-            var cardScores = Scoring.CardScoreProvider(cardRarityAppearances, color, rarity).ToArray();
+            var cardScores = Scoring.CardScoreProvider(cardRarityAppearances, cardShopAppearances, color).ToArray();
             r.Build(cardScores, x => x.score, x => x.cardId.Equals(cardId));
             r.rewardOutcomeMean = ReshapeMeanBySelecting(r, cardScores.Length);
             return r;
@@ -143,6 +148,40 @@ namespace ProjectPumpernickle {
                 x => x.id.Equals(ASSUMED_SWAP)
             );
             return r;
+        }
+    }
+    public class AddRelicsStatisticsGroup : IRewardStatisticsGroup {
+        protected float[] foundRelicsByRarity;
+        protected float[] shopRelicsByRarity;
+        public string relicId { get; protected set; }
+        public AddRelicsStatisticsGroup(float[] foundRelicsByRarity, float[] shopRelicsByRarity) {
+            this.foundRelicsByRarity = foundRelicsByRarity;
+            this.shopRelicsByRarity = shopRelicsByRarity;
+        }
+        public RewardOutcomeStatistics Evaluate() {
+            var r = new RewardOutcomeStatistics();
+            var foundScores = Scoring.RelicScoreProvider(foundRelicsByRarity).ToArray();
+            var foundStats = new RewardOutcomeStatistics();
+            var boughtScores = Scoring.RelicScoreProvider(shopRelicsByRarity).ToArray();
+            var boughtStats = new RewardOutcomeStatistics();
+            foundStats.Build(foundScores, x => x.score, x => x.relicId.Equals(relicId));
+            boughtStats.Build(boughtScores, x => x.score, x => false);
+            foundStats.rewardOutcomeMean *= foundScores.Count();
+            boughtStats.rewardOutcomeMean = ChooseCardsStatisticsGroup.ReshapeMeanBySelecting(boughtStats, boughtScores.Count());
+            r.rewardOutcomeMean = foundStats.rewardOutcomeMean + boughtStats.rewardOutcomeMean;
+            return r;
+        }
+    }
+    public class AddCommonRelicStatisicsGroup : AddRelicsStatisticsGroup {
+        public static string ASSUMED_ADD = "Orichalcum";
+        public AddCommonRelicStatisicsGroup() : base(new float[] { 1f, 0f, 0f, 0f }, new float[] { 0f, 0f, 0f, 0f }) {
+            relicId = ASSUMED_ADD;
+        }
+    }
+    public class AddRareRelicStatisicsGroup : AddRelicsStatisticsGroup {
+        public static string ASSUMED_ADD = "Ginger";
+        public AddRareRelicStatisicsGroup() : base(new float[] { 0f, 0f, 1f, 0f }, new float[] { 0f, 0f, 0f, 0f }) {
+            relicId = ASSUMED_ADD;
         }
     }
 }

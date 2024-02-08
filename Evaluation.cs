@@ -8,7 +8,7 @@ namespace ProjectPumpernickle {
     public enum ScoreReason : byte {
         ActSurvival,
         Upgrades,
-        RelicCount,
+        FutureRelics,
         CardReward,
         Key,
         CurrentEffectiveHealth,
@@ -123,7 +123,6 @@ namespace ProjectPumpernickle {
 
             if (context != null) {
                 Advice.AddRange(context.description);
-                BonusCardRewards = context.bonusCardRewards;
             }
 
             Save.state.earliestInfinite = 0;
@@ -131,9 +130,9 @@ namespace ProjectPumpernickle {
             Save.state.buildingInfinite = Save.state.expectingToRedBlue;
             Save.state.huntingCards.Clear();
         }
-        public void SetPath(Path path, int startingCardRewards) {
+        public void SetPath(Path path) {
             Path = path;
-            Path.ExplorePath(startingCardRewards);
+            Path.ExplorePath();
         }
         public void MergeScoreWithOffRamp() {
             if (OffRamp == null) {
