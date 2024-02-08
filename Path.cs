@@ -19,6 +19,7 @@ namespace ProjectPumpernickle {
         public int jumps;
         public bool invalidJump;
         public bool invalidFireWalk;
+        public int upgradeIndex;
         public bool IsValid() {
             var availableJumps = Evaluators.WingedBootsChargesLeft();
             if (jumps > availableJumps) {
@@ -36,6 +37,7 @@ namespace ProjectPumpernickle {
     public class Path {
         public static List<FireChoice> availableFireOptions;
         public static bool hasWingBoots;
+        public static List<int> plausibleUpgrades;
 
         public int elites;
         public bool hasMegaElite;
@@ -67,18 +69,29 @@ namespace ProjectPumpernickle {
         public int jumps;
         public float chanceToSurviveAct;
         public float[] expectedShopRelics = null;
+        public int upgradeChosen;
         protected static void CheckPathRelic(string relicId, ref bool hasWingBoots, ref List<FireChoice> fireChoices) {
             if (relicId.Equals("WingedGreaves")) {
                 hasWingBoots = true;
             }
         }
+        protected static void ClearNodeStats() {
+            foreach (var node in Save.state.map) {
+                if (node != null) {
+                    node.totalChildOptions = null;
+                    node.branchUpgrades = false;
+                }
+            }
+        }
         public static long CountNodeSequences(List<RewardOption> rewardOptions) {
+            ClearNodeStats();
             availableFireOptions = new List<FireChoice>() {
                     FireChoice.Rest,
                     FireChoice.Upgrade,
                     FireChoice.Key,
                 };
             hasWingBoots = Save.state.relics.Contains("WingedGreaves");
+            plausibleUpgrades = Evaluators.ReasonableUpgradeTargets().ToList();
             foreach (var relic in rewardOptions.Where(x => x.rewardType == RewardType.Relic).Select(x => x.values).Merge()) {
                 CheckPathRelic(relic, ref hasWingBoots, ref availableFireOptions);
             }
@@ -103,7 +116,12 @@ namespace ProjectPumpernickle {
                 subSequenceCount = 1;
             }
             if (root.nodeType == NodeType.Fire) {
-                subSequenceCount *= availableFireOptions.Count;
+                var branchingFactor = availableFireOptions.Count;
+                if (availableFireOptions.Contains(FireChoice.Upgrade) && root.position.y == Save.state.room_y + 1) {
+                    branchingFactor += plausibleUpgrades.Count - 1;
+                    root.branchUpgrades = true;
+                }
+                subSequenceCount *= branchingFactor;
             }
             root.totalChildOptions = subSequenceCount;
             return subSequenceCount;
@@ -117,45 +135,63 @@ namespace ProjectPumpernickle {
                     .ToList();
             }
             var fireOptionIndex = -1;
+            int upgradeIndex = -1;
             if (root.nodeType == NodeType.Fire) {
-                fireOptionIndex = (int)(pathIndex % availableFireOptions.Count);
-                pathIndex /= availableFireOptions.Count;
+                var branchingFactor = availableFireOptions.Count;
+                if (root.branchUpgrades) {
+                    branchingFactor += plausibleUpgrades.Count - 1;
+                }
+                var localFireNumber = (int)(pathIndex % branchingFactor);
+                pathIndex /= branchingFactor;
+
+                for (var i = 0; i < availableFireOptions.Count; i++) {
+                    if (availableFireOptions[i] == FireChoice.Upgrade && root.branchUpgrades) {
+                        fireOptionIndex = i;
+                        continue;
+                    }
+                    if (localFireNumber == 0) {
+                        fireOptionIndex = i;
+                        break;
+                    }
+                    localFireNumber--;
+                }
+                if (availableFireOptions[fireOptionIndex] == FireChoice.Upgrade && root.branchUpgrades) {
+                    upgradeIndex = localFireNumber;
+                }
             }
             var optionCount = nextOptions.Count;
+            NodeSequence r = null;
             if (optionCount == 0) {
-                var r = new NodeSequence();
+                r = new NodeSequence();
+            }
+            else {
+                int childIndex = 0;
+                var residual = pathIndex;
+                for (; childIndex < nextOptions.Count; childIndex++) {
+                    if (nextOptions[childIndex].totalChildOptions > residual) {
+                        break;
+                    }
+                    residual -= nextOptions[childIndex].totalChildOptions.Value;
+                }
+                r = BuildNodeSequence(residual, nextOptions[childIndex]);
+                if (hasWingBoots && !root.children.Contains(nextOptions[childIndex])) {
+                    r.jumps++;
+                    r.invalidJump |= root.children.Any(x => x.nodeType == nextOptions[childIndex].nodeType);
+                }
+                if (!nextOptions[childIndex].children.Any() && root.children.Any(x => x.position.x < nextOptions[childIndex].position.x)) {
+                    r.invalidFireWalk = true;
+                }
+            }
+            if (!skipFirstNode) {
                 r.nodes.Add(root);
                 if (root.nodeType == NodeType.Fire) {
                     r.fireChoices.Add(availableFireOptions[fireOptionIndex]);
-                }
-                if (pathIndex != 0) {
-                    Console.WriteLine();
-                }
-                return r;
-            }
-            int childIndex = 0;
-            var residual = pathIndex;
-            for (; childIndex < nextOptions.Count; childIndex++) {
-                if (nextOptions[childIndex].totalChildOptions > residual) {
-                    break;
-                }
-                residual -= nextOptions[childIndex].totalChildOptions.Value;
-            }
-            var recur = BuildNodeSequence(residual, nextOptions[childIndex]);
-            if (!skipFirstNode) {
-                recur.nodes.Add(root);
-                if (root.nodeType == NodeType.Fire) {
-                    recur.fireChoices.Add(availableFireOptions[fireOptionIndex]);
+                    if (root.branchUpgrades) {
+                        r.upgradeIndex = upgradeIndex;
+                    }
                 }
             }
-            if (hasWingBoots && !root.children.Contains(nextOptions[childIndex])) {
-                recur.jumps++;
-                recur.invalidJump |= root.children.Any(x => x.nodeType == nextOptions[childIndex].nodeType);
-            }
-            if (!nextOptions[childIndex].children.Any() && root.children.Any(x => x.position.x < nextOptions[childIndex].position.x)) {
-                recur.invalidFireWalk = true;
-            }
-            return recur;
+            return r;
         }
         public static Path BuildPath(NodeSequence nodeSequence, long pathId) {
             Path path = new Path();
@@ -164,6 +200,7 @@ namespace ProjectPumpernickle {
             nodeSequence.nodes.Reverse();
             path.nodes = nodeSequence.nodes.ToArray();
             nodeSequence.fireChoices.Reverse();
+            path.upgradeChosen = nodeSequence.upgradeIndex;
             path.InitFireChoices(nodeSequence.fireChoices.ToArray());
             return path;
         }

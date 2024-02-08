@@ -111,6 +111,7 @@ namespace ProjectPumpernickle {
         public bool NeedsMoreInfo = false;
         public long RewardIndex;
         public long Id;
+        public float riskRelevance;
 
         protected bool hasDescribedPathing;
 
@@ -142,7 +143,7 @@ namespace ProjectPumpernickle {
             float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToSurviveAct);
             var dT = riskT - offRampRiskT;
             var sigmoidX = -5f + dT * 10f;
-            float riskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
+            riskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
             for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
                 Scores[i] = Lerp.From(InternalScores[i], OffRamp.InternalScores[i], riskRelevance);
             }
@@ -235,8 +236,8 @@ namespace ProjectPumpernickle {
                                 break;
                             }
                             case FireChoice.Upgrade: {
-                                var bestUpgrade = Evaluators.ChooseBestUpgrade(out var healthPerFloor, Path, i);
-                                Advice.Add("Upgrade " + bestUpgrade);
+                                var card = Save.state.cards[Path.plausibleUpgrades[Path.upgradeChosen]];
+                                Advice.Add("Upgrade " + card.name);
                                 break;
                             }
                             case FireChoice.Lift: {

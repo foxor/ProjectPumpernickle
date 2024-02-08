@@ -49,7 +49,12 @@ namespace ProjectPumpernickle {
         public bool gainedMembershipCard;
         public IRewardStatisticsGroup statisticsGroup;
         public bool needsMoreInformation;
-        public RewardContext(in List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop) {
+        public RewardContext(in List<RewardOption> rewardOptions, List<int> rewardIndicies, bool eligibleForBlueKey, bool isShop, int upgradeIndex) {
+            if (upgradeIndex != -1) {
+                var cardIndex = Path.plausibleUpgrades[upgradeIndex];
+                Save.state.cards[cardIndex].upgrades++;
+                upgradeIndicies.Add(cardIndex);
+            }
             for (int i = 0; i < rewardIndicies.Count; i++) {
                 var rewardGroup = rewardOptions[i];
                 var index = rewardIndicies[i];
@@ -216,6 +221,7 @@ namespace ProjectPumpernickle {
                     var stats = new AddCardStatisticsGroup(card.cardColor, Rarity.Randomable);
                     statisticsGroup = stats;
                     addedCardIndicies.Add(Save.state.AddCardById(stats.cardId));
+                    needsMoreInformation = true;
                     break;
                 }
                 case EventRewardElement.THREE_SMALL_POTIONS: {
@@ -339,15 +345,13 @@ namespace ProjectPumpernickle {
                 }
                 case EventRewardElement.RELIC_CHANCE: {
                     // Scrap ooze
-                    /*var chance = float.Parse(rewardValue.Substring(rewardValue.IndexOf(" ") + 1));
+                    var chance = float.Parse(rewardValue.Substring(rewardValue.IndexOf(" ") + 1));
                     if (chance > 0f) {
-                        Evaluators.ChooseBestRelic(out var bestRelic, out var bestValue, out var averageValue, out var count);
-                        relics.Add(bestRelic);
-                        Save.state.relics.Add(bestRelic);
-                        //worstCaseValueProportion = 0f;
-                        //averageCaseValueProportion = (averageValue / bestValue) * chance;
-                        //chanceOfOutcome = (1f / count) * chance;
-                    }*/
+                        var stats = new AddRelicsStatisticsGroup(chance: chance);
+                        relics.Add(stats.relicId);
+                        Save.state.relics.Add(stats.relicId);
+                        statisticsGroup = stats;
+                    }
                     break;
                 }
                 case EventRewardElement.CURSED_TOME: {

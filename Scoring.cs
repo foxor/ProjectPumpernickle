@@ -266,13 +266,21 @@ namespace ProjectPumpernickle {
                 yield return new RelicScore(relic.id, ScoreValueOfRelic(relic) * expectedFound);
             }
         }
+        public static float[] RelicRarityDistribution(float numRelics, bool shop) {
+            if (!shop) {
+                return new float[] { numRelics * .5f, numRelics * .32f, numRelics * .18f, 0f };
+            }
+            else {
+                return new float[] { numRelics * .5f * 2f / 3f, numRelics * .32f * 2f / 3f, numRelics * .18f * 2f / 3f, numRelics * 1f / 3f };
+            }
+        }
         public static void ScoreFutureRelicValue(Evaluation evaluation) {
             var path = evaluation.Path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
             var rewardRelics = path.expectedRewardRelics[floorsTillEndOfAct];
             var shopRelics = path.expectedShopRelics[floorsTillEndOfAct];
-            var rewardRelicsByRarity = new float[] { rewardRelics * .5f, rewardRelics * .32f, rewardRelics * .18f, 0f };
-            var shopRelicsByRarity = new float[] { shopRelics * .5f * 2f / 3f, shopRelics * .32f * 2f / 3f, shopRelics * .18f * 2f / 3f, shopRelics * 1f / 3f };
+            var rewardRelicsByRarity = RelicRarityDistribution(rewardRelics, shop: false);
+            var shopRelicsByRarity = RelicRarityDistribution(shopRelics, shop: true);
             var stats = new AddRelicsStatisticsGroup(rewardRelicsByRarity, shopRelicsByRarity);
             var outcome = stats.Evaluate();
             var relicTotalEV = outcome.rewardOutcomeMean;

@@ -238,6 +238,7 @@ namespace ProjectPumpernickle {
         public List<MapNode> children = new List<MapNode>();
         public Vector2Int position;
         public long? totalChildOptions;
+        public bool branchUpgrades;
     }
     public enum PlayerCharacter {
         Ironclad,

@@ -19,6 +19,8 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.dungeons.Exordium;
+import com.megacrit.cardcrawl.dungeons.TheBeyond;
+import com.megacrit.cardcrawl.dungeons.TheCity;
 import com.megacrit.cardcrawl.events.beyond.MindBloom;
 import com.megacrit.cardcrawl.events.city.TheLibrary;
 import com.megacrit.cardcrawl.events.exordium.ScrapOoze;
@@ -41,6 +43,7 @@ import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.AbstractRoom.RoomPhase;
 import com.megacrit.cardcrawl.rooms.EventRoom;
 import com.megacrit.cardcrawl.rooms.MonsterRoom;
+import com.megacrit.cardcrawl.rooms.MonsterRoomElite;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.rooms.TreasureRoom;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
@@ -272,6 +275,9 @@ public class SpirePatches {
     	if (AbstractDungeon.gridSelectScreen.forUpgrade) {
     		return;
     	}
+    	if (AbstractDungeon.gridSelectScreen.forTransform) {
+    		return;
+    	}
     	PumpernickelMessage message = new PumpernickelMessage();
         message.AddLine("Reward");
         message.AddLine(AbstractDungeon.floorNum + "");
@@ -321,6 +327,13 @@ public class SpirePatches {
         message.AddLine(relic.relicId + "");
         message.Send();
     }
+    public static void genericUpdate() {
+    	PumpernickelMessage message = new PumpernickelMessage();
+        message.AddLine("Reward");
+        message.AddLine(AbstractDungeon.floorNum + "");
+        message.AddLine("false");
+        message.Send();
+    }
     // Recompute after generating a card reward
     @SpirePatch( clz = CombatRewardScreen.class, method = "setupItemReward" )
     public static class AbstractDungeonGetRewardCardsPatch {
@@ -362,5 +375,9 @@ public class SpirePatches {
 	@SpirePatch(clz = AbstractRoom.class, method = "spawnRelicAndObtain", paramtypez = { float.class, float.class, AbstractRelic.class })
 	public static class OnGainRelicPatch {
 		@SpirePrefixPatch public static void Postfix(AbstractRoom __instance, float x, float y, AbstractRelic relic) { obtainRelic(relic); }
+	}
+	@SpirePatch(clz = CardHelper.class, method = "obtain", paramtypez = { String.class, AbstractCard.CardRarity.class, AbstractCard.CardColor.class })
+	public static class OnCardAddedPatch {
+		@SpirePostfixPatch public static void Postfix() { genericUpdate(); }
 	}
 }

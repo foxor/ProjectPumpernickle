@@ -173,6 +173,7 @@ namespace ProjectPumpernickle {
             }
             rtb.explanationText.Append("\n");
             rtb.explanationText.Append("ID: " + evaluation.Id + "\n");
+            rtb.explanationText.Append("Chance of off-ramp: " + evaluation.riskRelevance.ToString("p2") + "\n");
 
             var advice = evaluation.ToString().Replace("\r", "");
             rtb.explanationText.Append(advice + "\n\n");

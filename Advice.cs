@@ -68,7 +68,7 @@ namespace ProjectPumpernickle {
                     rewardIndicies.Add((int)(residual % optionCount));
                     residual /= optionCount;
                 }
-                using (var context = new RewardContext(rewardOptions, rewardIndicies, eligibleForBlueKey, isShop)) {
+                using (var context = new RewardContext(rewardOptions, rewardIndicies, eligibleForBlueKey, isShop, nodeSequence.upgradeIndex)) {
                     if (!context.IsValid()) {
                         return;
                     }

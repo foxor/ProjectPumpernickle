@@ -153,10 +153,19 @@ namespace ProjectPumpernickle {
     public class AddRelicsStatisticsGroup : IRewardStatisticsGroup {
         protected float[] foundRelicsByRarity;
         protected float[] shopRelicsByRarity;
+        protected float chance;
         public string relicId { get; protected set; }
-        public AddRelicsStatisticsGroup(float[] foundRelicsByRarity, float[] shopRelicsByRarity) {
+        public AddRelicsStatisticsGroup(float[] foundRelicsByRarity = null, float[] shopRelicsByRarity = null, float chance = 1f) {
+            if (foundRelicsByRarity == null) {
+                foundRelicsByRarity = Scoring.RelicRarityDistribution(1f, shop: false);
+            }
             this.foundRelicsByRarity = foundRelicsByRarity;
+            if (shopRelicsByRarity == null) {
+                shopRelicsByRarity = new float[4];
+            }
             this.shopRelicsByRarity = shopRelicsByRarity;
+            relicId = Evaluators.AverageRandomRelic(foundRelicsByRarity, shopRelicsByRarity);
+            this.chance = chance;
         }
         public RewardOutcomeStatistics Evaluate() {
             var r = new RewardOutcomeStatistics();
@@ -168,7 +177,7 @@ namespace ProjectPumpernickle {
             boughtStats.Build(boughtScores, x => x.score, x => false);
             foundStats.rewardOutcomeMean *= foundScores.Count();
             boughtStats.rewardOutcomeMean = ChooseCardsStatisticsGroup.ReshapeMeanBySelecting(boughtStats, boughtScores.Count());
-            r.rewardOutcomeMean = foundStats.rewardOutcomeMean + boughtStats.rewardOutcomeMean;
+            r.rewardOutcomeMean = (foundStats.rewardOutcomeMean + boughtStats.rewardOutcomeMean) * chance;
             return r;
         }
     }

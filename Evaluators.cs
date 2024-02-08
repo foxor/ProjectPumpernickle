@@ -202,25 +202,6 @@ namespace ProjectPumpernickle {
                 r.rarity != Rarity.Basic &&
                 r.rarity != Rarity.Special;
         }
-
-        public static void ChooseBestRelic(out string bestRelic, out float bestValue, out float averageValue, out int count) {
-            var hasEvaluation = Evaluation.Active != null;
-            var relics = Database.instance.relics.Where(EligibleToSeeRelic).Select(x => {
-                if (hasEvaluation) {
-                    var value = EvaluationFunctionReflection.GetRelicEvalFunctionCached(x.id)(x);
-                    return (Relic: x, Val: value);
-                }
-                else {
-                    var value = x.bias;
-                    return (Relic: x, Val: value);
-                }
-            }).OrderByDescending(x => x.Val);
-            bestRelic = relics.First().Relic.id;
-            bestValue = relics.First().Val;
-            averageValue = relics.Average(x => x.Val);
-            count = relics.Count();
-        }
-
         public static int FloorToAct(int floorNum) {
             return floorNum <= 17 ? 1 : (floorNum <= 34 ? 2 : (floorNum <= 51 ? 3 : 4));
         }
@@ -583,6 +564,27 @@ namespace ProjectPumpernickle {
         public static string AverageRandomCard(Color color, Rarity rarity) {
             return AverageCardOptions.Select(x => Database.instance.cardsDict[x]).Where(x => {
                 return x.cardRarity.Is(rarity) && x.cardColor.Is(color);
+            }).Select(x => x.id).First();
+        }
+        public static readonly string[] AverageRelicOptions = new string[] {
+            "Orichalcum",
+            "InkBottle",
+            "Ginger",
+            "Champion Belt",
+        };
+        public static string AverageRandomRelic(float[] foundRelicRarities, float[] shopRelicRarities) {
+            return AverageRelicOptions.Select(x => Database.instance.relicsDict[x]).Where(x => {
+                var rarityIndex = x.rarity switch {
+                    Rarity.Common => 0,
+                    Rarity.Uncommon => 1,
+                    Rarity.Rare => 2,
+                    Rarity.Shop => 3,
+                    _ => -1
+                };
+                if (rarityIndex == -1) {
+                    return false;
+                }
+                return foundRelicRarities[rarityIndex] > 0f || shopRelicRarities[rarityIndex] > 0f;
             }).Select(x => x.id).First();
         }
         public static float EstimateFutureAddedCards() {
