@@ -23,7 +23,7 @@ namespace ProjectPumpernickle {
                     totalPunishment += PUNISHMENT_PER_CARD * (dupe.Value - 1);
                 }
             }
-            evaluation.AddScore(ScoreReason.AvoidDuplicateCards, totalPunishment);
+            evaluation.SetScore(ScoreReason.AvoidDuplicateCards, totalPunishment);
         }
     }
 }

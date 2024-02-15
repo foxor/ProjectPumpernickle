@@ -33,9 +33,9 @@ namespace ProjectPumpernickle {
                 infiniteEnd = Lerp.Inverse(-4f, 0f, finalRoom);
                 infiniteNemesis = Lerp.Inverse(-4f, 0f, nemesisRoom);
             }
-            evaluation.AddScore(ScoreReason.InfiniteNow, infiniteNow * NOW_POINTS * infiniteQuality);
-            evaluation.AddScore(ScoreReason.InfiniteByHeart, infiniteEnd * END_OF_GAME_POINTS * infiniteQuality);
-            evaluation.AddScore(ScoreReason.InfiniteNemesis, infiniteNemesis * NEMESIS_POINTS * infiniteQuality);
+            evaluation.SetScore(ScoreReason.InfiniteNow, infiniteNow * NOW_POINTS * infiniteQuality);
+            evaluation.SetScore(ScoreReason.InfiniteByHeart, infiniteEnd * END_OF_GAME_POINTS * infiniteQuality);
+            evaluation.SetScore(ScoreReason.InfiniteNemesis, infiniteNemesis * NEMESIS_POINTS * infiniteQuality);
         }
     }
 }

@@ -96,7 +96,7 @@ namespace ProjectPumpernickle {
         public static float ShiningLight(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float TheCleric(Event e, int floorsFromNow) {
+        public static float Cleric(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float TheJoust(Event e, int floorsFromNow) {

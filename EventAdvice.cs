@@ -13,30 +13,36 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void PleadingVagrant(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void BackToBasics(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void OldBeggar(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void BigFish(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){
-                "Eat the bananna",
-            };
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent(
+                new RewardOptionPart() {
+                    advice = "Eat the bananna",
+                    value = EventRewardElement.HEAL + ": " + Evaluators.PercentHealthHeal(1f / 3f)
+                },
+                new RewardOptionPart() {
+                    advice = "Eat the donut",
+                    value = EventRewardElement.MAX_HP + ": 5"
+                },
+                new RewardOptionPart() {
+                    advice = "Open the box",
+                    value = EventRewardElement.RELIC_CHANCE + ": 1",
+                    eventCost = "REGRET",
+                }
+            ));
         }
         public static void BonfireSpirits(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void DeadAdventurer(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void DrugDealer(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
@@ -51,20 +57,16 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void Falling(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void ForgottenAltar(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void TheDivineFountain(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void CouncilofGhosts(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void GoldenIdolEvent(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
@@ -73,30 +75,26 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void GoldenShrine(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void GoldenWing(IEnumerable<string> arguments) {
-            var preRewardEvaluation = new Evaluation();
+            /*var preRewardEvaluation = new Evaluation();
             Scoring.ScoreBasedOnEvaluation(preRewardEvaluation);
             var cardRemoveIndex = Evaluators.CardRemoveTarget();
             var existingAdvice = new List<string>(){
                 "Pray, removing " + Save.state.cards[cardRemoveIndex].name,
             };
             Save.state.current_health -= 7;
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnRewards(null, existingAdvice);*/
         }
         public static void KnowingSkull(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void Lab(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void TheSsssserpent(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void LivingWall(IEnumerable<string> arguments) {
             var validRemoveOptions = Evaluators.ReasonableRemoveTargets();
@@ -119,7 +117,7 @@ namespace ProjectPumpernickle {
             var rewardOption = RewardOption.Build(removeOptions.Concat(transformOptions).Concat(upgradeOptions));
             rewardOption.skippable = false;
             rewardOption.rewardType = RewardType.Event;
-            Advice.AdviceOnReward(rewardOption);
+            Advice.AdviseOnReward(rewardOption);
         }
         public static void MaskedBandits(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
@@ -128,24 +126,19 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void MatchandKeep(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void Mushrooms(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void MysteriousSphere(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void Nloth(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void Purifier(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static int SCRAP_OOZE_CLICKS_EXPECTED = -1;
         public static void ScrapOoze(IEnumerable<string> arguments) {
@@ -188,24 +181,51 @@ namespace ProjectPumpernickle {
             SCRAP_OOZE_CLICKS_EXPECTED = (int)PumpernickelAdviceWindow.instance.Evaluations[0].RewardIndex;
         }
         public static void SecretPortal(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void SensoryStone(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void ShiningLight(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent(
+                new RewardOptionPart() {
+                    advice = "Enter",
+                    hpCost = Evaluators.PercentHealthDamage(.3f),
+                    value = EventRewardElement.TWO_RANDOM_UPGRADES.ToString(),
+                    needsMoreInfo = true,
+                },
+                new RewardOptionPart() {
+                    advice = "Leave",
+                }
+            ));
         }
-        public static void TheCleric(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+        public static void Cleric(IEnumerable<string> arguments) {
+            var removeParts = Evaluators.ReasonableRemoveTargets().Select(x =>
+                new RewardOptionPart() {
+                    advice = "Remove " + Save.state.cards[x].name,
+                    value = EventRewardElement.REMOVE_CARD + ": " + x,
+                    eventCost = "75",
+                }
+            );
+            var alwaysParts = new RewardOptionPart[] {
+                new RewardOptionPart() {
+                    advice = "Heal",
+                    value = EventRewardElement.HEAL + ": " + Evaluators.PercentHealthHeal(.25f),
+                    eventCost = "35",
+                },
+                new RewardOptionPart() {
+                    advice = "Leave",
+                    eventCost = "NONE",
+                    value = EventRewardElement.None.ToString(),
+                }
+            };
+            var rewardOption = RewardOption.Build(removeParts.Concat(alwaysParts));
+            rewardOption.rewardType = RewardType.Event;
+            rewardOption.skippable = false;
+            Advice.AdviseOnReward(rewardOption);
         }
         public static void TheJoust(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void TheLibrary(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
@@ -221,12 +241,10 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void TheMoaiHead(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void TheWomaninBlue(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void TombRedMask(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
@@ -245,8 +263,7 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(new List<RewardOption>() { rewardOption }, needsMoreInfo: true);
         }
         public static void UpgradeShrine(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void Vampires(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
@@ -255,8 +272,7 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void GremlinWheelGame(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void WindingHalls(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>(){
@@ -265,8 +281,7 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void WorldofGoop(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void MindBloom(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {
@@ -282,16 +297,13 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void FaceTrader(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void ANoteForYourself(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void WeMeetAgain(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>(){};
-            Advice.AdviseOnRewards(null, existingAdvice);
+            Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void Designer(IEnumerable<string> arguments) {
             var adjustmentUpgradesOne = bool.Parse(arguments.First());
@@ -343,7 +355,7 @@ namespace ProjectPumpernickle {
                 values = new string[] { EventRewardElement.CURSED_TOME.ToString(), EventRewardElement.None.ToString() },
                 skippable = false,
             };
-            Advice.AdviceOnReward(option);
+            Advice.AdviseOnReward(option);
         }
     }
 }

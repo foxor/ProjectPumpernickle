@@ -6,44 +6,33 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class RelicPickFunctions {
-        public static void EmptyCage(RewardContext context) {
-            var bestRemove = Evaluators.CardRemoveTarget();
-            var removed = Save.state.cards[bestRemove];
-            Save.state.cards.RemoveAt(bestRemove);
-            var secondRemove = Evaluators.CardRemoveTarget();
-            Save.state.cards.Insert(bestRemove, removed);
-            if (bestRemove <= secondRemove) {
-                secondRemove++;
-            }
-            var bestRemoveName = Save.state.cards[bestRemove].name;
-            var secondBestRemoveName = Save.state.cards[secondRemove].name;
-            if (bestRemoveName.Equals(secondBestRemoveName)) {
-                context.description.Add("Remove 2 " + bestRemoveName + "s");
-            }
-            else {
-                context.description.Add("Remove the " + bestRemove + " and the " + secondBestRemoveName);
+        public static void EmptyCage(string parameters, RewardContext context) {
+            var removals = parameters.Trim().Split(",").Select(x => int.Parse(x.Trim()));
+            context.cardsRemoved = removals.Select(x => Save.state.cards[x]).ToList();
+            context.removedCardIndicies = removals.ToList();
+            foreach (var removal in removals) {
+                context.description.Add("Remove " + Save.state.cards[removal].name);
+                Save.state.cards.RemoveAt(removal);
             }
         }
-        public static void BottledLightning(RewardContext context) {
-            Card bestBottle = null;
-            float bestValue = float.MinValue;
-            foreach (var card in Save.state.cards) {
-                if (card.tags.TryGetValue(Tags.BottleEquity.ToString(), out var tagValue)) {
-                    if (tagValue > bestValue) {
-                        bestValue = tagValue;
-                        bestBottle = card;
-                    }
+    }
+    internal class RelicOptionSplitFunctions {
+        public static readonly string[] MultiOptionRelics = new string[] {
+            "EmptyCage",
+            "Astrolabe",
+            "BottledLightning",
+            "BottledTornado",
+            "BottledFlame",
+        };
+        public static IEnumerable<RewardOptionPart> EmptyCage() {
+            var reasonableRemoveTarget = Evaluators.ReasonableRemoveTargets().ToArray();
+            for (int i = 0; i < reasonableRemoveTarget.Length; i++) {
+                for (int j = i + 1; j < reasonableRemoveTarget.Length; j++) {
+                    yield return new RewardOptionPart() {
+                        value = "Empty Cage: " + j + ", " + i,
+                    };
                 }
             }
-            if (bestBottle == null) {
-                bestBottle = Save.state.cards[0];
-                Save.state.badBottle = true;
-            }
-            else {
-                bestBottle.bottled = true;
-                context.bottled = bestBottle;
-            }
-            context.description.Add("Bottle the " + bestBottle.name);
         }
     }
 }

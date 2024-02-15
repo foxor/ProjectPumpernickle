@@ -12,8 +12,10 @@ namespace ProjectPumpernickle {
         protected static Dictionary<string, Func<Card, int, float>> cardCache = new Dictionary<string, Func<Card, int, float>>();
         protected static Dictionary<string, Func<Card, int, float, float>> upgradeCache = new Dictionary<string, Func<Card, int, float, float>>();
         protected static Dictionary<string, Func<Relic, float>> relicEvalCache = new Dictionary<string, Func<Relic, float>>();
-        protected static Dictionary<string, Action<RewardContext>> relicPickCache = new Dictionary<string, Action<RewardContext>>();
+        protected static Dictionary<string, Func<IEnumerable<RewardOptionPart>>> relicSplitCache = new Dictionary<string, Func<IEnumerable<RewardOptionPart>>>();
+        protected static Dictionary<string, Action<string, RewardContext>> relicPickCache = new Dictionary<string, Action<string, RewardContext>>();
         protected static Dictionary<string, Func<int, float>> eventValueCache = new Dictionary<string, Func<int, float>>();
+        protected static Dictionary<string, Func<int, float>> encounterSimulationCache = new Dictionary<string, Func<int, float>>();
         public static Func<Card, int, float> GetCardEvalFunctionCached(string cardId) {
             return GetFunctionCached(cardId, cardCache, CardFunctionFactory(typeof(CardFunctions)));
         }
@@ -23,11 +25,17 @@ namespace ProjectPumpernickle {
         public static Func<Relic, float> GetRelicEvalFunctionCached(string relicId) {
             return GetFunctionCached(relicId, relicEvalCache, GetRelicEvalFunction);
         }
-        public static Action<RewardContext> GetRelicOnPickedFunctionCached(string relicId) {
+        public static Func<IEnumerable<RewardOptionPart>> GetRelicOptionSplitFunctionCached(string relicId) {
+            return GetFunctionCached(relicId, relicSplitCache, GetRelicSplitFunction);
+        }
+        public static Action<string, RewardContext> GetRelicOnPickedFunctionCached(string relicId) {
             return GetFunctionCached(relicId, relicPickCache, GetRelicPickFunction);
         }
         public static Func<int, float> GetEventValueFunctionCached(string eventName) {
             return GetFunctionCached(eventName, eventValueCache, GetEventValueFunction);
+        }
+        public static Func<int, float> GetEncounterSimulationFunctionCached(string encounterId) {
+            return GetFunctionCached(encounterId, encounterSimulationCache, GetEncounterSimulationFunction);
         }
         private static T GetFunctionCached<T>(string id, Dictionary<string, T> cache, Func<string, T> FunctionFactory) {
             if (cache.TryGetValue(id, out var func)) {
@@ -83,16 +91,32 @@ namespace ProjectPumpernickle {
                 return (float)method.Invoke(null, new object[] { r });
             };
         }
-        protected static Action<RewardContext> GetRelicPickFunction(string relicId) {
-            relicId = SanitizeId(relicId);
-            var method = typeof(RelicPickFunctions).GetMethod(relicId, BindingFlags.Static | BindingFlags.Public);
-            if (method == null) {
-                return (RewardContext r) => {
-                    // These can be null for everything that isn't a bottle or somesuch
+        protected static Func<IEnumerable<RewardOptionPart>> GetRelicSplitFunction(string relicId) {
+            var messageId = relicId;
+            var sanitizedId = SanitizeId(relicId);
+            if (!RelicOptionSplitFunctions.MultiOptionRelics.Contains(sanitizedId)) {
+                return () => {
+                    return new RewardOptionPart[] {
+                        new RewardOptionPart() {
+                            value = messageId,
+                        }
+                    };
                 };
             }
-            return (RewardContext r) => {
-                method.Invoke(null, new object[] { r });
+            var method = typeof(RelicOptionSplitFunctions).GetMethod(sanitizedId, BindingFlags.Static | BindingFlags.Public);
+            return () => {
+                return (IEnumerable<RewardOptionPart>)method.Invoke(null, null);
+            };
+        }
+        protected static Action<string, RewardContext> GetRelicPickFunction(string relicId) {
+            var messageId = relicId;
+            var sanitizedId = SanitizeId(relicId);
+            if (!RelicOptionSplitFunctions.MultiOptionRelics.Contains(sanitizedId)) {
+                return (string paramters, RewardContext context) => {};
+            }
+            var method = typeof(RelicPickFunctions).GetMethod(sanitizedId, BindingFlags.Static | BindingFlags.Public);
+            return (string parameters, RewardContext r) => {
+                method.Invoke(null, new object[] { parameters, r });
             };
         }
         protected static Func<int, float> GetEventValueFunction(string eventName) {
@@ -101,6 +125,13 @@ namespace ProjectPumpernickle {
             var @event = Database.instance.eventDict[eventName];
             return (int i) => {
                 return ((float)method.Invoke(null, new object[] { @event, i })) + @event.bias;
+            };
+        }
+        protected static Func<int, float> GetEncounterSimulationFunction(string encounterId) {
+            encounterId = "ENC" + SanitizeId(encounterId);
+            var method = typeof(EncounterSimulationFunctions).GetMethod(encounterId, BindingFlags.Static | BindingFlags.Public);
+            return (int floorNum) => {
+                return ((float)method.Invoke(null, new object[] { floorNum }));
             };
         }
     }

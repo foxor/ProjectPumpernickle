@@ -10,7 +10,7 @@ namespace ProjectPumpernickle {
 
         void IGlobalRule.Apply(Evaluation evaluation) {
             // TODO: modulate this based on perminant cards / card draw
-            evaluation.AddScore(ScoreReason.AvoidCard, MathF.Pow(Save.state.cards.Count / -25f, 3f));
+            evaluation.SetScore(ScoreReason.AvoidCard, MathF.Pow(Save.state.cards.Count / -25f, 3f));
         }
     }
 }

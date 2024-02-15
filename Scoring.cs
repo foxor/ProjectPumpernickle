@@ -33,6 +33,24 @@ namespace ProjectPumpernickle {
             var shopValue = 1f - (1f / (1 + ((goldBrought - 180f) / 360f)));
             return (float)shopValue * MAX_SHOP_VALUE;
         }
+        public static float DeepEvaluationScoreDelta() {
+            var cardQuality = 0f;
+            var relicQuality = 0f;
+            for (int i = 0; i < Save.state.cards.Count; i++) {
+                var card = Save.state.cards[i];
+                var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
+                cardQuality += cardValue;
+            }
+            for (int i = 0; i < Save.state.relics.Count; i++) {
+                var relicId = Save.state.relics[i];
+                // TODO: fix setup relics
+                var relic = Database.instance.relicsDict[relicId];
+                relicQuality += EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
+            }
+            var cardQualityDelta = cardQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.DeckQuality];
+            var relicQualityDelta = relicQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.RelicQuality];
+            return cardQualityDelta + relicQualityDelta;
+        }
         public static readonly float FIND_HUNTED_CARD_BONUS = 3f;
         protected static float ScoreValueOfCard(Card cardAdded) {
             var pointDelta = 0f;
@@ -55,28 +73,15 @@ namespace ProjectPumpernickle {
             if (Save.state.huntingCards.Contains(cardAdded.id)) {
                 pointDelta += FIND_HUNTED_CARD_BONUS;
             }
-            var cardQuality = 0f;
-            var relicQuality = 0f;
-            for (int i = 0; i < Save.state.cards.Count; i++) {
-                var card = Save.state.cards[i];
-                var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
-                cardQuality += cardValue;
-            }
-            for (int i = 0; i < Save.state.relics.Count; i++) {
-                var relicId = Save.state.relics[i];
-                // TODO: fix setup relics
-                var relic = Database.instance.relicsDict[relicId];
-                relicQuality += EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
-            }
+            var scoreDelta = DeepEvaluationScoreDelta();
             if (addedIndex != -1) {
                 Save.state.cards.RemoveAt(addedIndex);
-                pointDelta += cardQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.DeckQuality];
+                pointDelta += scoreDelta;
             }
             else {
                 Save.state.cards.Insert(removedIndex, removed);
-                pointDelta += -cardQuality + Evaluation.Active.InternalScores[(byte)ScoreReason.DeckQuality];
+                pointDelta -= scoreDelta;
             }
-            pointDelta += relicQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.RelicQuality];
             return pointDelta;
         }
         public struct CardScore {
@@ -198,7 +203,7 @@ namespace ProjectPumpernickle {
             var outcome = stats.Evaluate();
             var cardRewardExpectedTotalValue = outcome.rewardOutcomeMean;
             var currentValueMultiplier = Lerp.From(FUTURE_CARD_CURRENT_POINT_MIN, 1f, Save.state.floor_num / 55f);
-            evaluation.AddScore(ScoreReason.CardReward, cardRewardExpectedTotalValue * currentValueMultiplier);
+            evaluation.SetScore(ScoreReason.CardReward, cardRewardExpectedTotalValue * currentValueMultiplier);
         }
         protected static float ScoreValueOfRelic(Relic relicAdded) {
             var pointDelta = 0f;
@@ -281,62 +286,69 @@ namespace ProjectPumpernickle {
             var shopRelics = path.expectedShopRelics[floorsTillEndOfAct];
             var rewardRelicsByRarity = RelicRarityDistribution(rewardRelics, shop: false);
             var shopRelicsByRarity = RelicRarityDistribution(shopRelics, shop: true);
-            var stats = new AddRelicsStatisticsGroup(rewardRelicsByRarity, shopRelicsByRarity);
-            var outcome = stats.Evaluate();
-            var relicTotalEV = outcome.rewardOutcomeMean;
-            var currentValueMultiplier = Lerp.From(FUTURE_RELIC_CURRENT_POINT_MIN, 1f, Save.state.floor_num / 55f);
-            evaluation.AddScore(ScoreReason.FutureRelics, relicTotalEV * currentValueMultiplier);
+            if (rewardRelicsByRarity.Sum() + shopRelicsByRarity.Sum() > 0) {
+                var stats = new AddRelicsStatisticsGroup(rewardRelicsByRarity, shopRelicsByRarity);
+                var outcome = stats.Evaluate();
+                var relicTotalEV = outcome.rewardOutcomeMean;
+                var currentValueMultiplier = Lerp.From(FUTURE_RELIC_CURRENT_POINT_MIN, 1f, Save.state.floor_num / 55f);
+                evaluation.SetScore(ScoreReason.FutureRelics, relicTotalEV * currentValueMultiplier);
+            }
         }
         public static void ScorePath(Evaluation evaluation) {
             // This doesn't ever award points for future acts to avoid perverse incentives
             var path = evaluation.Path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
-            evaluation.AddScore(ScoreReason.Upgrades, 20f * Evaluators.UpgradeValueProportion(evaluation));
+            evaluation.SetScore(ScoreReason.Upgrades, 20f * Evaluators.UpgradeValueProportion(evaluation));
 
-            evaluation.AddScore(ScoreReason.Key, Save.state.has_sapphire_key ? .5f : 0);
+            evaluation.SetScore(ScoreReason.Key, Save.state.has_sapphire_key ? .5f : 0);
 
             var effectiveHealth = Evaluators.GetCurrentEffectiveHealth();
-            evaluation.AddScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 30f);
+            evaluation.SetScore(ScoreReason.CurrentEffectiveHealth, effectiveHealth / 30f);
 
             // This does incorporate future act points, because otherwise we might misbehave
             var goldBrought = path.ExpectedGoldBroughtToShops();
-            evaluation.AddScore(ScoreReason.BringGoldToShop, goldBrought.Select(PointsForShop).Sum());
+            evaluation.SetScore(ScoreReason.BringGoldToShop, goldBrought.Select(PointsForShop).Sum());
 
             var wingedBootChargesLeft = Math.Max(Evaluators.WingedBootsChargesLeft(), 0) - path.jumps;
             var actsLeft = Math.Max(3 - Save.state.act_num, 0);
-            evaluation.AddScore(ScoreReason.WingedBootsCharges, wingedBootChargesLeft * actsLeft * 0.03f);
-            evaluation.AddScore(ScoreReason.WingedBootsFlexibility, (wingedBootChargesLeft * actsLeft >= 1) ? 1.5f : 0f);
+            evaluation.SetScore(ScoreReason.WingedBootsCharges, wingedBootChargesLeft * actsLeft * 0.03f);
+            evaluation.SetScore(ScoreReason.WingedBootsFlexibility, (wingedBootChargesLeft * actsLeft >= 1) ? 1.5f : 0f);
 
             path.AddEventScore(evaluation);
 
             if (Save.state.act_num < 3 && (Save.state.has_emerald_key || path.hasMegaElite)) {
-                evaluation.AddScore(ScoreReason.EarlyMegaElite, 2f);
+                evaluation.SetScore(ScoreReason.EarlyMegaElite, .2f);
             }
 
             if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path.hasMegaElite != true) {
-                evaluation.AddScore(ScoreReason.MissingKey, float.MinValue);
+                evaluation.SetScore(ScoreReason.MissingKey, float.MinValue);
             }
             if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && !path.ContainsGuaranteedChest()) {
-                evaluation.AddScore(ScoreReason.MissingKey, float.MinValue);
+                evaluation.SetScore(ScoreReason.MissingKey, float.MinValue);
             }
 
             if (Save.state.badBottle) {
-                evaluation.AddScore(ScoreReason.BadBottle, -5f);
+                evaluation.SetScore(ScoreReason.BadBottle, -5f);
             }
         }
         public static void ScoreBasedOnEvaluation(Evaluation evaluation) {
+            var totalCardScore = 0f;
             for (int i = 0; i < Save.state.cards.Count; i++) {
                 var card = Save.state.cards[i];
                 var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
-                evaluation.AddScore(ScoreReason.DeckQuality, cardValue);
+                totalCardScore += cardValue;
             }
+            evaluation.SetScore(ScoreReason.DeckQuality, totalCardScore);
+            var totalRelicScore = 0f;
             for (int i = 0; i < Save.state.relics.Count; i++) {
                 var relicId = Save.state.relics[i];
                 // TODO: fix setup relics
                 var relic = Database.instance.relicsDict[relicId];
-                evaluation.AddScore(ScoreReason.RelicQuality, EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic));
+                var relicScore = EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
+                totalRelicScore += relicScore;
             }
+            evaluation.SetScore(ScoreReason.RelicQuality, totalRelicScore);
             EvaluateGlobalRules(evaluation);
             ScorePath(evaluation);
             ScoreFutureCardValue(evaluation);
@@ -349,11 +361,18 @@ namespace ProjectPumpernickle {
             evaluation.SetScore(ScoreReason.WinChance, winChance * 1f);
             evaluation.SetScore(ScoreReason.Variance, -stats.rewardOutcomeStd / 5f);
         }
+        public static readonly float LN101 = 4.61512051684126f;
         public static void ScoreBasedOnOffRamp(Evaluation evaluation) {
             var offRamp = evaluation.OffRamp?.Path ?? evaluation.Path;
             // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
             // but that's kinda the right way to play the game
-            evaluation.SetScore(ScoreReason.ActSurvival, 10f * offRamp.chanceToSurviveAct);
+
+            // If you have a low chance to survive, we want to incentivise marginal survival chance highly
+            // https://www.wolframalpha.com/input?i=10+-+110x%5E2+from+0+to+1
+            // rewards [10, -100]
+            var deathChance = 1f - offRamp.chanceToSurviveAct;
+            var survivalScore = 10f - 110f * MathF.Pow(deathChance, 2f);
+            evaluation.SetScore(ScoreReason.ActSurvival, survivalScore);
         }
     }
 }

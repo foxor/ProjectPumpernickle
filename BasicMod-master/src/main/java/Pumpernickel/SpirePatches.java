@@ -24,6 +24,7 @@ import com.megacrit.cardcrawl.dungeons.TheCity;
 import com.megacrit.cardcrawl.events.beyond.MindBloom;
 import com.megacrit.cardcrawl.events.city.TheLibrary;
 import com.megacrit.cardcrawl.events.exordium.ScrapOoze;
+import com.megacrit.cardcrawl.events.exordium.ShiningLight;
 import com.megacrit.cardcrawl.events.shrines.Designer;
 import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.map.MapRoomNode;
@@ -378,6 +379,10 @@ public class SpirePatches {
 	}
 	@SpirePatch(clz = CardHelper.class, method = "obtain", paramtypez = { String.class, AbstractCard.CardRarity.class, AbstractCard.CardColor.class })
 	public static class OnCardAddedPatch {
+		@SpirePostfixPatch public static void Postfix() { genericUpdate(); }
+	}
+	@SpirePatch(clz = ShiningLight.class, method = "upgradeCards", paramtypez = { })
+	public static class OnShiningLightUpgradePatch {
 		@SpirePostfixPatch public static void Postfix() { genericUpdate(); }
 	}
 }

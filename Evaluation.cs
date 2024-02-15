@@ -60,7 +60,7 @@ namespace ProjectPumpernickle {
         SecretPortal,
         SensoryStone,
         ShiningLight,
-        TheCleric,
+        Cleric,
         TheJoust,
         TheLibrary,
         TheMausoleum,
@@ -111,7 +111,8 @@ namespace ProjectPumpernickle {
         public bool NeedsMoreInfo = false;
         public long RewardIndex;
         public long Id;
-        public float riskRelevance;
+        public float RiskRelevance;
+        public float RewardPowerOffset;
 
         protected bool hasDescribedPathing;
 
@@ -124,6 +125,7 @@ namespace ProjectPumpernickle {
 
             if (context != null) {
                 Advice.AddRange(context.description);
+                RewardPowerOffset = context.rewardPowerOffset;
             }
 
             Save.state.earliestInfinite = 0;
@@ -143,9 +145,9 @@ namespace ProjectPumpernickle {
             float offRampRiskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - OffRamp.Path.chanceToSurviveAct);
             var dT = riskT - offRampRiskT;
             var sigmoidX = -5f + dT * 10f;
-            riskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
+            RiskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
             for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
-                Scores[i] = Lerp.From(InternalScores[i], OffRamp.InternalScores[i], riskRelevance);
+                Scores[i] = Lerp.From(InternalScores[i], OffRamp.InternalScores[i], RiskRelevance);
             }
         }
 
@@ -156,9 +158,6 @@ namespace ProjectPumpernickle {
             return string.Join("\r\n", Advice);
         }
 
-        public void AddScore(ScoreReason reason, float delta) {
-            InternalScores[(byte)reason] += delta;
-        }
         public void SetScore(ScoreReason reason, float score) {
             InternalScores[(byte)reason] = score;
         }

@@ -33,7 +33,7 @@ namespace ProjectPumpernickle {
                 totalSetup.TryGetValue(payoff.Key, out var setup);
                 var value = payoff.Value * setup;
                 var rewardReason = Enum.Parse<ScoreReason>(payoff.Key);
-                evaluation.AddScore(rewardReason, value);
+                evaluation.SetScore(rewardReason, value);
             }
         }
     }

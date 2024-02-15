@@ -31,7 +31,7 @@ namespace ProjectPumpernickle {
             foreach(var synnergy in payoffs) {
                 var reason = Enum.Parse<ScoreReason>(synnergy.Key);
                 if (synnergies.TryGetValue(synnergy.Key, out var value)) {
-                    evaluation.AddScore(reason, synnergy.Value * value);
+                    evaluation.SetScore(reason, synnergy.Value * value);
                 }
             }
         }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
@@ -89,8 +90,8 @@ namespace ProjectPumpernickle {
             return 0;
         }
 
-        public static int PerTurnEnergy() {
-            return 3;
+        public static float PerTurnEnergy() {
+            return 3f;
         }
 
         public static IEnumerable<Card> GetCardDrawCards() {
@@ -385,7 +386,7 @@ namespace ProjectPumpernickle {
         public static readonly float LOW_VALUE_UPGRADE = 0.5f;
         public static readonly float HIGH_VALUE_UPGRADE = 1.2f;
         public static readonly float CHANCE_OF_HIGH_VALUE_UPGRADE_PER_REWARD = .2f;
-        public static float UpgradePowerMultiplier(Path path, int floorIndex) {
+        public static float FutureUpgradePowerMultiplier(Path path, int floorIndex) {
             var bestUpgrade = ChooseBestUpgrade(out var deltaValue, path, floorIndex);
             if (bestUpgrade == null) {
                 return 1f;
@@ -401,6 +402,14 @@ namespace ProjectPumpernickle {
             var availableValueFraction = deltaValue / deckPower;
             var newValueFraction = newCardUpgradeValue / deckPower;
             return 1f + MathF.Max(availableValueFraction, newValueFraction);
+        }
+        public static float UpgradePowerGutFeeling(int cardIndex) {
+            var card = Save.state.cards[cardIndex];
+            var cardValue = card.bias;
+            var upgradeValue = ExtraCardUpgradeValue(card, card.bias);
+            var upgradePower = upgradeValue - cardValue;
+            var deckPower = Lerp.From(10f, 60f, Save.state.floor_num / 55f);
+            return 1f + (upgradePower / deckPower);
         }
 
         public static int NormalFutureActsLeft() {
@@ -520,7 +529,8 @@ namespace ProjectPumpernickle {
         }
         public static float EstimateOverallPower() {
             var defensivePower = FightSimulator.EstimateDefensivePower();
-            var damage = FightSimulator.EstimateDamagePerTurn();
+            var scaling = FightSimulator.EstimatePastScalingPerTurn();
+            var damage = FightSimulator.EstimateDamagePerTurn(scaling);
             var normalDamage = FightSimulator.NormalDamageForFloor(Save.state.floor_num);
             var offensivePower = damage / normalDamage;
             var overallPower = defensivePower * offensivePower;
@@ -627,7 +637,8 @@ namespace ProjectPumpernickle {
             return value;
         }
         public static float ExtraCardUpgradeValue(Card c, float value) {
-            value *= c.upgradePowerMultiplier;
+            var effectiveValue = MathF.Max(value, 1.5f);
+            value += effectiveValue * (c.upgradePowerMultiplier - 1f);
             value += c.upgradeBias;
             return value;
         }
@@ -797,7 +808,7 @@ namespace ProjectPumpernickle {
                 return 3;
             }
             if (c.intCost == int.MaxValue) {
-                return PerTurnEnergy();
+                return (int)(PerTurnEnergy() + 0.9999f);
             }
             return c.intCost;
         }
@@ -829,6 +840,15 @@ namespace ProjectPumpernickle {
             // Does this matter?
             // If so, pre-compute it on library load
             return 1f/3f;
+        }
+        public static int PercentHealthHeal(float pct) {
+            var missing = Save.state.max_health - Save.state.current_health;
+            var attempted = PercentHealthDamage(pct);
+            return Math.Min(missing, attempted);
+        }
+        public static int PercentHealthDamage(float pct) {
+            var attempted = (int)(Save.state.max_health * pct + 0.9999);
+            return attempted;
         }
     }
 }

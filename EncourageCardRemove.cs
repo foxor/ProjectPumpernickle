@@ -13,7 +13,7 @@ namespace ProjectPumpernickle {
         void IGlobalRule.Apply(Evaluation evaluation) {
             var deckSize = Save.state.cards.Count;
             if (deckSize < NORMAL_DECK_SIZE) {
-                evaluation.AddScore(ScoreReason.SmallDeck, REWARD_PER_CARD_SMALLER * (NORMAL_DECK_SIZE - deckSize));
+                evaluation.SetScore(ScoreReason.SmallDeck, REWARD_PER_CARD_SMALLER * (NORMAL_DECK_SIZE - deckSize));
             }
             else {
                 var totalPunishment = 0f;
@@ -22,7 +22,7 @@ namespace ProjectPumpernickle {
                     var punishment = Lerp.From(0f, REWARD_PER_CARD_SMALLER, punishFactor);
                     totalPunishment += punishment;
                 }
-                evaluation.AddScore(ScoreReason.LargeDeck, totalPunishment);
+                evaluation.SetScore(ScoreReason.LargeDeck, totalPunishment);
             }
         }
     }

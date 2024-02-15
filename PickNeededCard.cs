@@ -11,7 +11,7 @@ namespace ProjectPumpernickle {
         void IGlobalRule.Apply(Evaluation evaluation) {
             foreach (var card in Save.state.cards.Where(x => x.isNew)) {
                 var needFactor = Evaluators.CardNeedFitFactor(card);
-                evaluation.AddScore(ScoreReason.PickedNeededCard, needFactor * NEED_BIAS);
+                evaluation.SetScore(ScoreReason.PickedNeededCard, needFactor * NEED_BIAS);
             }
         }
     }

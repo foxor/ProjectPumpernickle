@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Reflection.Metadata;
+using System;
+using System.Text.RegularExpressions;
 
 namespace ProjectPumpernickle {
     public enum CardType {
@@ -54,6 +56,7 @@ namespace ProjectPumpernickle {
         public string rarity;
         public string color;
         public bool bottled;
+        public float scaling;
 
         public Dictionary<string, float> tags;
         public CardType cardType;
@@ -75,6 +78,8 @@ namespace ProjectPumpernickle {
             this.upgradeBias = fromDatabase.upgradeBias;
             this.rarity = fromDatabase.rarity;
             this.color = fromDatabase.color;
+            this.bottled = fromDatabase.bottled;
+            this.scaling = fromDatabase.scaling;
 
             this.tags = fromDatabase.tags;
             this.cardType = fromDatabase.cardType;
@@ -209,6 +214,12 @@ namespace ProjectPumpernickle {
                 return c;
             }).ToList();
         }
+        public bool Upgradable() {
+            if (id.Equals("Searing Blow")) {
+                return true;
+            }
+            return upgrades == 0 && cardType != CardType.Curse;
+        }
     }
     public enum NodeType {
         Question,
@@ -289,6 +300,7 @@ namespace ProjectPumpernickle {
         public bool chose_neow_reward;
         public int potion_chance;
         public int card_seed_count;
+        public string current_room;
 
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, MAX_MAP_X, MAX_MAP_Y];
@@ -304,8 +316,8 @@ namespace ProjectPumpernickle {
         public float addedDamagePerTurn;
         public float addedBlockPerTurn;
         public bool badBottle;
-        public bool addedSkill;
-        public List<string> availableCardIds;
+        public List<string> choosingNow;
+        public List<int> upgraded;
         public PumpernickelSaveState() {
             parsed = this;
         }
@@ -346,7 +358,6 @@ namespace ProjectPumpernickle {
             addedDamagePerTurn = original.addedDamagePerTurn;
             addedBlockPerTurn = original.addedBlockPerTurn;
             badBottle = original.badBottle;
-            addedSkill = original.addedSkill;
 
             // intentionally shared
             event_chances = original.event_chances;
@@ -362,7 +373,8 @@ namespace ProjectPumpernickle {
             huntingCards = original.huntingCards?.ToList();
 
             // not initialized
-            availableCardIds = null;
+            choosingNow = null;
+            upgraded = null;
         }
 
         public int AddCardById(string name) {
@@ -492,10 +504,11 @@ namespace ProjectPumpernickle {
                 fire, shop, elite, heart
             };
         }
+        public static readonly string NEW_ACT_ROOM = "new act";
         public MapNode GetCurrentNode() {
-            var talkingToNeow = (room_x == 0 && room_y == -1) || (room_y != floor_num - 1 && act_num == 1);
-            var newAct = (room_x == -1 && room_y == -1);
-            var bossChest = (room_x == -1 && room_y > 10);
+            var talkingToNeow = current_room.Equals("com.megacrit.cardcrawl.neow.NeowRoom");
+            var newAct = current_room.Equals(NEW_ACT_ROOM);
+            var bossChest = current_room.Equals("com.megacrit.cardcrawl.rooms.TreasureRoomBoss");
             if (talkingToNeow || newAct) {
                 var fakeNode = new MapNode();
                 fakeNode.position = new Vector2Int(3, -1);
@@ -543,13 +556,43 @@ namespace ProjectPumpernickle {
             }
         }
         public void AddChoosingNow(string cardId) {
-            if (availableCardIds == null) {
-                availableCardIds = new List<string>();
+            if (choosingNow == null) {
+                choosingNow = new List<string>();
             }
-            availableCardIds.Add(cardId);
+            choosingNow.Add(cardId);
         }
         public bool ChoosingNow(string cardId) {
-            return availableCardIds?.Contains(cardId) == true;
+            return choosingNow?.Contains(cardId) == true;
+        }
+        public IEnumerable<Card> CardsNotJustChosen() {
+            if (choosingNow == null) {
+                foreach (var card in cards) {
+                    yield return card;
+                }
+                yield break;
+            }
+            var notSeen = choosingNow.ToList();
+            foreach (var card in ((IEnumerable<Card>)cards).Reverse()) {
+                var foundIndex = notSeen.FirstIndexOf(x => x == card.id);
+                if (foundIndex != -1) {
+                    notSeen.RemoveAt(foundIndex);
+                    continue;
+                }
+                yield return card;
+            }
+        }
+        public IEnumerable<Card> CardsJustChosen() {
+            if (choosingNow == null) {
+                yield break;
+            }
+            var notSeen = choosingNow.ToList();
+            foreach (var card in ((IEnumerable<Card>)cards).Reverse()) {
+                var foundIndex = notSeen.FirstIndexOf(x => x == card.id);
+                if (foundIndex != -1) {
+                    notSeen.RemoveAt(foundIndex);
+                    yield return card;
+                }
+            }
         }
     }
 }

@@ -40,7 +40,8 @@ namespace ProjectPumpernickle {
                 case WeaknessAxis.Lethality: {
                     // You start out very far behind on damage
                     var earlyBonus = (5f / (Save.state.floor_num / 3f + 1)) + 1;
-                    var observed = FightSimulator.EstimateDamagePerTurn();
+                    var scaling = FightSimulator.EstimatePastScalingPerTurn();
+                    var observed = FightSimulator.EstimateDamagePerTurn(scaling);
                     var projected = FightSimulator.NormalDamageForFloor(Save.state.floor_num) * earlyBonus;
                     var minExpected = projected * .8f;
                     var maxExpected = projected / .8f;

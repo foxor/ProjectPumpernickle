@@ -72,8 +72,9 @@ namespace ProjectPumpernickle {
                     if (!context.IsValid()) {
                         return;
                     }
+                    Save.state.upgraded = context.upgradeIndicies;
                     var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
-                    eval.NeedsMoreInfo = Advice.needsMoreInfo | context.needsMoreInformation;
+                    eval.NeedsMoreInfo = Advice.needsMoreInfo | context.needsMoreInfo;
                     var path = Path.BuildPath(nodeSequence, pathIndex);
                     eval.SetPath(path);
                     Scoring.ScoreBasedOnEvaluation(eval);
@@ -93,19 +94,12 @@ namespace ProjectPumpernickle {
         }
         protected static void AwaitWorkChunk(bool firstChunk) {
             while (threadsOutstanding != 0) {
-                if (firstChunk) {
-                    PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Working...");
-                }
                 Application.DoEvents();
                 Thread.Sleep(10);
                 Application.DoEvents();
             }
         }
         protected static void MergeChunks(long chunksComplete, long totalChunks, int totalRewardOptions) {
-            if (chunksComplete == 0) {
-                PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Finalizing results");
-                Application.DoEvents();
-            }
             var validEvaluations = perThreadEvaluations.Values;
             if (!validEvaluations.Any()) {
                 return;
@@ -122,10 +116,13 @@ namespace ProjectPumpernickle {
             var sorted = validEvaluations.OrderByDescending(x => x.Score).ToArray();
             PumpernickelAdviceWindow.instance.SetEvaluations(sorted, chunksComplete + 1, totalChunks);
         }
-        public static void AdviceOnReward(RewardOption option) {
-            AdviseOnRewards(new List<RewardOption>() { option });
+        public static void AdviseOnReward(RewardOption option, bool needsMoreInfo = false) {
+            AdviseOnRewards(new List<RewardOption>() { option }, needsMoreInfo: needsMoreInfo);
         }
         public static void AdviseOnRewards(List<RewardOption> rewardOptions, IEnumerable<string> previousAdvice = null, bool needsMoreInfo = false) {
+            if (rewardOptions == null) {
+                rewardOptions = new List<RewardOption>();
+            }
             var isShop = rewardOptions.Any(x => x.cost != 0);
             var currentNode = Save.state.GetCurrentNode();
             var eligibleForBlueKey = currentNode?.nodeType == NodeType.Chest && !Save.state.has_sapphire_key;

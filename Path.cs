@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Diagnostics.Eventing.Reader;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -163,6 +164,7 @@ namespace ProjectPumpernickle {
             NodeSequence r = null;
             if (optionCount == 0) {
                 r = new NodeSequence();
+                r.upgradeIndex = -1;
             }
             else {
                 int childIndex = 0;
@@ -380,7 +382,7 @@ namespace ProjectPumpernickle {
             return ExpectedCardRemovesInternal(beforeElite);
         }
         protected void InitializePossibleThreats() {
-            var hasSeenElite = false;
+            var hasSeenElite = ElitesKilledThisAct() > 0;
             var easyPoolLeft = Save.state.act_num == 1 ? 3 : 2;
             var lastAct = Save.state.act_num;
             easyPoolLeft = Math.Max(0, easyPoolLeft - Save.state.monsters_killed);
@@ -460,8 +462,7 @@ namespace ProjectPumpernickle {
         public static Encounter[] BossOptions(int act) {
             return Database.instance.Bosses[act - 1];
         }
-
-        public static IEnumerable<Encounter> NextEliteOptions() {
+        public static int ElitesKilledThisAct() {
             var killed = 0;
             if (Save.state.act_num == 1) {
                 killed = Save.state.elites1_killed;
@@ -472,6 +473,11 @@ namespace ProjectPumpernickle {
             else if (Save.state.act_num == 3) {
                 killed = Save.state.elites3_killed;
             }
+            return killed;
+        }
+
+        public static IEnumerable<Encounter> NextEliteOptions() {
+            var killed = ElitesKilledThisAct();
             var cantBe = "";
             if (killed != 0) {
                 cantBe = Save.state.elite_monster_list[Save.state.elites1_killed - 1];
@@ -763,7 +769,7 @@ namespace ProjectPumpernickle {
                 }
                 case NodeType.Fire: {
                     if (fireChoices[index] == FireChoice.Upgrade) {
-                        residualPower *= Evaluators.UpgradePowerMultiplier(this, index);
+                        residualPower *= Evaluators.FutureUpgradePowerMultiplier(this, index);
                     }
                     break;
                 }
@@ -838,32 +844,30 @@ namespace ProjectPumpernickle {
         }
 
         public void SimulateHealthEvolution(float powerMultiplier = 1f, int floorsFromNow = 0, int healthFloor = 15) {
-            var currentDamagePerTurn = FightSimulator.EstimateDamagePerTurn();
+            var scaling = FightSimulator.EstimatePastScalingPerTurn();
+            var currentDamagePerTurn = FightSimulator.EstimateDamagePerTurn(scaling);
             Threats.Clear();
             var maxHeal = Evaluators.MaxHealing();
             for (int i = floorsFromNow; i < possibleThreats.Length; i++) {
                 var estimatedDamageThisFloor = FightSimulator.ProjectDamageForFutureFloor(currentDamagePerTurn, i);
                 var lastExpectedHealth = i == 0 ? Evaluators.GetCurrentEffectiveHealth() : expectedHealth[i - 1];
                 if (fireChoices[i] == FireChoice.Rest) {
-                    lastExpectedHealth += Save.state.max_health * .3f;
-                    lastExpectedHealth = MathF.Min(Save.state.max_health, lastExpectedHealth);
+                    lastExpectedHealth += Evaluators.PercentHealthHeal(.3f);
                 }
                 var floor = PathIndexToFloorNum(i);
                 if (Evaluators.FloorsIntoAct(floor) == 0) {
-                    var missing = Save.state.max_health - lastExpectedHealth;
-                    var healing = (int)((missing * .75) + 0.9999f);
-                    lastExpectedHealth += healing;
+                    lastExpectedHealth += Evaluators.PercentHealthHeal(.75f);
                 }
                 float averageExpectedHealthLoss = 0f;
                 float worstWorstCaseHealthLoss = 0f;
                 var totalWeight = possibleThreats[i].Select(x => x.weight).Sum();
                 chanceOfDeath[i] = 0f;
                 foreach (var possibleEncounter in possibleThreats[i]) {
-                    var expectedHealthLoss = FightSimulator.SimulateFight(possibleEncounter, PathIndexToFloorNum(i), estimatedDamageThisFloor, projectedDefensivePower[i] * powerMultiplier);
+                    var expectedHealthLoss = FightSimulator.SimulateFight(possibleEncounter, PathIndexToFloorNum(i), estimatedDamageThisFloor, scaling, projectedDefensivePower[i] * powerMultiplier);
                     expectedHealthLoss = MathF.Max(expectedHealthLoss, -maxHeal);
                     var chanceOfThis = (possibleEncounter.weight * 1f / totalWeight) * fightChance[i];
                     averageExpectedHealthLoss += expectedHealthLoss * chanceOfThis;
-                    AssessThreat(possibleEncounter, i, expectedHealthLoss, possibleEncounter.medianWorstCaseHealthLoss, lastExpectedHealth, chanceOfThis);
+                    AssessThreat(possibleEncounter, i, expectedHealthLoss, lastExpectedHealth, chanceOfThis);
                     worstWorstCaseHealthLoss = Math.Max(worstWorstCaseHealthLoss, possibleEncounter.medianWorstCaseHealthLoss);
                 }
                 var marginalPotions = expectedPotionsAdded[i] - (i == 0 ? 0 : expectedPotionsAdded[i - 1]);
@@ -898,15 +902,15 @@ namespace ProjectPumpernickle {
         public static readonly float NEXT_FLOOR_DAMAGE_THREAT_CAP = 5f;
         public static readonly float DISTANCE_INTO_FUTURE_DIVISOR = 5f;
         public static readonly float UPCOMING_DEATH_THREAT_MULTIPLIER = 8f;
-        protected void AssessThreat(Encounter threat, int floorIndex, float expectedDamage, float worstCaseDamage, float expectedHealth, float chanceOfThis) {
+        protected void AssessThreat(Encounter threat, int floorIndex, float expectedDamage, float expectedHealth, float chanceOfThis) {
             Threats.TryAdd(threat.id, 0f);
             var distanceFactor = 1f / (1 + (floorIndex / DISTANCE_INTO_FUTURE_DIVISOR));
             var damageThreatCap = NEXT_FLOOR_DAMAGE_THREAT_CAP * distanceFactor;
             var healthFraction = expectedDamage / Save.state.max_health;
             Threats[threat.id] += healthFraction * chanceOfThis * damageThreatCap;
-            if (worstCaseDamage <= 0f) {
-                throw new Exception("Nonsense expected damage! Data bug with: " + threat.id + " ?");
-            }
+            var floorNum = Path.PathIndexToFloorNum(floorIndex);
+            var bespokeSimulation = EvaluationFunctionReflection.GetEncounterSimulationFunctionCached(threat.id)(floorNum);
+            var worstCaseDamage = Lerp.From(threat.medianExpectedHealthLoss, threat.medianWorstCaseHealthLoss, bespokeSimulation);
             if (worstCaseDamage < expectedDamage) {
                 var temp = worstCaseDamage;
                 worstCaseDamage = expectedDamage;
@@ -923,7 +927,7 @@ namespace ProjectPumpernickle {
             Threats[threat.id] += deathLikelihood * chanceOfThis * upcomingDeathMultiplier;
             chanceOfDeath[floorIndex] += deathLikelihood * chanceOfThis;
             if (chanceOfDeath[floorIndex] > .99f) {
-                //throw new Exception("Bot thinks it's 100% chance to die.  This causes problems usually");
+                throw new Exception("Bot thinks it's 100% chance to die.  This causes problems usually");
             }
         }
 
@@ -1121,7 +1125,7 @@ namespace ProjectPumpernickle {
                     foreach (var eligibleEvent in eligibleEvents) {
                         var value = EvaluationFunctionReflection.GetEventValueFunctionCached(eligibleEvent.name)(i);
                         var chanceOfThis = eligibleEvent.shrine ? shrineChance : eventChance;
-                        evaluation.AddScore(eligibleEvent.reason, value * chanceOfThis);
+                        evaluation.SetScore(eligibleEvent.reason, value * chanceOfThis);
                     }
                 }
             }

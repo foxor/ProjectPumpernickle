@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ProjectPumpernickle {
     internal class Assert {
         public static void Break(int id = 4831) {
-            if (Evaluation.Active.Id == id) {
+            if (Evaluation.Active?.Id == id) {
                 Console.WriteLine();
             }
         }

@@ -20,9 +20,9 @@ namespace ProjectPumpernickle {
             var optionArray = options.ToArray();
             var scores = optionArray.Select(scoreFn).ToArray();
             Build(scores);
-            var chosenIndex = optionArray.FirstIndexOf(chosen);
-            if (chosenIndex != -1) {
-                chosenValue = scores[chosenIndex];
+            var chosenIndicies = Enumerable.Range(0, optionArray.Length).Where(x => chosen(optionArray[x]));
+            if (chosenIndicies.Any()) {
+                chosenValue = chosenIndicies.Select(x => scores[x]).Average();
             }
         }
         public void Build(float[] scores) {
@@ -191,6 +191,56 @@ namespace ProjectPumpernickle {
         public static string ASSUMED_ADD = "Ginger";
         public AddRareRelicStatisicsGroup() : base(new float[] { 0f, 0f, 1f, 0f }, new float[] { 0f, 0f, 0f, 0f }) {
             relicId = ASSUMED_ADD;
+        }
+    }
+    public class RandomUpgradeStatisticsGroup : IRewardStatisticsGroup {
+        public int numUpgrades;
+        public List<int> assumedUpgrades;
+        public RandomUpgradeStatisticsGroup(int numUpgrades) {
+            this.numUpgrades = numUpgrades;
+            var numCards = Save.state.cards.Count;
+            var skipCount = (numCards - numUpgrades) / 2;
+            assumedUpgrades = Enumerable.Range(0, numCards)
+                .OrderBy(x => Save.state.cards[x].upgradeBias)
+                .Skip(skipCount)
+                .Take(numUpgrades)
+                .ToList();
+        }
+        protected static float evaluateUpgrade(int upgradeCardIndex) {
+            var card = Save.state.cards[upgradeCardIndex];
+            var isUpgradable = card.Upgradable();
+            if (isUpgradable) {
+                card.upgrades++;
+            }
+            else {
+                card.upgrades--;
+            }
+            var scoreDelta = Scoring.DeepEvaluationScoreDelta();
+            if (isUpgradable) {
+                card.upgrades--;
+                return scoreDelta;
+            }
+            else {
+                card.upgrades++;
+                return -scoreDelta;
+            }
+        }
+        public RewardOutcomeStatistics Evaluate() {
+            var r = new RewardOutcomeStatistics();
+            var relevantCardIndicies = Enumerable.Range(0, Save.state.cards.Count).Where(x => Save.state.cards[x].Upgradable());
+            if (Save.state.upgraded != null) {
+                // This double-counts searing blow
+                relevantCardIndicies = relevantCardIndicies.Concat(Save.state.upgraded);
+            }
+            r.Build(
+                relevantCardIndicies,
+                evaluateUpgrade,
+                x => assumedUpgrades.Contains(x)
+            );
+            r.rewardOutcomeMean *= numUpgrades;
+            r.rewardOutcomeStd *= numUpgrades;
+            r.chosenValue *= numUpgrades;
+            return r;
         }
     }
 }

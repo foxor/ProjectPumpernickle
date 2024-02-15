@@ -53,6 +53,7 @@ namespace ProjectPumpernickle {
         public bool special;
         public float medianExpectedHealthLoss;
         public float medianWorstCaseHealthLoss;
+        public float medianFightLength;
         public float expectedStatuses;
 
         public NodeType NodeType {

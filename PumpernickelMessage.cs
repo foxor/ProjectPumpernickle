@@ -44,6 +44,8 @@ namespace ProjectPumpernickle {
         TWO_RANDOM_UPGRADES,
         RELIC_CHANCE,
         CURSED_TOME,
+        HEAL,
+        MAX_HP,
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
@@ -132,57 +134,47 @@ namespace ProjectPumpernickle {
                 }
             }
         }
-        protected static void ParseRewardMessage(IEnumerable<string> rewardGroups) {
-            List<RewardOption> rewardOptions = new List<RewardOption>();
-            List<string> argumentBuilder = new List<string>();
-            RewardType rewardType = RewardType.None;
-            foreach (var rewardMember in rewardGroups) {
+        protected static void ParseRewardMessage(IEnumerable<string> rewardMessage) {
+            Dictionary<RewardType, List<string>> rewardGroups = new Dictionary<RewardType, List<string>>();
+            List<string> activeGroup = null;
+            foreach (var rewardMember in rewardMessage) {
                 if (string.IsNullOrEmpty(rewardMember)) {
                     continue;
                 }
                 else if (rewardMember == "Cards") {
-                    if (rewardType != RewardType.None) {
-                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
-                    }
-                    argumentBuilder.Clear();
-                    rewardType = RewardType.Cards;
+                    rewardGroups[RewardType.Cards] = activeGroup = new List<string>();
                 }
                 else if (rewardMember == "Potion") {
-                    if (rewardType != RewardType.None) {
-                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
-                    }
-                    argumentBuilder.Clear();
-                    rewardType = RewardType.Potion;
+                    rewardGroups[RewardType.Potion] = activeGroup = new List<string>();
                 }
                 else if (rewardMember == "Gold") {
-                    if (rewardType != RewardType.None) {
-                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
-                    }
-                    argumentBuilder.Clear();
-                    rewardType = RewardType.Gold;
+                    rewardGroups[RewardType.Gold] = activeGroup = new List<string>();
                 }
                 else if (rewardMember == "Relic") {
-                    if (rewardType != RewardType.None) {
-                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
-                    }
-                    argumentBuilder.Clear();
-                    rewardType = RewardType.Relic;
+                    rewardGroups[RewardType.Relic] = activeGroup = new List<string>();
                 }
                 else if (rewardMember == "Key") {
-                    if (rewardType != RewardType.None) {
-                        rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
-                    }
-                    argumentBuilder.Clear();
-                    rewardType = RewardType.Key;
+                    rewardGroups[RewardType.Key] = activeGroup = new List<string>();
                 }
                 else {
-                    argumentBuilder.Add(rewardMember);
+                    activeGroup.Add(rewardMember);
                 }
             }
-            if (rewardType != RewardType.None) {
-                rewardOptions.Add(new RewardOption() { rewardType = rewardType, values = argumentBuilder.ToArray() });
+            List<RewardOption> rewardOptions = new List<RewardOption>();
+            foreach (var group in rewardGroups) {
+                if (group.Key == RewardType.Relic) {
+                    var values = group.Value.Select(x => EvaluationFunctionReflection.GetRelicOptionSplitFunctionCached(x)()).Merge();
+                    var option = RewardOption.Build(values);
+                    option.rewardType = RewardType.Relic;
+                    rewardOptions.Add(option);
+                }
+                else {
+                    rewardOptions.Add(new RewardOption() {
+                        rewardType = group.Key,
+                        values = group.Value.ToArray(),
+                    });
+                }
             }
-            argumentBuilder.Clear();
             Advice.AdviseOnRewards(rewardOptions);
         }
 
@@ -205,8 +197,7 @@ namespace ProjectPumpernickle {
                 PumpernickelSaveState.parsed = new PumpernickelSaveState();
             }
             Save.state.act_num = int.Parse(actLine.Substring(actLine.LastIndexOf(" ") + 1));
-            Save.state.room_x = -1;
-            Save.state.room_y = -1;
+            Save.state.current_room = PumpernickelSaveState.NEW_ACT_ROOM;
             Save.state.event_chances = new float[] {
                 0f,
                 0.1f,
@@ -227,10 +218,9 @@ namespace ProjectPumpernickle {
                 }
                 if (deckIndex >= Save.state.cards.Count) {
                     var upgrades = int.Parse(lines[i].Substring(colonIndex + 1));
-                    var card = Database.instance.cardsDict[cardId];
-                    // Do we need a copy constructor so that we're not messing with the database version?
+                    var cardIndex = Save.state.AddCardById(cardId);
+                    var card = Save.state.cards[cardIndex];
                     card.upgrades = upgrades;
-                    Save.state.cards.Add(card);
                 }
                 deckIndex++;
             }

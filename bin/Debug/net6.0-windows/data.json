@@ -6965,7 +6965,7 @@
          "description":"N=2 and increases by 1 when Multi-Stab is used. On A18, N=1+turn number. Whenever it deals unblocked damage, adds a Wound to your discard pile.\nHas an 85%/15% chance to use Multi-Stab/Single Stab.\nCannot use Multi-Stab 3 times in a row or Single Stab twice in a row.",
       },
       {
-         "id":"BronzeAutomaton",
+         "id":"Automaton",
          "name":"Bronze Automaton",
          "type":"Boss",
          "minHP":"300",
@@ -9702,12 +9702,12 @@
          "bias": 0.4,
       },
       {
-         "name":"The Cleric",
+         "name":"Cleric",
          "acts":[
             1
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:The Cleric",
+         "id":"slaythespire:Cleric",
          "description":"[Heal] 35 Gold: Heal 25% of your max HP.\n[Purify] 50 (75) Gold: Remove a card from your deck.\n[Leave] ",
          "colouredDesc":"\u001b[2;37m[Heal\u001b[2;37m] \u001b[2;33m35 Gold: \u001b[2;32mHeal 25% of your max HP.\n\u001b[2;37m[Purify\u001b[2;37m] \u001b[2;33m50 \u001b[2;34m(75) \u001b[2;33mGold: \u001b[2;32mRemove a card from your deck.\n\u001b[2;37m[Leave\u001b[2;37m] ",
          "character":"",
@@ -10458,6 +10458,7 @@
          "act": 1,
          "medianExpectedHealthLoss": 20,
          "medianWorstCaseHealthLoss": 52,
+         "medianFightLength": 2.5,
       },
       {
          "id": "Lagavulin",
@@ -10612,9 +10613,9 @@
          "medianWorstCaseHealthLoss": 40,
       },
       {
-         "id": "Bronze Automaton",
+         "id": "Automaton",
          "characters": [
-            "BronzeAutomaton",
+            "Automaton",
          ],
          "pool": "boss",
          "weight": 1,
