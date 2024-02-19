@@ -299,7 +299,7 @@ namespace ProjectPumpernickle {
             var path = evaluation.Path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
-            evaluation.SetScore(ScoreReason.Upgrades, 20f * Evaluators.UpgradeValueProportion(evaluation));
+            evaluation.SetScore(ScoreReason.Upgrades, 40f * Evaluators.UpgradeValueProportion(evaluation));
 
             evaluation.SetScore(ScoreReason.Key, Save.state.has_sapphire_key ? .5f : 0);
 

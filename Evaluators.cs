@@ -601,19 +601,47 @@ namespace ProjectPumpernickle {
             var floorsLeft = 55f - Save.state.floor_num;
             return 17f * (floorsLeft / 55f);
         }
+        public static IEnumerable<float> ExpectedFutureUpgradePowerMultipliers(float projectedCardAdds) {
+            var lastCard = (int)projectedCardAdds + 0.999f;
+            for (int i = 0; i < lastCard; i++) {
+                var t = i / (lastCard + 5f);
+                yield return Lerp.From(1.3f, 2f, t);
+            }
+        }
+        public static float PowerMultiplierToMarginalDeckPowerImpact(float powerMultiplier) {
+            // Power multipliers are relative to the absence of a card
+            // When you draw a card, it isn't ever no card, therefore we want to model
+            // the increase in relative power gained by a specific multiplier verses
+            // a replacement card.
+            // x - 1 would be the power multiplier relative to the existing card, the marginal value
+            // is a gut feeling based on the quality of a mid-game deck's replacement card to
+            // the card being upgraded based on the upgrade multiplier above normal replacement rate.
+            var bonus = MathF.Max(0f, powerMultiplier - 1.3f);
+            var marginalGutFeelingPower = powerMultiplier - 1f;
+            return marginalGutFeelingPower + (bonus * 2f);
+        }
         // Roughly: https://www.wolframalpha.com/input?i=x%2F%28x%2B10%29+from+0+to+30
         public static float UpgradeValueProportion(Evaluation evaluation) {
             var projectedCardAdds = Evaluators.EstimateFutureAddedCards();
-            var cardsByUpgradeWeight = Save.state.cards.Select(x => x.upgradePowerMultiplier - 1f).Where(x => x > 0).Concat(Enumerable.Range(0, (int)projectedCardAdds).Select(x => 0.3f)).OrderByDescending(x => x);
-            var totalWeight = cardsByUpgradeWeight.Sum();
-            var denominatorOffset = (totalWeight / 2f) + 3f;
+            var futureAddPowerMultipliers = ExpectedFutureUpgradePowerMultipliers(projectedCardAdds);
+            var cardsByPower = Save.state.cards
+                .Select(x => x.upgradePowerMultiplier)
+                .Where(x => x > 1)
+                .Concat(futureAddPowerMultipliers)
+                .Select(PowerMultiplierToMarginalDeckPowerImpact)
+                .OrderByDescending(x => x);
+            var totalPower = cardsByPower.Sum();
             var endOfAct = evaluation.Path.nodes.Length - 1;
             var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
             var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
             var fullUpgrades = futureUpgrades + presentUpgrades;
-            var upgradeWeight = cardsByUpgradeWeight.Take((int)fullUpgrades).Sum();
-            upgradeWeight += (fullUpgrades - (int)fullUpgrades) * cardsByUpgradeWeight.Skip((int)fullUpgrades).First();
-            return upgradeWeight / (upgradeWeight + denominatorOffset);
+            var gainedPower = cardsByPower.Take((int)fullUpgrades).Sum();
+            gainedPower += (fullUpgrades - (int)fullUpgrades) * cardsByPower.Skip((int)fullUpgrades).First();
+            var missingPower = totalPower - gainedPower;
+            var denominator = (totalPower * .3f) + (missingPower * 1.5f);
+            Assert.Break(1309); // now good
+            Assert.Break(6772); // now picked
+            return gainedPower / denominator;
         }
         public static float AverageCardsPerTurn() {
             return 3.5f;
@@ -763,7 +791,7 @@ namespace ProjectPumpernickle {
         public static bool ShouldConsiderRemovingNonBasic() {
             return !Save.state.cards.Any(x => x.cardRarity == Rarity.Basic);
         }
-        public static IEnumerable<int> ReasonableRemoveTargets() {
+        public static IEnumerable<int> ReasonableRemoveTargets(int maxCt = 1) {
             List<string> unupgradedRemoves = new List<string>();
             List<string> upgradedRemoves = new List<string>();
             var shouldConsiderNonCurse = ShouldConsiderRemovingNonCurse();
@@ -777,8 +805,8 @@ namespace ProjectPumpernickle {
                     continue;
                 }
                 var relevantList = (card.upgrades == 0 ? unupgradedRemoves : upgradedRemoves);
-                var hasConsidered = relevantList.Contains(card.id);
-                if (hasConsidered && card.id != "Searing Blow") {
+                var considered = relevantList.Where(x => x.Equals(card.id)).Count();
+                if (considered >= maxCt && card.id != "Searing Blow") {
                     continue;
                 }
                 relevantList.Add(card.id);

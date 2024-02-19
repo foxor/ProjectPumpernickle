@@ -655,8 +655,18 @@ namespace ProjectPumpernickle {
             var value = r.bias;
             return value;
         }
+        public static float PyramidAnswerConsistencyBonus() {
+            return 0f;
+        }
+        public static float PyramidHandComboBonus() {
+        }
+        public static float PyramidShuffleDensityBonus() {
+        }
         public static float RunicPyramid(Relic r) {
             var value = r.bias;
+            value += PyramidAnswerConsistencyBonus();
+            value += PyramidHandComboBonus();
+            value += PyramidShuffleDensityBonus();
             return value;
         }
         public static float SacredBark(Relic r) {

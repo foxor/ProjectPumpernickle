@@ -93,6 +93,7 @@ namespace ProjectPumpernickle {
         WinChance,
         LastChanceToPick,
         GoodAnswers,
+        Discard,
         COUNT,
     }
     public class Evaluation {

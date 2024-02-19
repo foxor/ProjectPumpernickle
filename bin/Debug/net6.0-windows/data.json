@@ -1068,6 +1068,9 @@
          "mod":"Slay the Spire",
          "upgradePowerMultiplier": 1.3,
          "bias": 0.2,
+         "setup": {
+            "Discard": 1,
+         }
       },
       {
          "id":"Acrobatics",
@@ -1080,6 +1083,9 @@
          "mod":"Slay the Spire",
          "bias": 1.2,
          "upgradePowerMultiplier": 2,
+         "setup": {
+            "Discard": 1,
+         }
       },
       {
          "id":"Backflip",
@@ -1152,6 +1158,9 @@
          "mod":"Slay the Spire",
          "bias": -0.1,
          "upgradePowerMultiplier": 1.3,
+         "setup": {
+            "Discard": 1,
+         }
       },
       {
          "id":"Deadly Poison",
@@ -1249,6 +1258,9 @@
          "bias": 0,
          "upgradeBias": 1.5,
          "upgradePowerMultiplier": 2,
+         "setup": {
+            "Discard": 2,
+         }
       },
       {
          "id":"Quick Slash",
@@ -1285,6 +1297,9 @@
          "mod":"Slay the Spire",
          "bias": 0.5,
          "upgradePowerMultiplier": 1.25,
+         "payoffs": {
+            "Discard": 0.3,
+         }
       },
       {
          "id":"Sucker Punch",
@@ -1324,6 +1339,9 @@
          "mod":"Slay the Spire",
          "bias": 0.4,
          "upgradePowerMultiplier": 1.5,
+         "setup": {
+            "Discard": 0.2,
+         }
       },
       {
          "id":"Backstab",
@@ -1372,6 +1390,9 @@
          "mod":"Slay the Spire",
          "bias": 2.8,
          "upgradePowerMultiplier": 2,
+         "setup": {
+            "Discard": 6,
+         }
       },
       {
          "id":"Caltrops",
@@ -1423,6 +1444,9 @@
             "greed": 1
          },
          "upgradePowerMultiplier": 1.7,
+         "setup": {
+            "Discard": 2,
+         }
       },
       {
          "id":"Crippling Poison",
@@ -1495,6 +1519,9 @@
          "mod":"Slay the Spire",
          "bias": 2.2,
          "upgradePowerMultiplier": 1.3,
+         "payoffs": {
+            "Discard": 1,
+         }
       },
       {
          "id":"Expertise",
@@ -1628,8 +1655,11 @@
          "cost":"",
          "description":"Unplayable.\nIf this card is discarded from your hand, draw 2 (3) cards.",
          "mod":"Slay the Spire",
-         "bias": 2.1,
+         "bias": 0,
          "upgradePowerMultiplier": 1.8,
+         "payoffs": {
+            "Discard": 3,
+         }
       },
       {
          "id":"Riddle With Holes",
@@ -1676,8 +1706,11 @@
          "cost":"",
          "description":"Unplayable.\nIf this card is discarded from your hand, gain [G] ([G]).",
          "mod":"Slay the Spire",
-         "bias": 1.5,
+         "bias": 0,
          "upgradePowerMultiplier": 2,
+         "setup": {
+            "Discard": 2,
+         }
       },
       {
          "id":"Terror",
@@ -1894,6 +1927,9 @@
          "mod":"Slay the Spire",
          "bias": -0.5,
          "upgradePowerMultiplier": 1.4,
+         "setup": {
+            "Discard": 0.2,
+         }
       },
       {
          "id":"Tools of the Trade",
@@ -1906,6 +1942,9 @@
          "mod":"Slay the Spire",
          "bias": 0.5,
          "upgradePowerMultiplier": 1.2,
+         "setup": {
+            "Discard": 3,
+         }
       },
       {
          "id":"Unload",
@@ -1918,6 +1957,9 @@
          "mod":"Slay the Spire",
          "bias": -0.1,
          "upgradePowerMultiplier": 1.2,
+         "setup": {
+            "Discard": 0.2,
+         }
       },
       {
          "id":"Wraith Form v2",

@@ -11,7 +11,7 @@ namespace ProjectPumpernickle {
             context.cardsRemoved = removals.Select(x => Save.state.cards[x]).ToList();
             context.removedCardIndicies = removals.ToList();
             foreach (var removal in removals) {
-                context.description.Add("Remove " + Save.state.cards[removal].name);
+                context.description.Add("Remove " + Save.state.cards[removal].Descriptor());
                 Save.state.cards.RemoveAt(removal);
             }
         }
@@ -25,7 +25,7 @@ namespace ProjectPumpernickle {
             "BottledFlame",
         };
         public static IEnumerable<RewardOptionPart> EmptyCage() {
-            var reasonableRemoveTarget = Evaluators.ReasonableRemoveTargets().ToArray();
+            var reasonableRemoveTarget = Evaluators.ReasonableRemoveTargets(2).ToArray();
             for (int i = 0; i < reasonableRemoveTarget.Length; i++) {
                 for (int j = i + 1; j < reasonableRemoveTarget.Length; j++) {
                     yield return new RewardOptionPart() {

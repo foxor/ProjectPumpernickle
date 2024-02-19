@@ -220,6 +220,12 @@ namespace ProjectPumpernickle {
             }
             return upgrades == 0 && cardType != CardType.Curse;
         }
+        public string Descriptor() {
+            if (upgrades != 0) {
+                return name + "+";
+            }
+            return name;
+        }
     }
     public enum NodeType {
         Question,

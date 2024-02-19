@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Diagnostics.Eventing.Reader;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -1114,6 +1115,7 @@ namespace ProjectPumpernickle {
             return nodes.Any(x => x.nodeType == NodeType.Chest);
         }
         public void AddEventScore(Evaluation evaluation) {
+            var accumulatedEventScore = new Dictionary<string, float>();
             for (int i = 0; i < remainingFloors; i++) {
                 var nodeType = nodeTypes[i];
                 if (nodeType == NodeType.Question) {
@@ -1123,11 +1125,16 @@ namespace ProjectPumpernickle {
                     var eventChance = .75f / eventPoolWeight;
                     var shrineChance = .25f / shrinePoolWeight;
                     foreach (var eligibleEvent in eligibleEvents) {
-                        var value = EvaluationFunctionReflection.GetEventValueFunctionCached(eligibleEvent.name)(i);
+                        var name = eligibleEvent.name;
+                        var value = EvaluationFunctionReflection.GetEventValueFunctionCached(name)(i);
                         var chanceOfThis = eligibleEvent.shrine ? shrineChance : eventChance;
-                        evaluation.SetScore(eligibleEvent.reason, value * chanceOfThis);
+                        var localScore = chanceOfThis * value;
+                        accumulatedEventScore[name] = accumulatedEventScore.GetValueOrDefault(name) + localScore;
                     }
                 }
+            }
+            foreach (var possibleEvent in accumulatedEventScore) {
+                evaluation.SetScore(Enum.Parse<ScoreReason>(possibleEvent.Key), possibleEvent.Value);
             }
         }
         public void SetChanceToSurviveAct() {
