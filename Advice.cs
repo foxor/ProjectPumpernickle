@@ -100,11 +100,10 @@ namespace ProjectPumpernickle {
             }
         }
         protected static void MergeChunks(long chunksComplete, long totalChunks, int totalRewardOptions) {
-            IEnumerable<Evaluation> validEvaluations = perThreadEvaluations.Values;
+            IEnumerable<Evaluation> validEvaluations = perThreadEvaluations.Values.OrderBy(x => x.Id);
             if (!validEvaluations.Any()) {
                 return;
             }
-            var rewardsChosenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(',', validEvaluations.Select(x => x.InternalScore)))));
             validEvaluations = PruneSubOptimalPaths(validEvaluations);
             SetEvaluationOffRamps(validEvaluations);
             foreach (var eval in validEvaluations) {
