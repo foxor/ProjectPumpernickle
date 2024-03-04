@@ -367,7 +367,10 @@ namespace ProjectPumpernickle {
         }
         public static readonly float LN101 = 4.61512051684126f;
         public static void ScoreBasedOnOffRamp(Evaluation evaluation) {
-            var offRamp = evaluation.OffRamp?.Path ?? evaluation.Path;
+            var offRamp = evaluation.OffRamp?.Path;
+            if (offRamp == null) {
+                return;
+            }
             // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
             // but that's kinda the right way to play the game
 

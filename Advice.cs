@@ -100,10 +100,12 @@ namespace ProjectPumpernickle {
             }
         }
         protected static void MergeChunks(long chunksComplete, long totalChunks, int totalRewardOptions) {
-            var validEvaluations = perThreadEvaluations.Values;
+            IEnumerable<Evaluation> validEvaluations = perThreadEvaluations.Values;
             if (!validEvaluations.Any()) {
                 return;
             }
+            var rewardsChosenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(',', validEvaluations.Select(x => x.InternalScore)))));
+            validEvaluations = PruneSubOptimalPaths(validEvaluations);
             SetEvaluationOffRamps(validEvaluations);
             foreach (var eval in validEvaluations) {
                 Scoring.ScoreBasedOnOffRamp(eval);
@@ -159,11 +161,26 @@ namespace ProjectPumpernickle {
                 return base.Equals(obj);
             }
         }
+        protected static IEnumerable<Evaluation> PruneSubOptimalPaths(IEnumerable<Evaluation> evaluations) {
+            foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {
+                foreach (var evaluation in offRampGroup) {
+                    var betterPathThisWay = offRampGroup
+                        .Where(x => x.Path.chanceToSurviveAct > evaluation.Path.chanceToSurviveAct && x.InternalScore > evaluation.InternalScore);
+                    if (!betterPathThisWay.Any()) {
+                        yield return evaluation;
+                    }
+                }
+            }
+        }
         protected static void SetEvaluationOffRamps(IEnumerable<Evaluation> evaluations) {
             foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {
-                var safestPathThisWay = offRampGroup.OrderByDescending(x => x.Path.chanceToSurviveAct).First();
-                foreach (var path in offRampGroup) {
-                    path.OffRamp = safestPathThisWay;
+                var sortedPathThisWay = offRampGroup
+                        .OrderByDescending(x => x.InternalScore);
+                foreach (var evaluation in offRampGroup) {
+                    var saferPathThisWay = sortedPathThisWay
+                        .Where(x => x.Path.chanceToSurviveAct > evaluation.Path.chanceToSurviveAct)
+                        .FirstOrDefault();
+                    evaluation.OffRamp = saferPathThisWay;
                 }
             }
         }

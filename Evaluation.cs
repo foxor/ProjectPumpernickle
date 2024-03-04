@@ -94,6 +94,7 @@ namespace ProjectPumpernickle {
         LastChanceToPick,
         GoodAnswers,
         Discard,
+        PathOptions,
         COUNT,
     }
     public class Evaluation {
@@ -140,6 +141,9 @@ namespace ProjectPumpernickle {
         }
         public void MergeScoreWithOffRamp() {
             if (OffRamp == null) {
+                for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
+                    Scores[i] = InternalScores[i];
+                }
                 return;
             }
             float riskT = Lerp.InverseUncapped(MIN_ACCEPTABLE_RISK, MAX_ACCEPTABLE_RISK, 1f - Path.chanceToSurviveAct);

@@ -178,7 +178,7 @@ namespace ProjectPumpernickle {
             instance.AdviceBox.Text = adviceText.ToString();
             UpdateAct();
             PathPreview.Text = PathTexts[Save.state.act_num - 1];
-            if (chosenEvaluation.Path != null) {
+            if (chosenEvaluation.OffRamp != null) {
                 foreach (var pathNode in chosenEvaluation.OffRamp.Path.nodes) {
                     var charIndex = PositionToIndex(pathNode.position);
                     if (charIndex < 0) {
@@ -188,6 +188,8 @@ namespace ProjectPumpernickle {
                     PathPreview.SelectionLength = 1;
                     PathPreview.SelectionColor = System.Drawing.Color.Blue;
                 }
+            }
+            if (chosenEvaluation.Path != null) {
                 foreach (var pathNode in chosenEvaluation.Path.nodes) {
                     var charIndex = PositionToIndex(pathNode.position);
                     if (charIndex < 0) {
