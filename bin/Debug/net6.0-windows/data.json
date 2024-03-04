@@ -316,7 +316,7 @@
          "mod":"Slay the Spire",
          "bias": 0,
          "upgradePowerMultiplier": 1.5,
-         "payoffs": {
+         "payoff": {
             "SelfHarm": 0.2,
          },
       },
@@ -391,7 +391,7 @@
          "mod":"Slay the Spire",
          "bias": 2.5,
          "upgradePowerMultiplier": 2,
-         "payoffs": {
+         "payoff": {
             "ExhaustSelf": 1.8,
             "ExhaustOther": 1.8,
          }
@@ -474,7 +474,7 @@
          "mod":"Slay the Spire",
          "bias": 3.1,
          "upgradePowerMultiplier": 1.3,
-         "payoffs": {
+         "payoff": {
             "ExhaustSelf": 0.5,
             "ExhaustOther": 0.5,
          },
@@ -664,7 +664,7 @@
          "mod":"Slay the Spire",
          "bias": 0.9,
          "upgradePowerMultiplier": 2,
-         "payoffs": {
+         "payoff": {
             "SelfHarm": 3.0,
          },
       },
@@ -721,7 +721,7 @@
          "mod":"Slay the Spire",
          "bias": 1.6,
          "upgradePowerMultiplier": 1.6,
-         "payoffs": {
+         "payoff": {
             "ExhaustOther": 1
          },
       },
@@ -898,7 +898,7 @@
          "setup": {
             "ExhaustSelf": 1
          },
-         "payoffs": {
+         "payoff": {
             "ExhaustSelf": 1.8,
             "ExhaustOther": 0.4
          },
@@ -1233,6 +1233,11 @@
          "mod":"Slay the Spire",
          "bias": 1.5,
          "upgradePowerMultiplier": 1.2,
+         "goodAgainst": {
+            "AwakenedOne": 3.0,
+            "TimeEater": 3.0,
+            "CorruptHeart": 5.0,
+         }
       },
       {
          "id":"Poisoned Stab",
@@ -1297,7 +1302,7 @@
          "mod":"Slay the Spire",
          "bias": 0.5,
          "upgradePowerMultiplier": 1.25,
-         "payoffs": {
+         "payoff": {
             "Discard": 0.3,
          }
       },
@@ -1517,9 +1522,9 @@
          "cost":"3",
          "description":"Costs 1 less [G]\nfor each card discarded this turn.\nDeal 7 (9) damage 3 times.",
          "mod":"Slay the Spire",
-         "bias": 2.2,
+         "bias": 0.2,
          "upgradePowerMultiplier": 1.3,
-         "payoffs": {
+         "payoff": {
             "Discard": 1,
          }
       },
@@ -1657,7 +1662,7 @@
          "mod":"Slay the Spire",
          "bias": 0,
          "upgradePowerMultiplier": 1.8,
-         "payoffs": {
+         "payoff": {
             "Discard": 3,
          }
       },
@@ -4199,6 +4204,9 @@
          "description":"Exhaust up to 3 (5) cards in your hand.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": -0.1,
+         "setup": {
+            "ExhaustOther": 5,
+         }
       },
       {
          "id":"Swift Strike",

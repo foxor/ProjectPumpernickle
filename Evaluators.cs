@@ -45,23 +45,32 @@ namespace ProjectPumpernickle {
                 _ => false,
             };
         }
-        public static float PermanentDeckSize() {
+        public static IEnumerable<Card> PermanentCards() {
             var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
-            return Save.state.cards.Select(x => {
+            return Save.state.cards.Where(x => {
                 if (x.cardType == CardType.Power) {
-                    return 0f;
+                    return false;
                 }
-                if (x.id == "Purity") {
-                    return x.upgrades > 0 ? -5f : -3f;
-                }
-                if (x.tags.TryGetValue(Tags.NonPermanent.ToString(), out var value)) {
-                    return 1 - value;
+                if (x.tags.ContainsKey(Tags.NonPermanent.ToString())) {
+                    return false;
                 }
                 if (x.cardType == CardType.Skill && hasSkillRemover && !CardRemovesSkills(x)) {
-                    return 0f;
+                    return false;
                 }
-                return 1f;
+                return true;
+            });
+        }
+        public static float PermanentDeckSizeOffset() {
+            var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
+            return Save.state.cards.Select(x => {
+                if (x.setup.TryGetValue(ScoreReason.ExhaustOther.ToString(), out var value)) {
+                    return value;
+                }
+                return 0f;
             }).Sum();
+        }
+        public static float PermanentDeckSize() {
+            return PermanentCards().Count() - PermanentDeckSizeOffset();
         }
 
         public static float CostOfNonPermanent() {
@@ -639,8 +648,6 @@ namespace ProjectPumpernickle {
             gainedPower += (fullUpgrades - (int)fullUpgrades) * cardsByPower.Skip((int)fullUpgrades).First();
             var missingPower = totalPower - gainedPower;
             var denominator = (totalPower * .3f) + (missingPower * 1.5f);
-            Assert.Break(1309); // now good
-            Assert.Break(6772); // now picked
             return gainedPower / denominator;
         }
         public static float AverageCardsPerTurn() {

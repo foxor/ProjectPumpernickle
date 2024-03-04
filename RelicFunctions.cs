@@ -656,17 +656,40 @@ namespace ProjectPumpernickle {
             return value;
         }
         public static float PyramidAnswerConsistencyBonus() {
-            return 0f;
+            var answerScore = Evaluation.Active.InternalScores[(int)ScoreReason.GoodAnswers];
+            return answerScore / (answerScore + 1.5f);
         }
         public static float PyramidHandComboBonus() {
+            var synergyPayoffs = Save.state.cards
+                .Select(c => c.payoff.Keys.Select(p => Enum.Parse<ScoreReason>(p)))
+                .Merge()
+                .Distinct();
+            var synergyScore = synergyPayoffs.Select(x => Evaluation.Active.InternalScores[(int)x]).Sum();
+            return synergyScore / (synergyScore + 0.8f);
         }
+        public static readonly int PYRAMID_WORST_CARDS_HELD_WHILE_SHUFFLING = 5;
         public static float PyramidShuffleDensityBonus() {
+            var permanentCards = Evaluators.PermanentCards();
+            var totalDeckScore = permanentCards.Select(x => x.evaluatedScore).Sum();
+            var permanentDeckSize = permanentCards.Count();
+            if (permanentDeckSize == 0) {
+                return 0f;
+            }
+            var scorePerCard = totalDeckScore / permanentDeckSize;
+            var skippedCards = PYRAMID_WORST_CARDS_HELD_WHILE_SHUFFLING + (int)Evaluators.PermanentDeckSizeOffset();
+            var shuffledCardCount = Math.Max(1, permanentDeckSize - skippedCards);
+            var shuffleSkipCount = permanentDeckSize - shuffledCardCount;
+            var shuffleCards = permanentCards.OrderBy(x => x.evaluatedScore).Skip(shuffleSkipCount);
+            var shuffleDeckScore = shuffleCards.Select(x => x.evaluatedScore).Sum();
+            var scorePerShuffledCard = shuffleDeckScore / shuffledCardCount;
+            var shuffleDeckAverageScoreDelta = scorePerShuffledCard - scorePerCard;
+            return shuffleDeckAverageScoreDelta / (shuffleDeckAverageScoreDelta + 0.3f);
         }
         public static float RunicPyramid(Relic r) {
-            var value = r.bias;
-            value += PyramidAnswerConsistencyBonus();
-            value += PyramidHandComboBonus();
-            value += PyramidShuffleDensityBonus();
+            var value = 0f;
+            value += PyramidAnswerConsistencyBonus() * 6f;
+            value += PyramidHandComboBonus() * 6f;
+            value += PyramidShuffleDensityBonus() * 6f;
             return value;
         }
         public static float SacredBark(Relic r) {

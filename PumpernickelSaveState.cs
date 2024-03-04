@@ -57,6 +57,7 @@ namespace ProjectPumpernickle {
         public string color;
         public bool bottled;
         public float scaling;
+        public float evaluatedScore;
 
         public Dictionary<string, float> tags;
         public CardType cardType;

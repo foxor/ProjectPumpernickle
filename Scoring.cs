@@ -333,10 +333,16 @@ namespace ProjectPumpernickle {
             }
         }
         public static void ScoreBasedOnEvaluation(Evaluation evaluation) {
+            // Order is important here
+            // card and relic evaluations can depend on global rules
+            // future card and relic evaluations depend on current evaluations heavily
+            EvaluateGlobalRules(evaluation);
+            ScorePath(evaluation);
             var totalCardScore = 0f;
             for (int i = 0; i < Save.state.cards.Count; i++) {
                 var card = Save.state.cards[i];
                 var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
+                card.evaluatedScore = cardValue;
                 totalCardScore += cardValue;
             }
             evaluation.SetScore(ScoreReason.DeckQuality, totalCardScore);
@@ -349,8 +355,6 @@ namespace ProjectPumpernickle {
                 totalRelicScore += relicScore;
             }
             evaluation.SetScore(ScoreReason.RelicQuality, totalRelicScore);
-            EvaluateGlobalRules(evaluation);
-            ScorePath(evaluation);
             ScoreFutureCardValue(evaluation);
             ScoreFutureRelicValue(evaluation);
         }

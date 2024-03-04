@@ -30,10 +30,14 @@ namespace ProjectPumpernickle {
                 }
             }
             foreach (var payoff in totalPayoff) {
-                totalSetup.TryGetValue(payoff.Key, out var setup);
-                var value = payoff.Value * setup;
-                var rewardReason = Enum.Parse<ScoreReason>(payoff.Key);
-                evaluation.SetScore(rewardReason, value);
+                if (totalSetup.TryGetValue(payoff.Key, out var setup)) {
+                    var value = payoff.Value * setup;
+                    var rewardReason = Enum.Parse<ScoreReason>(payoff.Key);
+                    evaluation.SetScore(rewardReason, value);
+                }
+                else {
+                    // Reward speculative synergy picks?  No for now
+                }
             }
         }
     }
