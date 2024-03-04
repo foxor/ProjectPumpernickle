@@ -171,9 +171,6 @@ namespace ProjectPumpernickle {
                 adviceText.AppendLine(String.Format("Still thinking, {0:P2} complete", (ChunksComplete * 1f / TotalChunks)));
             }
             adviceText.Append(chosenEvaluation.ToString());
-            if (ChosenEvaluation == chosenEvaluation) {
-                return;
-            }
             ChosenEvaluation = chosenEvaluation;
             instance.AdviceBox.Text = adviceText.ToString();
             UpdateAct();
