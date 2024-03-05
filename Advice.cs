@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Text;
@@ -26,6 +27,7 @@ namespace ProjectPumpernickle {
             Application.DoEvents();
 
             var workChunks = NeededWorkChunks(totalEvals);
+            Profiling.MainThreadStart(totalEvals);
             for (long i = 0; i < workChunks; i++) {
                 QueueWorkChunk(i, workChunks, totalEvals, pathingOptions);
                 AwaitWorkChunk(i == 0);
@@ -35,6 +37,7 @@ namespace ProjectPumpernickle {
                     break;
                 }
             }
+            Profiling.StopWork();
         }
 
 
@@ -54,6 +57,7 @@ namespace ProjectPumpernickle {
                 // The thread statics leak through from one task to another
                 Evaluation.Active = null;
                 PumpernickelSaveState.instance = null;
+                Profiling.WorkerStart();
 
                 var skipFirstNode = true;
                 var nodeSequence = Path.BuildNodeSequence(pathIndex, PumpernickelSaveState.parsed.GetCurrentNode(), skipFirstNode);
@@ -89,6 +93,7 @@ namespace ProjectPumpernickle {
                 Console.WriteLine(e);
             }
             finally {
+                Profiling.StopWork();
                 Interlocked.Decrement(ref threadsOutstanding);
             }
         }
@@ -100,6 +105,7 @@ namespace ProjectPumpernickle {
             }
         }
         protected static void MergeChunks(long chunksComplete, long totalChunks, int totalRewardOptions) {
+            Profiling.StartZone("MergeChunks");
             IEnumerable<Evaluation> validEvaluations = perThreadEvaluations.Values.OrderBy(x => x.Id);
             if (!validEvaluations.Any()) {
                 return;
@@ -116,6 +122,7 @@ namespace ProjectPumpernickle {
             //var rewardsChosenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(',', validEvaluations.Select(x => x.Score)))));
             var sorted = validEvaluations.OrderByDescending(x => x.Score).ToArray();
             PumpernickelAdviceWindow.instance.SetEvaluations(sorted, chunksComplete + 1, totalChunks);
+            Profiling.StopZone("MergeChunks");
         }
         public static void AdviseOnReward(RewardOption option, bool needsMoreInfo = false) {
             AdviseOnRewards(new List<RewardOption>() { option }, needsMoreInfo: needsMoreInfo);
@@ -160,21 +167,26 @@ namespace ProjectPumpernickle {
                 return base.Equals(obj);
             }
         }
+        protected static float PruningScore(Evaluation evaluation) {
+            // This gets set each time a chunk of evaluations finishes, so new evaluations won't have one yet
+            // Therefore, remove it so that it's fair
+            return evaluation.InternalScore - evaluation.InternalScores[(int)ScoreReason.ActSurvival];
+        }
         protected static IEnumerable<Evaluation> PruneSubOptimalPaths(IEnumerable<Evaluation> evaluations) {
             foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {
-                foreach (var evaluation in offRampGroup) {
-                    var betterPathThisWay = offRampGroup
-                        .Where(x => x.Path.chanceToSurviveAct > evaluation.Path.chanceToSurviveAct && x.InternalScore > evaluation.InternalScore);
-                    if (!betterPathThisWay.Any()) {
-                        yield return evaluation;
+                var evalsByScore = offRampGroup.OrderBy(PruningScore).ToArray();
+                var bestChanceSoFar = -1f;
+                for (int i = 0;  i < evalsByScore.Length; i++) {
+                    if (evalsByScore[i].Path.chanceToSurviveAct > bestChanceSoFar) {
+                        bestChanceSoFar = evalsByScore[i].Path.chanceToSurviveAct;
+                        yield return evalsByScore[i];
                     }
                 }
             }
         }
         protected static void SetEvaluationOffRamps(IEnumerable<Evaluation> evaluations) {
             foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {
-                var sortedPathThisWay = offRampGroup
-                        .OrderByDescending(x => x.InternalScore);
+                var sortedPathThisWay = offRampGroup.OrderByDescending(PruningScore);
                 foreach (var evaluation in offRampGroup) {
                     var saferPathThisWay = sortedPathThisWay
                         .Where(x => x.Path.chanceToSurviveAct > evaluation.Path.chanceToSurviveAct)

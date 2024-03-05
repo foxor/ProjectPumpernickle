@@ -9,7 +9,7 @@ namespace ProjectPumpernickle {
         public static float AccursedBlacksmith(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float PleadingVagrant(Event e, int floorsFromNow) {
+        public static float Addict(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float BackToBasics(Event e, int floorsFromNow) {

@@ -429,6 +429,10 @@ namespace ProjectPumpernickle {
                     addedCardIndicies.Add(Save.state.AddCardById("Regret"));
                     break;
                 }
+                case "SHAME": {
+                    addedCardIndicies.Add(Save.state.AddCardById("Shame"));
+                    break;
+                }
                 case "PERCENT_DAMAGE": {
                     var damage = ((int)(Save.state.current_health * .1f)) * 3;
                     healthLost += damage;

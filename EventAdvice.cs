@@ -12,8 +12,25 @@ namespace ProjectPumpernickle {
             };
             Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static void PleadingVagrant(IEnumerable<string> arguments) {
-            Advice.AdviseOnReward(RewardOption.BuildEvent());
+        public static void Addict(IEnumerable<string> arguments) {
+            Advice.AdviseOnReward(RewardOption.BuildEvent(
+                new RewardOptionPart() {
+                    advice = "Offer gold",
+                    value = EventRewardElement.RELIC_CHANCE + ": 1",
+                    eventCost = "85",
+                    needsMoreInfo = true,
+                },
+                new RewardOptionPart() {
+                    advice = "Rob",
+                    value = EventRewardElement.RELIC_CHANCE + ": 1",
+                    eventCost = "SHAME",
+                    needsMoreInfo = true,
+                },
+                new RewardOptionPart() {
+                    advice = "Leave",
+                    value = EventRewardElement.None.ToString(),
+                }
+            ));
         }
         public static void BackToBasics(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());

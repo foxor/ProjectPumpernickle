@@ -9332,12 +9332,12 @@
          "bias": 2.0,
       },
       {
-         "name":"Pleading Vagrant",
+         "name":"Addict",
          "acts":[
             2
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:Pleading Vagrant",
+         "id":"slaythespire:Addict",
          "description":"[Offer Gold (requires 85 gold)] 85 Gold: Obtain a Relic.\n[Rob] Obtain a Relic. Become Cursed - Shame.\n[Leave ()] ",
          "colouredDesc":"\u001b[2;37m[Offer Gold \u001b[0;2m(requires 85 gold)\u001b[2;37m] \u001b[2;33m85 Gold: \u001b[2;32mObtain a Relic.\n\u001b[2;37m[Rob\u001b[2;37m] \u001b[2;32mObtain a Relic. \u001b[2;31mBecome Cursed - Shame.\n\u001b[2;37m[Leave \u001b[0;2m()\u001b[2;37m] ",
          "character":"",

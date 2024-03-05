@@ -31,7 +31,7 @@ namespace ProjectPumpernickle {
         EVENT_SUM,
         EVENT_BEGIN,
         AccursedBlacksmith,
-        PleadingVagrant,
+        Addict,
         BackToBasics,
         OldBeggar,
         BigFish,
