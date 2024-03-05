@@ -174,7 +174,7 @@ namespace ProjectPumpernickle {
         }
         protected static IEnumerable<Evaluation> PruneSubOptimalPaths(IEnumerable<Evaluation> evaluations) {
             foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {
-                var evalsByScore = offRampGroup.OrderBy(PruningScore).ToArray();
+                var evalsByScore = offRampGroup.OrderByDescending(PruningScore).ToArray();
                 var bestChanceSoFar = -1f;
                 for (int i = 0;  i < evalsByScore.Length; i++) {
                     if (evalsByScore[i].Path.chanceToSurviveAct > bestChanceSoFar) {
