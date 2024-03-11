@@ -97,6 +97,8 @@ namespace ProjectPumpernickle {
         PathOptions,
         SustainableSpeed,
         SetupSpeed,
+        ArchetypeValue,
+        ArchetypeSlotFull,
         COUNT,
     }
     public class Evaluation {

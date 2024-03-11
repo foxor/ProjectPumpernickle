@@ -70,6 +70,7 @@ namespace ProjectPumpernickle {
         public Dictionary<string, float> payoff;
         public Dictionary<string, float> goodAgainst;
         public Dictionary<string, float> combo;
+        public List<ArchetypeMembership> archetypes;
 
         public void MergeWithDatabaseCard(Card fromDatabase) {
             this.name = fromDatabase.name;
@@ -94,6 +95,7 @@ namespace ProjectPumpernickle {
             this.payoff = fromDatabase.payoff;
             this.goodAgainst = fromDatabase.goodAgainst;
             this.combo = fromDatabase.combo;
+            this.archetypes = fromDatabase.archetypes;
         }
 
         public void OnLoad() {
@@ -111,6 +113,9 @@ namespace ProjectPumpernickle {
             }
             if (combo == null) {
                 combo = new Dictionary<string, float>();
+            }
+            if (archetypes == null) {
+                archetypes = new List<ArchetypeMembership>();
             }
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
@@ -336,6 +341,8 @@ namespace ProjectPumpernickle {
         public bool badBottle;
         public List<string> choosingNow;
         public List<int> upgraded;
+        public Dictionary<string, float> archetypeIdentities;
+        public List<ArchetypeSlotEntries> archetypeSlots;
         public PumpernickelSaveState() {
             parsed = this;
         }
@@ -393,6 +400,8 @@ namespace ProjectPumpernickle {
             // not initialized
             choosingNow = null;
             upgraded = null;
+            archetypeIdentities = null;
+            archetypeSlots = null;
         }
 
         public int AddCardById(string name) {
@@ -611,6 +620,34 @@ namespace ProjectPumpernickle {
                     yield return card;
                 }
             }
+        }
+        public void AddArchetypeSlotMember(ArchetypeMembership member) {
+            if (archetypeSlots == null) {
+                archetypeSlots = new List<ArchetypeSlotEntries>();
+            }
+            var existingId = archetypeSlots.FirstIndexOf(x => x.archetypeId == member.archetypeId && x.slotId == member.slotId);
+            if (existingId != -1) {
+                archetypeSlots[existingId].entries++;
+                return;
+            }
+            archetypeSlots.Add(new ArchetypeSlotEntries() {
+                archetypeId = member.archetypeId,
+                slotId = member.slotId,
+                entries = 1
+            });
+        }
+        public int GetArchetypeSlotMembership(ArchetypeMembership membership) {
+            return GetArchetypeSlotMembership(membership.archetypeId, membership.slotId);
+        }
+        public int GetArchetypeSlotMembership(string archetypeId, string slotId) {
+            if (archetypeSlots == null) {
+                return 0;
+            }
+            var existingId = archetypeSlots.FirstIndexOf(x => x.archetypeId == archetypeId && x.slotId == slotId);
+            if (existingId != -1) {
+                return archetypeSlots[existingId].entries;
+            }
+            return 0;
         }
     }
 }

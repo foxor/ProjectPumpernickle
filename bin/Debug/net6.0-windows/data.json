@@ -10814,5 +10814,42 @@
          "medianExpectedHealthLoss": 0,
          "medianWorstCaseHealthLoss": 20,
       },
+   ],
+   "archetypes": [
+      {
+         "id": "discard",
+         "value": 5.0,
+         "slots": {
+            "damage": {
+               "count": 1.0,
+               "cards": [
+                  "Underhanded Strike",
+                  "Eviscerate",
+                  "Slice",
+                  "Masterful Stab",
+               ]
+            },
+            "draw": {
+               "count": 2.5,
+               "cards": [
+                  "Acrobatics",
+                  "Prepared",
+               ]
+            },
+            "sustain": {
+               "count": 1.0,
+               "cards": [
+                  "Reflex",
+                  "Tactician",
+               ]
+            },
+            "gamble": {
+               "count": 1.0,
+               "cards": [
+                  "Calculated Gamble",
+               ]
+            }
+         }
+      }
    ]
 }

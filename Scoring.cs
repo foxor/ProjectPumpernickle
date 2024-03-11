@@ -299,8 +299,6 @@ namespace ProjectPumpernickle {
             var path = evaluation.Path;
             var floorsTillEndOfAct = Evaluators.LastFloorThisAct(Save.state.act_num) - Save.state.floor_num;
 
-            evaluation.SetScore(ScoreReason.Upgrades, 40f * Evaluators.UpgradeValueProportion(evaluation));
-
             evaluation.SetScore(ScoreReason.Key, Save.state.has_sapphire_key ? .5f : 0);
 
             var effectiveHealth = Evaluators.GetCurrentEffectiveHealth();
@@ -332,6 +330,9 @@ namespace ProjectPumpernickle {
                 evaluation.SetScore(ScoreReason.BadBottle, -5f);
             }
         }
+        public static void ScoreUpgrades(Evaluation evaluation) {
+            evaluation.SetScore(ScoreReason.Upgrades, 40f * Evaluators.UpgradeValueProportion(evaluation));
+        }
         public static void ScoreBasedOnEvaluation(Evaluation evaluation) {
             // Order is important here
             // card and relic evaluations can depend on global rules
@@ -346,6 +347,7 @@ namespace ProjectPumpernickle {
                 totalCardScore += cardValue;
             }
             evaluation.SetScore(ScoreReason.DeckQuality, totalCardScore);
+            ScoreUpgrades(evaluation);
             var totalRelicScore = 0f;
             for (int i = 0; i < Save.state.relics.Count; i++) {
                 var relicId = Save.state.relics[i];
@@ -369,7 +371,7 @@ namespace ProjectPumpernickle {
         public static void ScoreBasedOnOffRamp(Evaluation evaluation) {
             var offRamp = evaluation.OffRamp?.Path;
             if (offRamp == null) {
-                return;
+                offRamp = evaluation.Path;
             }
             // this has the potential to provide "phantom" points, where you plan a really ambitious path, and then chicken out when the off-ramp disappears
             // but that's kinda the right way to play the game

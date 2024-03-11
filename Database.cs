@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -147,6 +148,38 @@ namespace ProjectPumpernickle {
             reason = Enum.GetValues<ScoreReason>().Where(x => x.ToString().Equals(name)).Single();
         }
     }
+    public class Archetype {
+        public string id;
+        public float value;
+        public Dictionary<string, ArchetypeSlot> slots;
+        public void OnLoad() {
+            foreach (var slot in slots) {
+                slot.Value.OnLoad(id, slot.Key);
+            }
+        }
+    }
+    public class ArchetypeMembership {
+        public string archetypeId;
+        public string slotId;
+    }
+    public class ArchetypeSlotEntries {
+        public string archetypeId;
+        public string slotId;
+        public int entries;
+    }
+    public class ArchetypeSlot {
+        public float count;
+        public string[] cards;
+        public void OnLoad(string archetypeId, string slotId) {
+            var membership = new ArchetypeMembership() {
+                archetypeId = archetypeId,
+                slotId = slotId
+            };
+            foreach (var cardId in cards) {
+                Database.instance.cardsDict[cardId].archetypes.Add(membership);
+            }
+        }
+    }
     internal class Database {
         public static Database instance;
         public Card[] cards = null;
@@ -154,12 +187,14 @@ namespace ProjectPumpernickle {
         public Encounter[] encounters = null;
         public Relic[] relics = null;
         public Event[] events = null;
+        public Archetype[] archetypes = null;
 
         public Dictionary<string, Card> cardsDict = new Dictionary<string, Card>();
         public Dictionary<string, Monster> creatureDict = new Dictionary<string, Monster>();
         public Dictionary<string, Encounter> encounterDict = new Dictionary<string, Encounter>();
         public Dictionary<string, Relic> relicsDict = new Dictionary<string, Relic>();
         public Dictionary<string, Event> eventDict = new Dictionary<string, Event>();
+        public Dictionary<string, Archetype> archetypeDict = new Dictionary<string, Archetype>();
 
         public Encounter[][] EasyPools = new Encounter[4][];
         public Encounter[][] HardPools = new Encounter[4][];
@@ -174,6 +209,10 @@ namespace ProjectPumpernickle {
             foreach (var creature in creatures) {
                 creatureDict[creature.id] = creature;
                 creature.OnLoad();
+            }
+            foreach (var archetype in archetypes) {
+                archetypeDict[archetype.id] = archetype;
+                archetype.OnLoad();
             }
             var easyBuilder = new List<Encounter>[] {
                 new List<Encounter>(),

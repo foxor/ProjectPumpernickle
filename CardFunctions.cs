@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ProjectPumpernickle {
+﻿namespace ProjectPumpernickle {
     public static class CardFunctions {
         public static float Bash(Card c, int index) {
             var value = 0f;
@@ -501,8 +495,23 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float EVISCERATE_FREE_VALUE = 10f;
+        public static readonly float DISCARD_COMBO_BIAS = 1.2f;
+        // https://www.wolframalpha.com/input?i=sigmoid%28x+*+1.6%29
+        public static readonly float DISCARD_COMBO_SIGMOID_SLOPE = 1.6f;
+        public static readonly float EVISCERATE_VALUE_PER_STRENGTH = 0.3f;
+        public static float ChanceEviscerateFree() {
+            var nonEvisCards = Evaluators.SustainableCardDrawPerTurn() - 1f;
+            var avgDiscardTags = Save.state.cards.Select(x => x.setup.GetValueOrDefault(ScoreReason.Discard.ToString())).Average();
+            var discards = nonEvisCards * avgDiscardTags;
+            var sigmoidX = ((discards - 3) + DISCARD_COMBO_BIAS) * DISCARD_COMBO_SIGMOID_SLOPE;
+            var chance = PumpernickelMath.Sigmoid(sigmoidX);
+            return chance;
+        }
         public static float Eviscerate(Card c, int index) {
             var value = 0f;
+            value += ChanceEviscerateFree() * EVISCERATE_FREE_VALUE;
+            value += Evaluators.StrengthScaling() * EVISCERATE_VALUE_PER_STRENGTH;
             return value;
         }
         public static float Expertise(Card c, int index) {

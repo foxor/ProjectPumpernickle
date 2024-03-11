@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms.Design;
 
 namespace ProjectPumpernickle {
     internal static class Evaluators {
@@ -640,45 +641,33 @@ namespace ProjectPumpernickle {
             var floorsLeft = 55f - Save.state.floor_num;
             return 17f * (floorsLeft / 55f);
         }
-        public static IEnumerable<float> ExpectedFutureUpgradePowerMultipliers(float projectedCardAdds) {
+        public static IEnumerable<float> ExpectedFutureUpgradePowerDeltas(float projectedCardAdds) {
             var lastCard = (int)projectedCardAdds + 0.999f;
+            var normalCardUpgradeValueDelta = CardUpgradeValueDelta(1f, 1.3f, 0f);
+            var excellentCardUpgradeValueDelta = CardUpgradeValueDelta(2f, 1.8f, 0f);
             for (int i = 0; i < lastCard; i++) {
                 var t = i / (lastCard + 5f);
-                yield return Lerp.From(1.3f, 2f, t);
+                yield return Lerp.From(normalCardUpgradeValueDelta, excellentCardUpgradeValueDelta, t);
             }
-        }
-        public static float PowerMultiplierToMarginalDeckPowerImpact(float powerMultiplier) {
-            // Power multipliers are relative to the absence of a card
-            // When you draw a card, it isn't ever no card, therefore we want to model
-            // the increase in relative power gained by a specific multiplier verses
-            // a replacement card.
-            // x - 1 would be the power multiplier relative to the existing card, the marginal value
-            // is a gut feeling based on the quality of a mid-game deck's replacement card to
-            // the card being upgraded based on the upgrade multiplier above normal replacement rate.
-            var bonus = MathF.Max(0f, powerMultiplier - 1.3f);
-            var marginalGutFeelingPower = powerMultiplier - 1f;
-            return marginalGutFeelingPower + (bonus * 2f);
         }
         public static float UpgradeValueProportion(Evaluation evaluation) {
             var projectedCardAdds = EstimateFutureAddedCards();
-            var futureAddPowerMultipliers = ExpectedFutureUpgradePowerMultipliers(projectedCardAdds);
-            var presentPower = Save.state.cards
+            var futureAddUpgradeDeltas = ExpectedFutureUpgradePowerDeltas(projectedCardAdds);
+            var presentValue = Save.state.cards
                 .Where(x => x.upgrades > 0)
-                .Select(x => PowerMultiplierToMarginalDeckPowerImpact(x.upgradePowerMultiplier))
+                .Select(x => -Evaluators.EstimateDowngradeValue(x, x.evaluatedScore))
                 .Sum();
             var endOfAct = evaluation.Path.nodes.Length - 1;
             var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
-            var pendingUpgradesByPower = Save.state.cards
+            var pendingUpgradesByValue = Save.state.cards
                 .Where(CanBeUpgraded)
-                .Select(x => x.upgradePowerMultiplier)
-                .Where(x => x > 1)
-                .Concat(futureAddPowerMultipliers)
-                .Select(PowerMultiplierToMarginalDeckPowerImpact)
+                .Select(x => CardUpgradeValueDelta(x.evaluatedScore, x.upgradePowerMultiplier, x.upgradeBias))
+                .Concat(futureAddUpgradeDeltas)
                 .OrderByDescending(x => x);
-            var anticipatedPower = pendingUpgradesByPower.Take((int)futureUpgrades).Sum();
-            anticipatedPower += (futureUpgrades - (int)futureUpgrades) * pendingUpgradesByPower.Skip((int)futureUpgrades).First();
-            var totalPower = presentPower + anticipatedPower;
-            return totalPower / (totalPower + 20f);
+            var anticipatedValue = pendingUpgradesByValue.Take((int)futureUpgrades).Sum();
+            anticipatedValue += (futureUpgrades - (int)futureUpgrades) * pendingUpgradesByValue.Skip((int)futureUpgrades).First();
+            var totalValue = presentValue + anticipatedValue;
+            return totalValue / (totalValue + 7.5f);
         }
         public static float AverageCardsPlayedPerTurn() {
             return 3.5f;
@@ -707,10 +696,25 @@ namespace ProjectPumpernickle {
             return value;
         }
         public static float ExtraCardUpgradeValue(Card c, float value) {
-            var effectiveValue = MathF.Max(value, 1.5f);
-            value += effectiveValue * (c.upgradePowerMultiplier - 1f);
-            value += c.upgradeBias;
-            return value;
+            var delta = CardUpgradeValueDelta(value, c.upgradePowerMultiplier, c.upgradeBias);
+            return value + delta;
+        }
+        public static float CardUpgradeValueDelta(float value, float upgradePowerMultiplier, float upgradeBias) {
+            var effectiveValue = MathF.Max(value, 0.5f);
+            var delta = 0f;
+            delta += effectiveValue * (upgradePowerMultiplier - 1f);
+            delta += upgradeBias;
+            return delta;
+        }
+        public static float EstimateDowngradeValue(Card c, float upgradedValue) {
+            var estimate = upgradedValue - c.upgradeBias;
+            estimate /= c.upgradePowerMultiplier;
+            estimate -= upgradedValue;
+            var floor = (-0.5f * (c.upgradePowerMultiplier - 1f)) + c.upgradeBias;
+            if (estimate > floor) {
+                return floor;
+            }
+            return estimate;
         }
         public static float EstimateUsesPerFight(Card c) {
             if (c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
@@ -938,6 +942,9 @@ namespace ProjectPumpernickle {
                 return 1f;
             }
             return Lerp.From(1f, 0f, (Save.state.floor_num - 35) / 20f);
+        }
+        public static float StrengthScaling() {
+            return 0f;
         }
     }
 }

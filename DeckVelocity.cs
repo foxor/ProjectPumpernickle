@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class DeckVelocity : IGlobalRule {
-        public static readonly float MAX_VELOCITY_SCORE = 3f;
+        public static readonly float SHUFFLE_PER_TURN_VELOCITY_SCORE = 6f;
         public static readonly float MAX_SETUP_SCORE = 4f;
         public void Apply(Evaluation evaluation) {
             var setupCards = Evaluators.OneTimeDrawEffects();
@@ -17,9 +17,9 @@ namespace ProjectPumpernickle {
             var setupEnergy = Evaluators.ExtraPerFightEnergy();
             var sustainEnergy = Evaluators.PerTurnEnergy();
 
-            var permenantCards = Evaluators.PermanentCards().Count();
-            var sustainableDeckFraction = permenantCards / sustainCards;
-            evaluation.SetScore(ScoreReason.SustainableSpeed, sustainableDeckFraction * MAX_VELOCITY_SCORE);
+            var permenantCards = Evaluators.PermanentDeckSize();
+            var sustainableDeckFraction = sustainCards / permenantCards;
+            evaluation.SetScore(ScoreReason.SustainableSpeed, sustainableDeckFraction * SHUFFLE_PER_TURN_VELOCITY_SCORE);
 
             // t * sustainEnergy + setupEnergy = setupCost
             // t * sustainCards + setupCards = fullDeck

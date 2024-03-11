@@ -152,7 +152,7 @@ namespace ProjectPumpernickle {
             }
         }
 
-        public RichTextBuilder BuildEvaluationString(Evaluation evaluation, float[] winningScore) {
+        public RichTextBuilder BuildEvaluationString(Evaluation toDisplay, Evaluation winner) {
             var rtb = new RichTextBuilder();
             rtb.explanationText = new StringBuilder();
             rtb.sectionBegin = new List<int>();
@@ -160,29 +160,43 @@ namespace ProjectPumpernickle {
             rtb.sectionFontStyle = new List<FontStyle>();
             rtb.sectionColor = new List<SysColor>();
 
-            var index = PumpernickelAdviceWindow.instance.Evaluations.FirstIndexOf(x => x == evaluation);
+            var index = PumpernickelAdviceWindow.instance.Evaluations.FirstIndexOf(x => x == toDisplay);
 
             var name = IndexToComparative(index);
             rtb.AddSection(name, FontStyle.Bold, SysColor.Black);
-            rtb.explanationText.Append(" Score: " + evaluation.Score.ToString("n2"));
+            rtb.explanationText.Append(" Score: " + toDisplay.Score.ToString("n2"));
             if (index != 0) {
-                var deltaPoints = PumpernickelAdviceWindow.instance.Evaluations[0].Score - evaluation.Score;
+                var deltaPoints = PumpernickelAdviceWindow.instance.Evaluations[0].Score - toDisplay.Score;
                 rtb.explanationText.Append(" (");
                 rtb.AddSection("-" + deltaPoints.ToString("n4"), FontStyle.Regular, SysColor.Red);
                 rtb.explanationText.Append(") ");
             }
             rtb.explanationText.Append("\n");
-            rtb.explanationText.Append("ID: " + evaluation.Id + "\n");
-            rtb.explanationText.Append("Chance of off-ramp: " + evaluation.RiskRelevance.ToString("p2") + "\n");
-            rtb.explanationText.Append("Chance to survive this act: " + evaluation.Path.chanceToSurviveAct.ToString("p2") + "\n");
+            rtb.explanationText.Append("ID: " + toDisplay.Id + "\n");
+            rtb.explanationText.Append("Chance of off-ramp: " + toDisplay.RiskRelevance.ToString("p2"));
+            if (index != 0) {
+                var deltaChance = PumpernickelAdviceWindow.instance.Evaluations[0].RiskRelevance - toDisplay.RiskRelevance;
+                rtb.explanationText.Append(" (");
+                rtb.AddSection(deltaChance.ToString("n4"), FontStyle.Regular, SysColor.Red);
+                rtb.explanationText.Append(") ");
+            }
+            rtb.explanationText.Append("\n");
+            rtb.explanationText.Append("Chance to survive this act: " + toDisplay.Path.chanceToSurviveAct.ToString("p2"));
+            if (index != 0) {
+                var deltaChance = PumpernickelAdviceWindow.instance.Evaluations[0].Path.chanceToSurviveAct - toDisplay.Path.chanceToSurviveAct;
+                rtb.explanationText.Append(" (");
+                rtb.AddSection(deltaChance.ToString("n4"), FontStyle.Regular, SysColor.Red);
+                rtb.explanationText.Append(") ");
+            }
+            rtb.explanationText.Append("\n");
 
-            var advice = evaluation.ToString().Replace("\r", "");
+            var advice = toDisplay.ToString().Replace("\r", "");
             rtb.explanationText.Append(advice + "\n\n");
 
             rtb.AddSection("Score explanation", FontStyle.Italic, SysColor.Black);
             rtb.explanationText.Append(":\n");
 
-            AddScoreExplanation(rtb, evaluation, winningScore, index);
+            AddScoreExplanation(rtb, toDisplay, winner.Scores, index);
 
             rtb.explanationText.Append("\n\n\n");
             return rtb;
@@ -200,7 +214,7 @@ namespace ProjectPumpernickle {
             }
             var filtered = evaluations.Where(PumpernickelAdviceWindow.instance.EvalFitsCoords);
             filtered = mode switch {
-                ExplanationGroupMode.Reward => filtered.DistinctBy(x => x.RewardIndex),
+                ExplanationGroupMode.Reward => filtered.DistinctBy(x => (x.RewardIndex, x.Path.upgradeChosen)),
                 ExplanationGroupMode.Path => filtered.DistinctBy(x => x.Path.pathId),
                 ExplanationGroupMode.Ungrouped => filtered
             };
@@ -216,7 +230,7 @@ namespace ProjectPumpernickle {
                 evaluation.Scores[(int)ScoreReason.EVENT_SUM] = eventReasons.Select(x => evaluation.Scores[x]).Sum();
             }
             EvaluationLengths.Clear();
-            var explanationBuilders = Enumerable.Range(0, filteredArray.Length).Select(x => BuildEvaluationString(filteredArray[x], filteredArray[0].Scores)).ToArray();
+            var explanationBuilders = Enumerable.Range(0, filteredArray.Length).Select(x => BuildEvaluationString(filteredArray[x], filteredArray[0])).ToArray();
             for (var i = 0; i < explanationBuilders.Length; i++) {
                 explanationBuilders[i].startIndex = explanation.Text.Length;
                 var explanationText = explanationBuilders[i].explanationText;
