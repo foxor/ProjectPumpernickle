@@ -180,6 +180,11 @@ namespace ProjectPumpernickle {
             }
         }
     }
+    public class Synergy {
+        public string id;
+        public float valueMax;
+        public float divisorOffset;
+    }
     internal class Database {
         public static Database instance;
         public Card[] cards = null;
@@ -188,6 +193,7 @@ namespace ProjectPumpernickle {
         public Relic[] relics = null;
         public Event[] events = null;
         public Archetype[] archetypes = null;
+        public Synergy[] synergies = null;
 
         public Dictionary<string, Card> cardsDict = new Dictionary<string, Card>();
         public Dictionary<string, Monster> creatureDict = new Dictionary<string, Monster>();
@@ -195,6 +201,7 @@ namespace ProjectPumpernickle {
         public Dictionary<string, Relic> relicsDict = new Dictionary<string, Relic>();
         public Dictionary<string, Event> eventDict = new Dictionary<string, Event>();
         public Dictionary<string, Archetype> archetypeDict = new Dictionary<string, Archetype>();
+        public Dictionary<string, Synergy> synergyDict = new Dictionary<string, Synergy>();
 
         public Encounter[][] EasyPools = new Encounter[4][];
         public Encounter[][] HardPools = new Encounter[4][];
@@ -213,6 +220,9 @@ namespace ProjectPumpernickle {
             foreach (var archetype in archetypes) {
                 archetypeDict[archetype.id] = archetype;
                 archetype.OnLoad();
+            }
+            foreach (var synergy in synergies) {
+                synergyDict[synergy.id] = synergy;
             }
             var easyBuilder = new List<Encounter>[] {
                 new List<Encounter>(),

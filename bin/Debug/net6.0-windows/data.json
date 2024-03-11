@@ -10851,5 +10851,12 @@
             }
          }
       }
+   ],
+   "synergies": [
+      {
+         "id": "Discard",
+         "valueMax": 5.0,
+         "divisorOffset": 2.5,
+      }
    ]
 }

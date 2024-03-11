@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class SynergyBonuses : IGlobalRule {
-        public bool ShouldApply => true;
-
         public void Apply(Evaluation evaluation) {
             var totalSetup = new Dictionary<string, float>();
             var totalPayoff = new Dictionary<string, float>();
@@ -33,7 +31,9 @@ namespace ProjectPumpernickle {
                 if (totalSetup.TryGetValue(payoff.Key, out var setup)) {
                     var value = payoff.Value * setup;
                     var rewardReason = Enum.Parse<ScoreReason>(payoff.Key);
-                    evaluation.SetScore(rewardReason, value);
+                    var synergy = Database.instance.synergyDict[payoff.Key];
+                    var score = (value / (value + synergy.divisorOffset)) * synergy.valueMax;
+                    evaluation.SetScore(rewardReason, score);
                 }
                 else {
                     // Reward speculative synergy picks?  No for now
