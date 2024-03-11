@@ -34,12 +34,12 @@ namespace ProjectPumpernickle {
             return (float)shopValue * MAX_SHOP_VALUE;
         }
         public static float DeepEvaluationScoreDelta() {
-            var cardQuality = 0f;
+            var cardDelta = new float[Save.state.cards.Count];
             var relicQuality = 0f;
             for (int i = 0; i < Save.state.cards.Count; i++) {
                 var card = Save.state.cards[i];
                 var cardValue = EvaluationFunctionReflection.GetCardEvalFunctionCached(card.id)(card, i);
-                cardQuality += cardValue;
+                cardDelta[i] = cardValue - card.evaluatedScore;
             }
             for (int i = 0; i < Save.state.relics.Count; i++) {
                 var relicId = Save.state.relics[i];
@@ -47,7 +47,7 @@ namespace ProjectPumpernickle {
                 var relic = Database.instance.relicsDict[relicId];
                 relicQuality += EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
             }
-            var cardQualityDelta = cardQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.DeckQuality];
+            var cardQualityDelta = cardDelta.Sum();
             var relicQualityDelta = relicQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.RelicQuality];
             return cardQualityDelta + relicQualityDelta;
         }

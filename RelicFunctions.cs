@@ -657,7 +657,7 @@ namespace ProjectPumpernickle {
         }
         public static float PyramidAnswerConsistencyBonus() {
             var answerScore = Evaluation.Active.InternalScores[(int)ScoreReason.GoodAnswers];
-            return answerScore / (answerScore + 1.5f);
+            return MathF.Max(0f, (answerScore / (answerScore + 1.5f) * 2f) - 1);
         }
         public static float PyramidHandComboBonus() {
             var synergyPayoffs = Save.state.cards
@@ -665,7 +665,7 @@ namespace ProjectPumpernickle {
                 .Merge()
                 .Distinct();
             var synergyScore = synergyPayoffs.Select(x => Evaluation.Active.InternalScores[(int)x]).Sum();
-            return synergyScore / (synergyScore + 0.8f);
+            return MathF.Max(0f, (2f * synergyScore / (synergyScore + 0.8f)) - 1);
         }
         public static readonly int PYRAMID_WORST_CARDS_HELD_WHILE_SHUFFLING = 5;
         public static float PyramidShuffleDensityBonus() {
@@ -683,13 +683,13 @@ namespace ProjectPumpernickle {
             var shuffleDeckScore = shuffleCards.Select(x => x.evaluatedScore).Sum();
             var scorePerShuffledCard = shuffleDeckScore / shuffledCardCount;
             var shuffleDeckAverageScoreDelta = scorePerShuffledCard - scorePerCard;
-            return shuffleDeckAverageScoreDelta / (shuffleDeckAverageScoreDelta + 0.3f);
+            return MathF.Max(0f, (2f * shuffleDeckAverageScoreDelta / (shuffleDeckAverageScoreDelta + 0.3f)) - 1);
         }
         public static float RunicPyramid(Relic r) {
-            var value = 0f;
-            value += PyramidAnswerConsistencyBonus() * 6f;
-            value += PyramidHandComboBonus() * 6f;
-            value += PyramidShuffleDensityBonus() * 6f;
+            var value = r.bias;
+            value += PyramidAnswerConsistencyBonus() * 4f;
+            value += PyramidHandComboBonus() * 4f;
+            value += PyramidShuffleDensityBonus() * 4f;
             return value;
         }
         public static float SacredBark(Relic r) {

@@ -359,8 +359,11 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static float BANE_POISON_VALUE = 0.8f;
         public static float Bane(Card c, int index) {
             var value = 0f;
+            var poisonCards = Save.state.cards.Where(x => x.tags.ContainsKey(Tags.Poison.ToString())).Count();
+            value += poisonCards / (poisonCards + 1);
             return value;
         }
         public static float BladeDance(Card c, int index) {
@@ -463,8 +466,19 @@ namespace ProjectPumpernickle {
             var value = 0f;
             return value;
         }
+        public static readonly float CONCENTRATE_VALUE_OFFSET = 0.8f;
+        public static readonly float CONCENTRATE_EXCESS_COST_VALUE = 2f;
+        public static readonly float CONCENTRATE_EXCESS_DRAW_VALUE = 0.5f;
         public static float Concentrate(Card c, int index) {
             var value = 0f;
+            value += CONCENTRATE_VALUE_OFFSET * Evaluators.SpeculationAppropriateness();
+            var excessPlayableEnergy = Evaluators.ExcessHandCardEnergy();
+            var excessEnergyUsefulnessRate = MathF.Max(0f, (excessPlayableEnergy / (excessPlayableEnergy + 2f)) - 0.5f);
+            value += excessEnergyUsefulnessRate * CONCENTRATE_EXCESS_COST_VALUE;
+            var handRoom = Evaluators.HandRoom();
+            var drawPerTurn = Evaluators.SustainableCardDrawPerTurn();
+            var overDraw = MathF.Max(0f, drawPerTurn - handRoom);
+            value += overDraw * CONCENTRATE_EXCESS_DRAW_VALUE;
             return value;
         }
         public static float CripplingPoison(Card c, int index) {

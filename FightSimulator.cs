@@ -140,7 +140,7 @@ namespace ProjectPumpernickle {
             }
             totalDamagePerTurn /= totalSignificance;
 
-            var turnDensity = Evaluators.AverageCardsPerTurn() / Save.state.cards.Count;
+            var turnDensity = Evaluators.AverageCardsPlayedPerTurn() / Save.state.cards.Count;
             foreach (var card in Save.state.CardsJustChosen()) {
                 card.tags.TryGetValue(Tags.Damage.ToString(), out var damage);
                 // assume 100% drawn played rate for newly picked cards

@@ -15,7 +15,7 @@ namespace ProjectPumpernickle {
         public static float BackToBasics(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float OldBeggar(Event e, int floorsFromNow) {
+        public static float Beggar(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float BigFish(Event e, int floorsFromNow) {

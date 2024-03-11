@@ -60,6 +60,9 @@ namespace ProjectPumpernickle {
                 return true;
             });
         }
+        public static IEnumerable<Card> NonpermanentCards() {
+            return Save.state.cards.Except(PermanentCards());
+        }
         public static float PermanentDeckSizeOffset() {
             var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
             return Save.state.cards.Select(x => {
@@ -95,6 +98,24 @@ namespace ProjectPumpernickle {
             }).Sum();
         }
 
+        public static float OneTimeDrawEffects() {
+            return NonpermanentCards().Select(x => x.tags.GetValueOrDefault(Tags.CardDraw.ToString())).Sum();
+        }
+        public static float SustainableCardDrawPerTurn() {
+            var drawEfficiency = PermanentCards().Select(x => x.tags.GetValueOrDefault(Tags.CardDraw.ToString()) / (x.intCost + 1f)).Where(x => x > 0);
+            var canShuffleEveryDraw = PermanentDeckSize() < 11f;
+            var averageDrawEfficiency = 0f;
+            if (canShuffleEveryDraw) {
+                averageDrawEfficiency = drawEfficiency.OrderByDescending(x => x).Take(2).Average();
+            }
+            else {
+                averageDrawEfficiency = drawEfficiency.Average();
+            }
+            var energySpentOnCardDraw = PerTurnEnergy() / 5f;
+            var drawPerEnergy = averageDrawEfficiency * 2f; // "reversing" the divide by 0 hack above
+            return (drawPerEnergy * energySpentOnCardDraw) + 5;
+        }
+
         public static int ExtraPerFightEnergy() {
             return 0;
         }
@@ -102,9 +123,18 @@ namespace ProjectPumpernickle {
         public static float PerTurnEnergy() {
             return 3f;
         }
+        public static float ExcessHandCardEnergy() {
+            return AverageCostOfHand() - PerTurnEnergy();
+        }
 
         public static IEnumerable<Card> GetCardDrawCards() {
             return Save.state.cards.Where(x => x.tags.ContainsKey(Tags.CardDraw.ToString()) && (x.intCost != -1));
+        }
+        public static float HandRoom() {
+            if (Save.state.relics.Contains("Runic Pyramid")) {
+                return 3f;
+            }
+            return 5f;
         }
 
         public static bool HasCalmEnter() {
@@ -629,28 +659,28 @@ namespace ProjectPumpernickle {
             var marginalGutFeelingPower = powerMultiplier - 1f;
             return marginalGutFeelingPower + (bonus * 2f);
         }
-        // Roughly: https://www.wolframalpha.com/input?i=x%2F%28x%2B10%29+from+0+to+30
         public static float UpgradeValueProportion(Evaluation evaluation) {
-            var projectedCardAdds = Evaluators.EstimateFutureAddedCards();
+            var projectedCardAdds = EstimateFutureAddedCards();
             var futureAddPowerMultipliers = ExpectedFutureUpgradePowerMultipliers(projectedCardAdds);
-            var cardsByPower = Save.state.cards
+            var presentPower = Save.state.cards
+                .Where(x => x.upgrades > 0)
+                .Select(x => PowerMultiplierToMarginalDeckPowerImpact(x.upgradePowerMultiplier))
+                .Sum();
+            var endOfAct = evaluation.Path.nodes.Length - 1;
+            var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
+            var pendingUpgradesByPower = Save.state.cards
+                .Where(CanBeUpgraded)
                 .Select(x => x.upgradePowerMultiplier)
                 .Where(x => x > 1)
                 .Concat(futureAddPowerMultipliers)
                 .Select(PowerMultiplierToMarginalDeckPowerImpact)
                 .OrderByDescending(x => x);
-            var totalPower = cardsByPower.Sum();
-            var endOfAct = evaluation.Path.nodes.Length - 1;
-            var futureUpgrades = endOfAct >= 0 ? evaluation.Path.expectedUpgrades[endOfAct] : 0;
-            var presentUpgrades = Save.state.cards.Select(x => x.upgrades).Sum();
-            var fullUpgrades = futureUpgrades + presentUpgrades;
-            var gainedPower = cardsByPower.Take((int)fullUpgrades).Sum();
-            gainedPower += (fullUpgrades - (int)fullUpgrades) * cardsByPower.Skip((int)fullUpgrades).First();
-            var missingPower = totalPower - gainedPower;
-            var denominator = (totalPower * .3f) + (missingPower * 1.5f);
-            return gainedPower / denominator;
+            var anticipatedPower = pendingUpgradesByPower.Take((int)futureUpgrades).Sum();
+            anticipatedPower += (futureUpgrades - (int)futureUpgrades) * pendingUpgradesByPower.Skip((int)futureUpgrades).First();
+            var totalPower = presentPower + anticipatedPower;
+            return totalPower / (totalPower + 20f);
         }
-        public static float AverageCardsPerTurn() {
+        public static float AverageCardsPlayedPerTurn() {
             return 3.5f;
         }
         public static float AverageCardsPerFight() {
@@ -666,6 +696,11 @@ namespace ProjectPumpernickle {
                 value += LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY * extraCost;
             }
             value += c.bias;
+            foreach (var combo in c.combo) {
+                if (Save.state.cards.Any(x => x.id.Equals(combo.Key))) {
+                    value += combo.Value;
+                }
+            }
             if (c.upgrades > 0) {
                 value = EvaluationFunctionReflection.GetUpgradeFunctionCached(c.id)(c, index, value);
             }
@@ -820,14 +855,20 @@ namespace ProjectPumpernickle {
                 yield return i;
             }
         }
+        public static bool CanBeUpgraded(Card card) {
+            if (card.cardType == CardType.Curse) {
+                return false;
+            }
+            if (card.upgrades > 0 && card.id != "Searing Blow") {
+                return false;
+            }
+            return true;
+        }
         public static IEnumerable<int> ReasonableUpgradeTargets() {
             List<string> considered = new List<string>();
             for (int i = 0; i < Save.state.cards.Count; i++) {
                 var card = Save.state.cards[i];
-                if (card.cardType == CardType.Curse) {
-                    continue;
-                }
-                if (card.upgrades > 0 && card.id != "Searing Blow") {
+                if (!CanBeUpgraded(card)) {
                     continue;
                 }
                 var hasConsidered = considered.Contains(card.id);
@@ -871,6 +912,10 @@ namespace ProjectPumpernickle {
                 return 3f;
             }
         }
+        public static float AverageCostOfHand() {
+            var averageHandSize = SustainableCardDrawPerTurn();
+            return Save.state.cards.Select(AverageCost).Average() * averageHandSize;
+        }
         public static float DensityOfRarity(Color color, Rarity rarity) {
             // Does this matter?
             // If so, pre-compute it on library load
@@ -884,6 +929,15 @@ namespace ProjectPumpernickle {
         public static int PercentHealthDamage(float pct) {
             var attempted = (int)(Save.state.max_health * pct + 0.9999);
             return attempted;
+        }
+        public static float SpeculationAppropriateness() {
+            if (Save.state.floor_num < 10) {
+                return Save.state.floor_num / 10f;
+            }
+            if (Save.state.floor_num < 35) {
+                return 1f;
+            }
+            return Lerp.From(1f, 0f, (Save.state.floor_num - 35) / 20f);
         }
     }
 }

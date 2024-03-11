@@ -195,7 +195,6 @@
          "bias": 1.0,
          "upgradePowerMultiplier": 1.9,
          "tags": {
-            "CardDraw": 2,
             "PickLimit": 2,
          },
       },
@@ -210,7 +209,6 @@
          "mod":"Slay the Spire",
          "bias": 0.7,
          "tags": {
-            "CardDraw": 1
          },
          "upgradePowerMultiplier": 1.2,
       },
@@ -1083,6 +1081,8 @@
          "mod":"Slay the Spire",
          "bias": 1.2,
          "upgradePowerMultiplier": 2,
+         "tags": {
+         },
          "setup": {
             "Discard": 1,
          }
@@ -1110,6 +1110,9 @@
          "mod":"Slay the Spire",
          "bias": -1,
          "upgradePowerMultiplier": 1.5,
+         "combo": {
+            "Envenom": 2.5,
+         }
       },
       {
          "id":"Blade Dance",
@@ -1173,6 +1176,9 @@
          "mod":"Slay the Spire",
          "bias": -0.3,
          "upgradePowerMultiplier": 1.3,
+         "tags": {
+            "Poison": 7,
+         }
       },
       {
          "id":"Deflect",
@@ -1250,6 +1256,9 @@
          "mod":"Slay the Spire",
          "bias": -0.3,
          "upgradePowerMultiplier": 1.3,
+         "tags": {
+            "Poison": 4,
+         }
       },
       {
          "id":"Prepared",
@@ -1383,6 +1392,9 @@
          "mod":"Slay the Spire",
          "bias": 0.8,
          "upgradePowerMultiplier": 1.5,
+         "tags": {
+            "Poison": 8,
+         }
       },
       {
          "id":"Calculated Gamble",
@@ -1464,6 +1476,9 @@
          "mod":"Slay the Spire",
          "bias": -0.3,
          "upgradePowerMultiplier": 1.4,
+         "tags": {
+            "Poison": 7,
+         }
       },
       {
          "id":"Dash",
@@ -1638,6 +1653,9 @@
          "mod":"Slay the Spire",
          "bias": 0.6,
          "upgradePowerMultiplier": 1.4,
+         "tags": {
+            "Poison": 10,
+         }
       },
       {
          "id":"Predator",
@@ -1824,6 +1842,9 @@
          "mod":"Slay the Spire",
          "bias": -0.4,
          "upgradePowerMultiplier": 1.1,
+         "tags": {
+            "Poison": 6,
+         }
       },
       {
          "id":"Die Die Die",
@@ -1860,6 +1881,9 @@
          "mod":"Slay the Spire",
          "bias": -1,
          "upgradePowerMultiplier": 2,
+         "tags": {
+            "Poison": 12,
+         }
       },
       {
          "id":"Glass Knife",
@@ -3542,7 +3566,6 @@
          "description":"Deal 15 (20) damage.\nDraw 2 cards.",
          "mod":"Slay the Spire",
          "tags": {
-            "CardDraw": 2.0,
          },
          "bias": 0,
          "upgradePowerMultiplier": 1.3,
@@ -4048,7 +4071,6 @@
          "bias": 2.8,
          "upgradePowerMultiplier": 2,
          "tags": {
-            "CardDraw": 2,
          },
       },
       {
@@ -9360,12 +9382,12 @@
          "bias": 3.0,
       },
       {
-         "name":"Old Beggar",
+         "name":"Beggar",
          "acts":[
             2
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:Old Beggar",
+         "id":"slaythespire:Beggar",
          "description":"[Offer Gold (requires 75 gold)] 75 Gold: Remove a card from your deck.\n[Leave] ",
          "colouredDesc":"\u001b[2;37m[Offer Gold \u001b[0;2m(requires 75 gold)\u001b[2;37m] \u001b[2;33m75 Gold: \u001b[2;32mRemove a card from your deck.\n\u001b[2;37m[Leave\u001b[2;37m] ",
          "character":"",

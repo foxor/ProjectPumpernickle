@@ -29,6 +29,7 @@ namespace ProjectPumpernickle {
         ExhaustCost,
         Unpurgeable,
         PickLimit,
+        Poison,
     }
     public enum Color {
         Red,
@@ -68,6 +69,7 @@ namespace ProjectPumpernickle {
         public Dictionary<string, float> setup;
         public Dictionary<string, float> payoff;
         public Dictionary<string, float> goodAgainst;
+        public Dictionary<string, float> combo;
 
         public void MergeWithDatabaseCard(Card fromDatabase) {
             this.name = fromDatabase.name;
@@ -91,6 +93,7 @@ namespace ProjectPumpernickle {
             this.setup = fromDatabase.setup;
             this.payoff = fromDatabase.payoff;
             this.goodAgainst = fromDatabase.goodAgainst;
+            this.combo = fromDatabase.combo;
         }
 
         public void OnLoad() {
@@ -105,6 +108,9 @@ namespace ProjectPumpernickle {
             }
             if (goodAgainst == null) {
                 goodAgainst = new Dictionary<string, float>();
+            }
+            if (combo == null) {
+                combo = new Dictionary<string, float>();
             }
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
@@ -126,6 +132,11 @@ namespace ProjectPumpernickle {
             }
             else {
                 intCost = int.MaxValue;
+            }
+            var drawRegex = new Regex(@"Draw (\d+) (\((\d+)\) )?card");
+            var drawMatch = drawRegex.Match(description);
+            if (drawMatch.Success) {
+                tags[Tags.CardDraw.ToString()] = float.Parse(drawMatch.Groups[upgrades == 0 ? 1 : 2].Value);
             }
 
             switch (type) {

@@ -33,7 +33,7 @@ namespace ProjectPumpernickle {
         AccursedBlacksmith,
         Addict,
         BackToBasics,
-        OldBeggar,
+        Beggar,
         BigFish,
         BonfireSpirits,
         DeadAdventurer,
@@ -95,6 +95,8 @@ namespace ProjectPumpernickle {
         GoodAnswers,
         Discard,
         PathOptions,
+        SustainableSpeed,
+        SetupSpeed,
         COUNT,
     }
     public class Evaluation {

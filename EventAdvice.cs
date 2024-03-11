@@ -35,8 +35,19 @@ namespace ProjectPumpernickle {
         public static void BackToBasics(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
-        public static void OldBeggar(IEnumerable<string> arguments) {
-            Advice.AdviseOnReward(RewardOption.BuildEvent());
+        public static void Beggar(IEnumerable<string> arguments) {
+            var validRemoveOptions = Evaluators.ReasonableRemoveTargets();
+            var validUpgradeOptions = Evaluators.ReasonableUpgradeTargets();
+            var removeOptions = validRemoveOptions.Select(x => new RewardOptionPart() {
+                advice = "Offer gold.  Remove: " + Save.state.cards[x].name,
+                eventCost = "75",
+                value = "REMOVE_CARD: " + x
+            });
+            var leaveOption = new RewardOptionPart() {
+                advice = "Leave",
+                value = EventRewardElement.None.ToString(),
+            };
+            Advice.AdviseOnReward(RewardOption.BuildEvent(removeOptions.Append(leaveOption).ToArray()));
         }
         public static void BigFish(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent(
@@ -77,7 +88,21 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void ForgottenAltar(IEnumerable<string> arguments) {
-            Advice.AdviseOnReward(RewardOption.BuildEvent());
+            Advice.AdviseOnReward(RewardOption.BuildEvent(
+                /*new RewardOptionPart() {
+                    advice = "Get bloody idol",
+                },*/
+                new RewardOptionPart() {
+                    advice = "Sacrifice",
+                    value = EventRewardElement.MAX_HP + ": 5",
+                    hpCost = Evaluators.PercentHealthDamage(.35f),
+                },
+                new RewardOptionPart() {
+                    advice = "Desecrate",
+                    value = EventRewardElement.None.ToString(),
+                    eventCost = "DECAY",
+                }
+            ));
         }
         public static void TheDivineFountain(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());

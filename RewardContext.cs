@@ -114,12 +114,12 @@ namespace ProjectPumpernickle {
                 switch (rewardGroup.rewardType) {
                     case RewardType.Cards: {
                         var cardData = Database.instance.cardsDict[chosenId];
-                        addedCardIndicies.Add(Save.state.AddCardById(chosenId));
+                        addedCardIndicies.Add(Save.state.AddCardById(chosen));
                         if (cardData.tags.TryGetValue(Tags.Damage.ToString(), out var damage)) {
-                            Save.state.addedDamagePerTurn = damage / Save.state.cards.Count() * Evaluators.AverageCardsPerTurn();
+                            Save.state.addedDamagePerTurn = damage / Save.state.cards.Count() * Evaluators.AverageCardsPlayedPerTurn();
                         }
                         if (cardData.tags.TryGetValue(Tags.Block.ToString(), out var block)) {
-                            Save.state.addedBlockPerTurn = block / Save.state.cards.Count() * Evaluators.AverageCardsPerTurn();
+                            Save.state.addedBlockPerTurn = block / Save.state.cards.Count() * Evaluators.AverageCardsPlayedPerTurn();
                         }
                         Save.state.AddChoosingNow(chosenId);
                         description.Add("Take the " + cardData.name);
@@ -431,6 +431,10 @@ namespace ProjectPumpernickle {
                 }
                 case "SHAME": {
                     addedCardIndicies.Add(Save.state.AddCardById("Shame"));
+                    break;
+                }
+                case "DECAY": {
+                    addedCardIndicies.Add(Save.state.AddCardById("Decay"));
                     break;
                 }
                 case "PERCENT_DAMAGE": {
