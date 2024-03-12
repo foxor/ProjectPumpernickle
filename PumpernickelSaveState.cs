@@ -98,6 +98,39 @@ namespace ProjectPumpernickle {
             this.archetypes = fromDatabase.archetypes;
         }
 
+        public void ParseDescription() {
+            // FIXME: we should split the card and the upgraded card at database load time
+            tags = tags.ToDictionary(x => x.Key, x => x.Value);
+            var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
+            var damageMatch = damageRegex.Match(description);
+            if (damageMatch.Success) {
+                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[upgrades == 0 ? 1 : 3].Value);
+            }
+            var blockRegex = new Regex(@"Gain (\d+) (\((\d+)\) )?Block");
+            var blockMatch = blockRegex.Match(description);
+            if (blockMatch.Success) {
+                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[upgrades == 0 ? 1 : 3].Value);
+            }
+            if (description.Contains("Weak") && !tags.ContainsKey(Tags.Block.ToString())) {
+                tags[Tags.Block.ToString()] = 1f;
+            }
+            var costRegex = new Regex(@"(\d+)( \((\d+)\))?");
+            var costMatch = costRegex.Match(cost);
+            if (costMatch.Success) {
+                var upgradeCostRegexGroup = costMatch.Groups[2].Length > 0 ? 3 : 1;
+                var groupIndex = upgrades == 0 ? 1 : upgradeCostRegexGroup;
+                intCost = int.Parse(costMatch.Groups[groupIndex].Value);
+            }
+            else {
+                intCost = int.MaxValue;
+            }
+            var drawRegex = new Regex(@"Draw (\d+) (\((\d+)\) )?card");
+            var drawMatch = drawRegex.Match(description);
+            if (drawMatch.Success) {
+                tags[Tags.CardDraw.ToString()] = float.Parse(drawMatch.Groups[upgrades == 0 ? 1 : 3].Value);
+            }
+        }
+
         public void OnLoad() {
             if (tags == null) {
                 tags = new Dictionary<string, float>();
@@ -116,32 +149,6 @@ namespace ProjectPumpernickle {
             }
             if (archetypes == null) {
                 archetypes = new List<ArchetypeMembership>();
-            }
-            var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
-            var damageMatch = damageRegex.Match(description);
-            if (damageMatch.Success) {
-                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[upgrades == 0 ? 1 : 2].Value);
-            }
-            var blockRegex = new Regex(@"Gain (\d+) (\((\d+)\) )?Block");
-            var blockMatch = blockRegex.Match(description);
-            if (blockMatch.Success) {
-                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[upgrades == 0 ? 1 : 2].Value);
-            }
-            if (description.Contains("Weak") && !tags.ContainsKey(Tags.Block.ToString())) {
-                tags[Tags.Block.ToString()] = 1f;
-            }
-            var costRegex = new Regex(@"(\d+) ?(\((\d+)\) )?");
-            var costMatch = costRegex.Match(cost);
-            if (costMatch.Success) {
-                intCost = int.Parse(costMatch.Groups[upgrades == 0 ? 1 : 2].Value);
-            }
-            else {
-                intCost = int.MaxValue;
-            }
-            var drawRegex = new Regex(@"Draw (\d+) (\((\d+)\) )?card");
-            var drawMatch = drawRegex.Match(description);
-            if (drawMatch.Success) {
-                tags[Tags.CardDraw.ToString()] = float.Parse(drawMatch.Groups[upgrades == 0 ? 1 : 2].Value);
             }
 
             switch (type) {
@@ -328,7 +335,7 @@ namespace ProjectPumpernickle {
         public PlayerCharacter character;
         public MapNode[,,] map = new MapNode[4, MAX_MAP_X, MAX_MAP_Y];
         public float infiniteBlockPerCard;
-        public float infiniteMaxSize;
+        public int infiniteMaxSize;
         public bool infiniteDoesDamage;
         public int earliestInfinite;
         public bool buildingInfinite;
@@ -413,6 +420,9 @@ namespace ProjectPumpernickle {
                 misc = 0
             };
             card.MergeWithDatabaseCard(Database.instance.cardsDict[card.id]);
+            if (upgrades > 0) {
+                card.ParseDescription();
+            }
             card.isNew = true;
             cards.Add(card);
             return cards.Count - 1;
@@ -505,6 +515,7 @@ namespace ProjectPumpernickle {
         public void OnLoad() {
             foreach (var card in cards) {
                 card.MergeWithDatabaseCard(Database.instance.cardsDict[card.id]);
+                card.ParseDescription();
             }
         }
         public MapNode[] Act4() {

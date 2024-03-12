@@ -946,5 +946,11 @@ namespace ProjectPumpernickle {
         public static float StrengthScaling() {
             return 0f;
         }
+        public static float HighestZeroCostDamage() {
+            if (Save.state.cards.Any(x => x.id.Equals("Eviscerate"))) {
+                return 27f;
+            }
+            return 0f;
+        }
     }
 }
