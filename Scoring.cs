@@ -6,9 +6,16 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using static ProjectPumpernickle.Path;
 
 namespace ProjectPumpernickle {
+    public enum GlobalRuleEvaluationTiming {
+        VeryEarly,
+        PrePathExploration,
+        PreCardEvaluation,
+    }
     public interface IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing { get; }
         public void Apply(Evaluation evaluation);
     }
     internal class Scoring {
@@ -17,21 +24,45 @@ namespace ProjectPumpernickle {
         protected static IGlobalRule[] GlobalRules;
         static Scoring() {
             var globalRuleTypes = typeof(Scoring).Assembly.GetTypes().Where(x => typeof(IGlobalRule).IsAssignableFrom(x) && typeof(IGlobalRule) != x);
-            GlobalRules = globalRuleTypes.Select(x => (IGlobalRule)Activator.CreateInstance(x)).ToArray();
+            GlobalRules = globalRuleTypes
+                .OrderBy(x => x.Name)
+                .Select(x => (IGlobalRule)Activator.CreateInstance(x)).ToArray();
         }
-        public static void EvaluateGlobalRules(Evaluation evaluation) {
+        public static void EvaluateGlobalRules(Evaluation evaluation, GlobalRuleEvaluationTiming timing) {
             foreach (var globalRule in GlobalRules) {
-                globalRule.Apply(evaluation);
+                if (globalRule.Timing == timing) {
+                    globalRule.Apply(evaluation);
+                }
             }
         }
-        public static readonly float MAX_SHOP_VALUE = 5f;
-        public static float PointsForShop(float goldBrought) {
-            if (goldBrought < 180f) {
-                return 0f;
+        public static float GoldToEfficientGold(GoldShopPlan goldPlan) {
+            switch (goldPlan.Plan) {
+                case PathShopPlan.FixFight: {
+                    return Evaluation.Active.Path.FixShopPoint((int)goldPlan.Gold);
+                }
+                case PathShopPlan.MaxRemove: {
+                    return Evaluation.Active.Path.CardRemovePoints((int)goldPlan.Gold);
+                }
+                case PathShopPlan.HuntForShopRelic: {
+                    return Evaluation.Active.Path.HuntForShopRelicPoint((int)goldPlan.Gold);
+                }
+                case PathShopPlan.SaveGold: {
+                    return 0f;
+                }
+                case PathShopPlan.NormalShop: {
+                    return Evaluation.Active.Path.NormalShopPoint((int)goldPlan.Gold);
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
             }
-            // https://www.wolframalpha.com/input?i=1+-+%281+%2F+%281+%2B+%28%28x+-+180%29+%2F+360%29%29%29+from+0+to+1000
-            var shopValue = 1f - (1f / (1 + ((goldBrought - 180f) / 360f)));
-            return (float)shopValue * MAX_SHOP_VALUE;
+        }
+        // 9 is our "points budget" for gold, so target that.
+        // I'm guessing you spend 750 gold "efficiently?"
+        public static readonly float POINT_PER_EFFICIENT_GOLD = 9f/750f;
+        public static float GoldPlanToPoints(GoldShopPlan goldPlan) {
+            var efficientGoldSpent = GoldToEfficientGold(goldPlan);
+            return efficientGoldSpent * POINT_PER_EFFICIENT_GOLD;
         }
         public static float DeepEvaluationScoreDelta() {
             var cardDelta = new float[Save.state.cards.Count];
@@ -208,6 +239,7 @@ namespace ProjectPumpernickle {
         protected static float ScoreValueOfRelic(Relic relicAdded) {
             var pointDelta = 0f;
             Save.state.relics.Add(relicAdded.id);
+            Save.state.relic_counters.Add(0);
             var addedIndex = Save.state.relics.Count - 1;
             var cardQuality = 0f;
             var relicQuality = 0f;
@@ -223,6 +255,7 @@ namespace ProjectPumpernickle {
                 relicQuality += EvaluationFunctionReflection.GetRelicEvalFunctionCached(relic.id)(relic);
             }
             Save.state.relics.RemoveAt(addedIndex);
+            Save.state.relic_counters.RemoveAt(addedIndex);
             pointDelta += cardQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.DeckQuality];
             pointDelta += relicQuality - Evaluation.Active.InternalScores[(byte)ScoreReason.RelicQuality];
             return pointDelta;
@@ -306,7 +339,7 @@ namespace ProjectPumpernickle {
 
             // This does incorporate future act points, because otherwise we might misbehave
             var goldBrought = path.ExpectedGoldBroughtToShops();
-            evaluation.SetScore(ScoreReason.BringGoldToShop, goldBrought.Select(PointsForShop).Sum());
+            evaluation.SetScore(ScoreReason.GoldEfficiency, goldBrought.Select(GoldPlanToPoints).Sum());
 
             var wingedBootChargesLeft = Math.Max(Evaluators.WingedBootsChargesLeft(), 0) - path.jumps;
             var actsLeft = Math.Max(3 - Save.state.act_num, 0);
@@ -325,10 +358,6 @@ namespace ProjectPumpernickle {
             if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && !path.ContainsGuaranteedChest()) {
                 evaluation.SetScore(ScoreReason.MissingKey, float.MinValue);
             }
-
-            if (Save.state.badBottle) {
-                evaluation.SetScore(ScoreReason.BadBottle, -5f);
-            }
         }
         public static void ScoreUpgrades(Evaluation evaluation) {
             evaluation.SetScore(ScoreReason.Upgrades, 40f * Evaluators.UpgradeValueProportion(evaluation));
@@ -337,7 +366,7 @@ namespace ProjectPumpernickle {
             // Order is important here
             // card and relic evaluations can depend on global rules
             // future card and relic evaluations depend on current evaluations heavily
-            EvaluateGlobalRules(evaluation);
+            EvaluateGlobalRules(evaluation, GlobalRuleEvaluationTiming.PreCardEvaluation);
             ScorePath(evaluation);
             var totalCardScore = 0f;
             for (int i = 0; i < Save.state.cards.Count; i++) {

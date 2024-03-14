@@ -127,7 +127,9 @@ namespace ProjectPumpernickle {
             var drawRegex = new Regex(@"Draw (\d+) (\((\d+)\) )?card");
             var drawMatch = drawRegex.Match(description);
             if (drawMatch.Success) {
-                tags[Tags.CardDraw.ToString()] = float.Parse(drawMatch.Groups[upgrades == 0 ? 1 : 3].Value);
+                var drawRegexGroup = drawMatch.Groups[2].Length > 0 ? 3 : 1;
+                var groupIndex = upgrades == 0 ? 1 : drawRegexGroup;
+                tags[Tags.CardDraw.ToString()] = float.Parse(drawMatch.Groups[drawRegexGroup].Value);
             }
         }
 
@@ -389,7 +391,6 @@ namespace ProjectPumpernickle {
             chanceOfOutcome = original.chanceOfOutcome;
             addedDamagePerTurn = original.addedDamagePerTurn;
             addedBlockPerTurn = original.addedBlockPerTurn;
-            badBottle = original.badBottle;
 
             // intentionally shared
             event_chances = original.event_chances;

@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class PunishSkillsIntoNob : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+
         public static readonly float FULL_PUNISHMENT = -20f;
         public static readonly float PCT_SKILLS_NO_PUNISH = 0.3f;
         void IGlobalRule.Apply(Evaluation evaluation) {

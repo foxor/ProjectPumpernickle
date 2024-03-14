@@ -11,6 +11,7 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -272,7 +273,6 @@ namespace ProjectPumpernickle {
 
         public void InitArrays() {
             remainingFloors = 56 - Save.state.floor_num;
-            Threats = new Dictionary<string, float>();
             expectedGold = new float[remainingFloors];
             plannedCardRemove = new bool[remainingFloors];
             minPlanningGold = new int[remainingFloors];
@@ -360,7 +360,7 @@ namespace ProjectPumpernickle {
             for (int i = 0; i < nodes.Length; i++) {
                 if (nodes[i].nodeType == NodeType.Shop && minPlanningGold[i] > removeCost) {
                     var maxPlanningGold = expectedGold[i] - (expectedGold[i] -  minPlanningGold[i]);
-                    var removeAvailableChance = Lerp.Inverse(minPlanningGold[i], maxPlanningGold, removeCost);
+                    var removeAvailableChance = 1f - Lerp.Inverse(minPlanningGold[i], maxPlanningGold, removeCost);
                     removeCost += 25f * removeAvailableChance;
                     totalRemoves += removeAvailableChance;
                 }
@@ -935,7 +935,9 @@ namespace ProjectPumpernickle {
         protected float ExpectedGoldSpend(int index) {
             var expectedGoldForFloor = index > 0 ? expectedGold[index - 1] : Save.state.gold;
             var minGoldForFloor = index > 0 ? minPlanningGold[index - 1] : Save.state.gold;
-            switch (shortTermShopPlan) {
+            var thisAct = index < nodes.Length;
+            var shopPlan = thisAct ? shortTermShopPlan : PathShopPlan.NormalShop;
+            switch (shopPlan) {
                 case PathShopPlan.MaxRemove: {
                     var removeCost = Save.state.purgeCost;
                     var previousRemoves = index == 0 ? 0 : plannedCardRemove.Take(index).Select(b => b ? 1 : 0).Aggregate((acc, x) => acc + x);
@@ -1023,25 +1025,94 @@ namespace ProjectPumpernickle {
             }
             return 0f;
         }
-        public static readonly float NORMAL_SHOP_BASELINE = 100f;
-        public float NormalShopPoint() {
-            return NORMAL_SHOP_BASELINE;
+        public float NormalShopPoint(int minGold) {
+            // https://www.wolframalpha.com/input?i=sigmoid%28%28x+-+200%29+%2F+70%29+from+0+to+1000
+            var efficiency = PumpernickelMath.Sigmoid((minGold - 200f) / 70f);
+            return efficiency * minGold;
         }
-        public float FixShopPoint() {
-            // How valuable is it to buy an attack card or potion to fix a scary fight?
-            return Save.state.floor_num <= 10 ? NORMAL_SHOP_BASELINE * 2f : 0f;
+        public float UpcomingEliteThreat() {
+            // FIXME: replace threats with "gut impression" of threats
+            return Threats.Where(threat => {
+                var encounter = Database.instance.encounterDict[threat.Key];
+                if (encounter.NodeType != NodeType.Elite) {
+                    return false;
+                }
+                if (encounter.act != Save.state.act_num) {
+                    return false;
+                }
+                return true;
+            }).Select(threat => {
+                var encounter = Database.instance.encounterDict[threat.Key];
+                var indexOfFirstElite = nodeTypes.FirstIndexOf(x => x.Equals(NodeType.Elite) || x.Equals(NodeType.MegaElite));
+                var soonnessFactor = 1f / ((indexOfFirstElite * 0.3f) + 1);
+                var floorFactor = Evaluators.PercentGameOver(Save.state.floor_num);
+                return soonnessFactor * threat.Value * floorFactor;
+            }).Sum();
         }
-        public float HuntForShopRelicPoint() {
+        public static readonly float MAX_FIX_SHOP_EFFICIENCY = 0.8f;
+        public static readonly float MIN_FIX_SHOP_EFFICIENCY = 0.6f;
+        public float FixShopPoint(int minGold) {
+            var upcomingEliteThreat = UpcomingEliteThreat();
+            var spendableGold = MathF.Min(120f, minGold);
+            var goldFactor = Lerp.Inverse(50f, 120f, minGold);
+            var efficiency = Lerp.From(MIN_FIX_SHOP_EFFICIENCY, MAX_FIX_SHOP_EFFICIENCY, goldFactor);
+            return spendableGold * efficiency;
+        }
+        public IEnumerable<float> ShopRelicValues() {
+            return Database.instance.relics
+                .Where(x => x.rarity.Equals(Rarity.Shop) && x.forCharacter.Is(Save.state.character))
+                .Select(x => EvaluationFunctionReflection.GetRelicEvalFunctionCached(x.id)(x));
+        }
+        public float HuntForShopRelicPoint(int minGold) {
+            var shopRelicValues = ShopRelicValues();
+            var topThree = shopRelicValues.OrderByDescending(x => x).Take(3).Average();
+            var topThreeValueFactor = topThree / (topThree + 5f);
+            var goldFactor = Lerp.Inverse(170f, 190f, minGold);
+            var value = topThreeValueFactor * goldFactor;
+            // TODO
             return 0f;
+            //return Lerp.From(0f, MAX_HUNT_SHOP_RELIC_SCORE, value);
         }
-        public float CardRemovePoints() {
-            return 0f;
+        public float CardRemovePoints(int minGold) {
+            if (minGold < Save.state.purgeCost) {
+                return 0f;
+            }
+            var value = .6f;
+            var curseRemoveAvailable = !Evaluators.ShouldConsiderRemovingNonCurse();
+            if (curseRemoveAvailable) {
+                value = 2f;
+            }
+            else {
+                var attemptingInfinite = Save.state.buildingInfinite;
+                if (attemptingInfinite) {
+                    var removesNeeded = Evaluators.PermanentDeckSize() - Save.state.infiniteMaxSize;
+                    if (removesNeeded > 0) {
+                        value = 2f;
+                    }
+                    else {
+                        if (removesNeeded > -2) {
+                            value = 1.5f;
+                        }
+                        else {
+                            value = 1f;
+                        }
+                    }
+                }
+            }
+            var nominalPurgeCost = 100f;
+            var costFactor = nominalPurgeCost / Save.state.purgeCost;
+            var efficiency = value * costFactor;
+            // Card removes are sometimes way better than other ways to spend gold, so efficiency allowed
+            // to go over 1 here
+            return efficiency * Save.state.purgeCost;
         }
         public void ChooseShortTermShopPlan() {
-            var removeValue = CardRemovePoints();
-            var fixValue = FixShopPoint();
-            var normalValue = NormalShopPoint();
-            var huntValue = HuntForShopRelicPoint();
+            var firstShopIndex = nodeTypes.FirstIndexOf(x => x.Equals(NodeType.Shop));
+            var minGold = minPlanningGold[firstShopIndex];
+            var removeValue = CardRemovePoints(minGold);
+            var fixValue = FixShopPoint(minGold);
+            var normalValue = NormalShopPoint(minGold);
+            var huntValue = HuntForShopRelicPoint(minGold);
             var highest = new float[] {removeValue, fixValue, normalValue, huntValue}.Max();
             if (removeValue == highest) {
                 shortTermShopPlan = PathShopPlan.MaxRemove;
@@ -1056,11 +1127,22 @@ namespace ProjectPumpernickle {
                 shortTermShopPlan = PathShopPlan.HuntForShopRelic;
             }
         }
-        public IEnumerable<float> ExpectedGoldBroughtToShops() {
+        public struct GoldShopPlan {
+            public float Gold;
+            public PathShopPlan Plan;
+        }
+        public IEnumerable<GoldShopPlan> ExpectedGoldBroughtToShops() {
+            var existingGold = Save.state.gold * 1f;
             for (int i = 0; i < nodeTypes.Length - 1; i++) {
-                if (nodeTypes[i + 1] == NodeType.Shop) {
-                    yield return expectedGold[i];
+                var thisAct = i < nodes.Length;
+                var endOfFloorGold = expectedGold[i];
+                if (nodeTypes[i] == NodeType.Shop) {
+                    yield return new GoldShopPlan() {
+                        Gold = existingGold - endOfFloorGold,
+                        Plan = thisAct ? shortTermShopPlan : PathShopPlan.NormalShop
+                    };
                 }
+                existingGold = expectedGold[i];
             }
         }
 

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class CheckForCardDrawInfinite : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.VeryEarly;
         public class InfiniteSubpackage {
             public int cost;
             public int deltaHandSize;
@@ -93,18 +94,22 @@ namespace ProjectPumpernickle {
                 var considering = bestInfinite.Append(consideringDraw);
                 var consideringEnergy = new List<InfiniteSubpackage>();
                 var resetEnergyIndex = energyIndex;
-                while (NetEnergy(considering) > 0) {
+                var netEnergy = NetEnergy(considering);
+                while (netEnergy > 0) {
                     if (energyIndex >= energy.Count) {
                         failed = true;
                         break;
                     }
                     consideringEnergy.Add(energy[energyIndex++]);
                     considering = bestInfinite.Concat(consideringEnergy).Append(consideringDraw);
+                    netEnergy = NetEnergy(considering);
                 }
                 if (failed) {
-                    break;
+                    energyIndex = resetEnergyIndex;
+                    continue;
                 }
-                if (NetCards(considering) < 0 && NetEnergy(considering) > 0) {
+                var netCards = NetCards(considering);
+                if (netCards < 0 && netEnergy > 0) {
                     energyIndex = resetEnergyIndex;
                     continue;
                 }
@@ -112,10 +117,10 @@ namespace ProjectPumpernickle {
                 bestInfinite.AddRange(consideringEnergy);
                 if (IsInfinite(bestInfinite)) {
                     var totalCards = bestInfinite.Select(x => x.cardsToDiscard).Sum();
-                    if (NetCards(considering) > 0) {
+                    if (netCards > 0) {
                         hasExcessDraw = true;
                         var damage = Evaluators.HighestZeroCostDamage();
-                        bestDamagePerCard = MathF.Max(bestDamagePerCard, damage / totalCards);
+                        bestDamagePerCard = MathF.Max(bestDamagePerCard, damage / (totalCards + 1));
                     }
                     bestDamagePerCard = MathF.Max(bestDamagePerCard, bestInfinite.Select(x => x.damage).Average());
                     bestBlockPerCard = MathF.Max(bestBlockPerCard, bestInfinite.Select(x => x.block).Average());

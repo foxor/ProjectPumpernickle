@@ -174,14 +174,23 @@ namespace ProjectPumpernickle {
         }
         public static float BottledFlame(Relic r) {
             var value = r.bias;
+            var index = Save.state.relics.FirstIndexOf(x => x.Equals(r.id));
+            var counter = Save.state.relic_counters[index];
+            value += Save.state.cards[counter].evaluatedScore;
             return value;
         }
         public static float BottledLightning(Relic r) {
             var value = r.bias;
+            var index = Save.state.relics.FirstIndexOf(x => x.Equals(r.id));
+            var counter = Save.state.relic_counters[index];
+            value += Save.state.cards[counter].evaluatedScore;
             return value;
         }
         public static float BottledTornado(Relic r) {
             var value = r.bias;
+            var index = Save.state.relics.FirstIndexOf(x => x.Equals(r.id));
+            var counter = Save.state.relic_counters[index];
+            value += Save.state.cards[counter].evaluatedScore;
             return value;
         }
         public static float DarkstonePeriapt(Relic r) {

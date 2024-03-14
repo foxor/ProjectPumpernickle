@@ -79,8 +79,10 @@ namespace ProjectPumpernickle {
                     Save.state.upgraded = context.upgradeIndicies;
                     var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
                     eval.NeedsMoreInfo = Advice.needsMoreInfo | context.needsMoreInfo;
-                    var path = Path.BuildPath(nodeSequence, pathIndex);
-                    eval.SetPath(path);
+                    eval.Path = Path.BuildPath(nodeSequence, pathIndex);
+                    Scoring.EvaluateGlobalRules(eval, GlobalRuleEvaluationTiming.VeryEarly);
+                    Scoring.EvaluateGlobalRules(eval, GlobalRuleEvaluationTiming.PrePathExploration);
+                    eval.Path.ExplorePath();
                     Scoring.ScoreBasedOnEvaluation(eval);
                     context.UpdateRewardPopulationStatistics(eval);
                     Scoring.ScoreBasedOnStatistics(eval);
@@ -124,6 +126,20 @@ namespace ProjectPumpernickle {
             PumpernickelAdviceWindow.instance.SetEvaluations(sorted, chunksComplete + 1, totalChunks);
             Profiling.StopZone("MergeChunks");
         }
+        public static Evaluation[] RequestUnprunedMerge() {
+            IEnumerable<Evaluation> validEvaluations = perThreadEvaluations.Values.OrderBy(x => x.Id);
+            if (!validEvaluations.Any()) {
+                return new Evaluation[0];
+            }
+            SetEvaluationOffRamps(validEvaluations);
+            foreach (var eval in validEvaluations) {
+                Scoring.ScoreBasedOnOffRamp(eval);
+            }
+            foreach (var eval in validEvaluations) {
+                eval.MergeScoreWithOffRamp();
+            }
+            return validEvaluations.OrderByDescending(x => x.Score).ToArray();
+        }
         public static void AdviseOnReward(RewardOption option, bool needsMoreInfo = false) {
             AdviseOnRewards(new List<RewardOption>() { option }, needsMoreInfo: needsMoreInfo);
         }
@@ -142,7 +158,9 @@ namespace ProjectPumpernickle {
             public MapNode finalPosition;
             public long rewardOption;
             public int fireChoice;
+            public int upgradeChoice;
             public OfframpGroup(Evaluation evaluation) {
+                upgradeChoice = evaluation.Path.upgradeChosen;
                 fireChoice = 0;
                 rewardOption = evaluation.RewardIndex;
                 finalPosition = null;
@@ -162,7 +180,8 @@ namespace ProjectPumpernickle {
                 if (obj is OfframpGroup other) {
                     return other.finalPosition == this.finalPosition &&
                         other.rewardOption == this.rewardOption &&
-                        other.fireChoice == this.fireChoice;
+                        other.fireChoice == this.fireChoice &&
+                        other.upgradeChoice == this.upgradeChoice;
                 }
                 return base.Equals(obj);
             }

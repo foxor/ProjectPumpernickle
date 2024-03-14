@@ -213,9 +213,12 @@ namespace ProjectPumpernickle {
                 return;
             }
             var filtered = evaluations.Where(PumpernickelAdviceWindow.instance.EvalFitsCoords);
+            if (!filtered.Any()) {
+                filtered = Advice.RequestUnprunedMerge().Where(PumpernickelAdviceWindow.instance.EvalFitsCoords);
+            }
             filtered = mode switch {
-                ExplanationGroupMode.Reward => filtered.DistinctBy(x => (x.RewardIndex, x.Path.upgradeChosen)),
-                ExplanationGroupMode.Path => filtered.DistinctBy(x => x.Path.pathId),
+                ExplanationGroupMode.Reward => filtered.DistinctBy(x => x.RewardIndex),
+                ExplanationGroupMode.Path => filtered.DistinctBy(x => (x.Path.pathId, x.Path.upgradeChosen)),
                 ExplanationGroupMode.Ungrouped => filtered
             };
             var filteredArray = filtered.ToArray();

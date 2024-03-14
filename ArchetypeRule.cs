@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class ArchetypeRule : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
         public static readonly float PUNISHMENT_PER_OVERAGE = -10f;
         public void Apply(Evaluation evaluation) {
             Save.state.archetypeIdentities = new Dictionary<string, float>();

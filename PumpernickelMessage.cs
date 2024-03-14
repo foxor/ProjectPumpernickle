@@ -229,6 +229,7 @@ namespace ProjectPumpernickle {
             for (int i = relicHeaderIndex + 1 + Save.state.relics.Count; i < greenKeyHeaderIndex; i++) {
                 var relicId = lines[i];
                 Save.state.relics.Add(relicId);
+                Save.state.relic_counters.Add(0);
             }
             PumpernickelAdviceWindow.instance.UpdateAct();
             if (greenKeyHeaderIndex >= 0) {
@@ -263,14 +264,24 @@ namespace ProjectPumpernickle {
                     default: {
                         var id = line.Substring(0, line.IndexOf(":"));
                         var price = int.Parse(line.Substring(line.LastIndexOf(" ") + 1));
-                        rewardOptions.Add(new RewardOption {
-                            cost = price,
-                            rewardType = activeRewardType,
-                            values = new string[] {
-                                id,
-                            },
-                            skippable = true,
-                        });
+                        if (activeRewardType == RewardType.Relic) {
+                            var values = line.Select(x => EvaluationFunctionReflection.GetRelicOptionSplitFunctionCached(id)()).Merge();
+                            var option = RewardOption.Build(values);
+                            option.rewardType = RewardType.Relic;
+                            option.cost = price;
+                            option.skippable = true;
+                            rewardOptions.Add(option);
+                        }
+                        else {
+                            rewardOptions.Add(new RewardOption {
+                                cost = price,
+                                rewardType = activeRewardType,
+                                values = new string[] {
+                                    id,
+                                },
+                                skippable = true,
+                            });
+                        }
                         break;
                     }
                 }

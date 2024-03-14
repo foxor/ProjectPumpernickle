@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class DeckVelocity : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+
         public static readonly float SHUFFLE_PER_TURN_VELOCITY_SCORE = 6f;
         public static readonly float MAX_SETUP_SCORE = 4f;
         public void Apply(Evaluation evaluation) {

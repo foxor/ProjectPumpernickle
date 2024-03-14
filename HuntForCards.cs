@@ -1,5 +1,7 @@
 ﻿namespace ProjectPumpernickle {
     internal class HuntForCards : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+
         public static readonly float PENALTY_MULTIPLIER = -8f;
 
         void IGlobalRule.Apply(Evaluation evaluation) {

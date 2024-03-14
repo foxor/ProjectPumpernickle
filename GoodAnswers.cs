@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class GoodAnswers : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
         public void Apply(Evaluation evaluation) {
             var goodAgainstTotal = new Dictionary<string, float>();
             foreach (var card in Save.state.cards) {

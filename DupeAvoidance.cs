@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class DupeAvoidance : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+
         public static readonly float PUNISHMENT_PER_CARD = -0.5f;
 
         void IGlobalRule.Apply(Evaluation evaluation) {

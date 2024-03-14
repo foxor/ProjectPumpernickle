@@ -12,7 +12,7 @@ namespace ProjectPumpernickle {
         CardReward,
         Key,
         CurrentEffectiveHealth,
-        BringGoldToShop,
+        GoldEfficiency,
         MissingKey,
         DeckQuality,
         RelicQuality,
@@ -138,10 +138,6 @@ namespace ProjectPumpernickle {
             Save.state.expectingToRedBlue = Save.state.character == PlayerCharacter.Watcher;
             Save.state.buildingInfinite = Save.state.expectingToRedBlue;
             Save.state.huntingCards.Clear();
-        }
-        public void SetPath(Path path) {
-            Path = path;
-            Path.ExplorePath();
         }
         public void MergeScoreWithOffRamp() {
             if (OffRamp == null) {

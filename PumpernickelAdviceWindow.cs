@@ -43,7 +43,10 @@ namespace ProjectPumpernickle {
         public bool PickBestEvalThroughCoords() {
             var chosen = Evaluations.Where(EvalFitsCoords);
             if (!chosen.Any()) {
-                return false;
+                chosen = Advice.RequestUnprunedMerge().Where(EvalFitsCoords);
+                if (!chosen.Any()) {
+                    return false;
+                }
             }
             SetFiltererdEvaluations(chosen.ToArray());
             return true;

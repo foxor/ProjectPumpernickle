@@ -68,6 +68,7 @@ namespace ProjectPumpernickle {
             if (upgradeIndex != -1) {
                 var cardIndex = Path.plausibleUpgrades[upgradeIndex];
                 Save.state.cards[cardIndex].upgrades++;
+                Save.state.cards[cardIndex].ParseDescription();
                 upgradeIndicies.Add(cardIndex);
             }
             for (int i = 0; i < rewardIndicies.Count; i++) {
@@ -143,6 +144,7 @@ namespace ProjectPumpernickle {
                         relics.Add(relicId);
                         var pickFn = EvaluationFunctionReflection.GetRelicOnPickedFunctionCached(relicId);
                         Save.state.relics.Add(relicId);
+                        Save.state.relic_counters.Add(0);
                         description.Add("Take the " + Database.instance.relicsDict[relicId].name);
                         pickFn(parameters, this);
                         if (relicId.Equals("Membership Card")) {
@@ -254,6 +256,7 @@ namespace ProjectPumpernickle {
                     statisticsGroup = new AddCommonRelicStatisicsGroup();
                     relics.Add(AddCommonRelicStatisicsGroup.ASSUMED_ADD);
                     Save.state.relics.Add(AddCommonRelicStatisicsGroup.ASSUMED_ADD);
+                    Save.state.relic_counters.Add(0);
                     break;
                 }
                 case EventRewardElement.TEN_PERCENT_HP_BONUS: {
@@ -272,6 +275,7 @@ namespace ProjectPumpernickle {
                 case EventRewardElement.THREE_ENEMY_KILL: {
                     relics.Add("NeowsBlessing");
                     Save.state.relics.Add("NeowsBlessing");
+                    Save.state.relic_counters.Add(0);
                     break;
                 }
                 case EventRewardElement.REMOVE_TWO: {
@@ -309,6 +313,7 @@ namespace ProjectPumpernickle {
                 }
                 case EventRewardElement.ONE_RARE_RELIC: {
                     relics.Add(AddRareRelicStatisicsGroup.ASSUMED_ADD);
+                    Save.state.relic_counters.Add(0);
                     Save.state.relics.Add(AddRareRelicStatisicsGroup.ASSUMED_ADD);
                     statisticsGroup = new AddRareRelicStatisicsGroup();
                     break;
@@ -385,6 +390,7 @@ namespace ProjectPumpernickle {
                     statisticsGroup = new CursedTomeRewardGroup();
                     relics.Add(CursedTomeRewardGroup.CHOSEN);
                     Save.state.relics.Add(CursedTomeRewardGroup.CHOSEN);
+                    Save.state.relic_counters.Add(0);
                     break;
                 }
                 case EventRewardElement.HEAL: {
@@ -465,7 +471,9 @@ namespace ProjectPumpernickle {
         }
         public void Dispose() {
             foreach (var relic in relics) {
-                Save.state.relics.Remove(relic);
+                var index = Save.state.relics.IndexOf(relic);
+                Save.state.relics.RemoveAt(index);
+                Save.state.relic_counters.RemoveAt(index);
             }
             foreach (var cardIndex in addedCardIndicies.OrderByDescending(x => x)) {
                 Save.state.RemoveCardByIndex(cardIndex);

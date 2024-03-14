@@ -9,6 +9,8 @@ namespace ProjectPumpernickle {
     //  1) We want to be able to get an infinite against the heart
     //  2) We want to be able to infinite now if possible
     internal class RewardInfinite : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+
         public static readonly float END_OF_GAME_POINTS = 12f;
         public static readonly float NEMESIS_POINTS = 6f;
         public static readonly float NOW_POINTS = 12f;
@@ -29,6 +31,7 @@ namespace ProjectPumpernickle {
             var infiniteEnd = Lerp.Inverse(-4f, 0f, finalRoom - 2f);
             var infiniteNemesis = Lerp.Inverse(-4f, 0f, nemesisRoom - 5f);
             var infiniteQuality = Evaluators.CurrentInfiniteQuality();
+            // TODO: project the infinite quality forwards to account for removes and such
             if (Save.state.relics.Contains("Medical Kit")) {
                 infiniteEnd = Lerp.Inverse(-4f, 0f, finalRoom);
                 infiniteNemesis = Lerp.Inverse(-4f, 0f, nemesisRoom);

@@ -13,11 +13,11 @@ If we define an "average" run in terms of room types and points per room as:
  - 8 upgrade fires      - 2.5pts    -> 20 pts total
  - 2 rest fires         - 0pts      -> 0 pts total
  - 5 bosses             - 0pts      -> 0 pts total
- - 2 boss chest         - 5.5pts    -> 11 pts total
- - 15 fights            - 1.75pts   -> 26.25 pts total
+ - 2 boss chest         - 5pts      -> 10 pts total
+ - 15 fights            - 1.5pts    -> 22.5 pts total
  - 3 mid-act chest      - 3pts      -> 9 pts total
- - 6 question marks     - 1.25pt    -> 7.5 pts total
- - 3 shops              - 0.5pts    -> 1.5 pts total
+ - 6 question marks     - .75pt     -> 4.5 pts total
+ - 3 shops              - 3pts      -> 9 pts total
  - 55 floors            - 1.9 pts   -> 100 pts total
 
 Each card, relic and event has an evaluation function that decides how many points it is worth.  As a starting point, each thing has a "bias" that gets added together with contextual factors to determine the final score.  There ends up being 5 "evaluation depths":

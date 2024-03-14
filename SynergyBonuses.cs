@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class SynergyBonuses : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+
         public void Apply(Evaluation evaluation) {
             var totalSetup = new Dictionary<string, float>();
             var totalPayoff = new Dictionary<string, float>();

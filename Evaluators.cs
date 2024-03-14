@@ -472,8 +472,10 @@ namespace ProjectPumpernickle {
             };
             var drawsAfterClear = Save.state.infiniteMaxSize - 5;
             var redrawPenalty = .2f * (1f - (1f / (1f + (drawsAfterClear / 8))));
-            var clogPenalty = .3f * (1f - (1f / (1f + ((Save.state.cards.Count() - 12) / 15f))));
-            var practicality = (1f - speedPenalty) *
+            var clogPenalty = .5f * (1f - (1f / (1f + ((Evaluators.PermanentDeckSize() - 8) / 4f))));
+            clogPenalty = MathF.Max(0f, MathF.Min(1f, clogPenalty));
+            var practicality = 
+                (1f - speedPenalty) *
                 (1f - clearCostPenalty) *
                 (1f - redrawPenalty) *
                 (1f - clogPenalty);
@@ -777,6 +779,10 @@ namespace ProjectPumpernickle {
         public static bool ShouldConsiderSkippingKey() {
             return false;
         }
+        public static bool ShouldConsiderBuyingThingsYouCantAfford() {
+            // Is this possible?  I think not
+            return false;
+        }
         public static void SkipUnpalatableOptions(List<RewardOption> rewardOptions) {
             if (!ShouldConsiderSkippingGold()) {
                 foreach (var option in rewardOptions) {
@@ -803,6 +809,14 @@ namespace ProjectPumpernickle {
                 foreach (var option in rewardOptions) {
                     if (option.rewardType == RewardType.Key && option.cost == 0) {
                         option.skippable = false;
+                    }
+                }
+            }
+            if (!ShouldConsiderBuyingThingsYouCantAfford()) {
+                for (int i = 0; i < rewardOptions.Count; i++) {
+                    if (rewardOptions[i].cost > Save.state.gold) {
+                        rewardOptions.RemoveAt(i);
+                        i--;
                     }
                 }
             }

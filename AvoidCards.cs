@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace ProjectPumpernickle {
     // Smaller decks are generally better.  Cards are very slightly bad
     internal class AvoidCards : IGlobalRule {
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
 
         void IGlobalRule.Apply(Evaluation evaluation) {
             // TODO: modulate this based on perminant cards / card draw
