@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace ProjectPumpernickle {
     internal class FightSimulator {
-        public static readonly float DECAY_RATE = 1.5f;
+        public static readonly float RESIDENCY_RATE = .92f;
         public static readonly int ACT_STRETCH_FLOORS = 8;
-        public static readonly int BEGINNING_OF_GAME_STRETCH_FLOORS = 15;
-        internal static float SignificanceFactor(int fromFloor) {
+        public static readonly int HALLWAY_FIGHT_STRETCH_FLOORS = 4;
+        internal static float SignificanceFactor(int fromFloor, string pool) {
             // TODO: fighting an act 1 boss in act 3 should have very low significance... or a different median or something
             // TODO: decay rate should depend on "important" things happening, like finishing a combo or getting a significant relic
             var currentFloor = Save.state.floor_num;
@@ -22,12 +22,15 @@ namespace ProjectPumpernickle {
             }
             var stretchFloors = 0;
             var actsApart = Save.state.act_num - Evaluators.FloorToAct((int)MathF.Round(fromFloor));
-            stretchFloors += actsApart * ACT_STRETCH_FLOORS + BEGINNING_OF_GAME_STRETCH_FLOORS;
-            fromFloor += BEGINNING_OF_GAME_STRETCH_FLOORS;
+            var poolStretchFloors = pool switch {
+                "easy" or "hard" or "both" => HALLWAY_FIGHT_STRETCH_FLOORS,
+                _ => 0,
+            };
+            stretchFloors += actsApart * ACT_STRETCH_FLOORS + poolStretchFloors;
 
             var effectiveFloor = currentFloor + stretchFloors;
-            var pctRunAgo = (effectiveFloor - fromFloor) * 1f / effectiveFloor;
-            var significance = MathF.Pow(1f - pctRunAgo, DECAY_RATE);
+            var floorsAgo = effectiveFloor - fromFloor;
+            var significance = MathF.Pow(RESIDENCY_RATE, floorsAgo);
             return significance;
         }
         public static float EstimateIncomingDamage(Encounter encounter, float turns, float damagePerTurn) {
@@ -80,13 +83,13 @@ namespace ProjectPumpernickle {
                 else {
                     powerRatio = Lerp.Inverse(-10f, 10f, realDamage - encounter.medianExpectedHealthLoss) + .5f;
                 }
-                var significance = SignificanceFactor((int)damageTaken.floor);
+                var significance = SignificanceFactor((int)damageTaken.floor, encounter.pool);
                 totalSignificance += significance;
                 totalPower += powerRatio * significance;
             }
             for (var finishedAct = 0; finishedAct < Save.state.act_num; finishedAct++) {
                 var endFloor = Evaluators.ActToFirstFloor(finishedAct + 1) - 1;
-                var significance = SignificanceFactor(endFloor) * ACT_COMPLETION_WEIGHT;
+                var significance = SignificanceFactor(endFloor, "boss") * ACT_COMPLETION_WEIGHT;
                 totalSignificance += significance;
                 totalPower += significance;
                 // TODO: If we're playing watcher, maybe we're more powerful than 1 * significance
@@ -109,6 +112,9 @@ namespace ProjectPumpernickle {
             var relevantCards = Save.state.CardsNotJustChosen();
             var totalScaling = relevantCards.Select(x => x.scaling).Sum();
             var totalEnergy = relevantCards.Select(Evaluators.AverageCost).Sum();
+            if (totalEnergy < 0.01f) {
+                return 0f;
+            }
             var scalingPerEnergy = totalScaling / totalEnergy;
             var energyPerTurn = Evaluators.PerTurnEnergy();
             return scalingPerEnergy * energyPerTurn;
@@ -125,12 +131,15 @@ namespace ProjectPumpernickle {
                 }
                 var totalEnemyHealth = AverageEnemyHealth(Database.instance.encounterDict[damageTaken.enemies]);
                 var averageDamagePerTurn = totalEnemyHealth / damageTaken.turns;
-                var significance = SignificanceFactor((int)damageTaken.floor);
+                var fightPool = Database.instance.encounterDict[damageTaken.enemies].pool;
+                var significance = SignificanceFactor((int)damageTaken.floor, fightPool);
+                var floorsAgo = Save.state.floor_num - damageTaken.floor;
                 // FIXME: scaling was probably lower for fights that happened a while ago
                 var middleTurnScaling = 1f + (((damageTaken.turns - 1f) / 2f) * estimatedScaling);
                 var initialDamageEstimate = averageDamagePerTurn / middleTurnScaling;
+                var projectedPresentInitialDamage = ProjectDamageForFutureFloor(initialDamageEstimate, floorsAgo);
                 totalSignificance += significance;
-                totalDamagePerTurn += initialDamageEstimate * significance;
+                totalDamagePerTurn += projectedPresentInitialDamage * significance;
             }
             totalDamagePerTurn += Save.state.addedDamagePerTurn;
             if (totalDamagePerTurn < BEGINNING_OF_GAME_DAMAGE) {
@@ -157,11 +166,11 @@ namespace ProjectPumpernickle {
         public static readonly float FLOORS_IN_GAME = 55;
         public static readonly float DAMAGE_LOG_PER_FLOOR = (END_OF_GAME_DAMAGE_LOG - BEGINNING_OF_GAME_DAMAGE_LOG) / FLOORS_IN_GAME;
         public static readonly float BLOCK_LOG_PER_FLOOR = (END_OF_GAME_BLOCK_LOG - BEGINNING_OF_GAME_BLOCK_LOG) / FLOORS_IN_GAME;
-        public static float ProjectDamageForFutureFloor(float damagePerTurn, int floorsFromNow) {
+        public static float ProjectDamageForFutureFloor(float damagePerTurn, float floorsFromNow) {
             var damageMultiplier = MathF.Exp(DAMAGE_LOG_PER_FLOOR * floorsFromNow);
             return damagePerTurn * damageMultiplier;
         }
-        public static float ProjectBlockForFutureFloor(float damagePerTurn, int floorsFromNow) {
+        public static float ProjectBlockForFutureFloor(float damagePerTurn, float floorsFromNow) {
             var damageMultiplier = MathF.Exp(BLOCK_LOG_PER_FLOOR * floorsFromNow);
             return damagePerTurn * damageMultiplier;
         }

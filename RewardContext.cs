@@ -104,10 +104,8 @@ namespace ProjectPumpernickle {
                 goldAdded -= cost;
                 Save.state.current_health -= rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
                 healthLost += rewardGroup.hpCost == null ? 0 : rewardGroup.hpCost[index];
-                bool alreadyAdvised = false;
                 if (rewardGroup.advice != null && !string.IsNullOrEmpty(rewardGroup.advice[index])) {
                     description.Add(rewardGroup.advice[index]);
-                    alreadyAdvised = true;
                 }
                 if (rewardGroup.needsMoreInfo != null) {
                     needsMoreInfo |= rewardGroup.needsMoreInfo[index];
@@ -186,7 +184,7 @@ namespace ProjectPumpernickle {
                         if (colonIndex != -1) {
                             rewardHeader = rewardHeader.Substring(0, colonIndex);
                         }
-                        HandleEvent(Enum.GetValues<EventRewardElement>().Where(x => x.ToString().Equals(rewardHeader)).Single(), chosen, eventCost, alreadyAdvised);
+                        HandleEvent(Enum.GetValues<EventRewardElement>().Where(x => x.ToString().Equals(rewardHeader)).Single(), chosen, eventCost);
                         break;
                     }
                     default: {
@@ -196,7 +194,7 @@ namespace ProjectPumpernickle {
             }
         }
 
-        protected void HandleEvent(EventRewardElement reward, string rewardValue, string cost, bool alreadyAdvised) {
+        public void HandleEvent(EventRewardElement reward, string rewardValue, string cost) {
             switch (reward) {
                 case EventRewardElement.RANDOM_COLORLESS_2: {
                     var stats = new AddCardStatisticsGroup(Color.Colorless, Rarity.Rare);
@@ -475,8 +473,14 @@ namespace ProjectPumpernickle {
                 Save.state.relics.RemoveAt(index);
                 Save.state.relic_counters.RemoveAt(index);
             }
-            foreach (var cardIndex in addedCardIndicies.OrderByDescending(x => x)) {
-                Save.state.RemoveCardByIndex(cardIndex);
+            for (int i = 0; i < addedCardIndicies.Count; i++) {
+                var index = addedCardIndicies[i];
+                Save.state.RemoveCardByIndex(index);
+                for (int j = i + 1; j < addedCardIndicies.Count; j++) {
+                    if (addedCardIndicies[j] >= index) {
+                        addedCardIndicies[j]--;
+                    }
+                }
             }
             Save.state.gold -= goldAdded;
             foreach (var potionIndex in potionIndicies) {

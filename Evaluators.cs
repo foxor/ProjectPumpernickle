@@ -864,6 +864,9 @@ namespace ProjectPumpernickle {
                 if (card.cardType == CardType.Curse && !shouldConsiderNonCurse) {
                     continue;
                 }
+                if (card.tags.ContainsKey(Tags.Unpurgeable.ToString())) {
+                    continue;
+                }
                 var relevantList = (card.upgrades == 0 ? unupgradedRemoves : upgradedRemoves);
                 var considered = relevantList.Where(x => x.Equals(card.id)).Count();
                 if (considered >= maxCt && card.id != "Searing Blow") {

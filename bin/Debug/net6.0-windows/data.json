@@ -10120,7 +10120,7 @@
       {
          "id": "Small Slimes",
          "characters": [
-            "AcidSlime_M",
+            "AcidSlime_S",
             "SpikeSlime_S"
          ],
          "pool": "easy",

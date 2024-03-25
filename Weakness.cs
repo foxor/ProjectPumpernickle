@@ -39,7 +39,8 @@ namespace ProjectPumpernickle {
             switch (axis) {
                 case WeaknessAxis.Lethality: {
                     // You start out very far behind on damage
-                    var earlyBonus = (5f / (Save.state.floor_num / 3f + 1)) + 1;
+                    var earlyFactor = 1f - Lerp.Inverse(6f, 11f, Save.state.floor_num);
+                    var earlyBonus = 1 + earlyFactor * 4;
                     var scaling = FightSimulator.EstimatePastScalingPerTurn();
                     var observed = FightSimulator.EstimateDamagePerTurn(scaling);
                     var projected = FightSimulator.NormalDamageForFloor(Save.state.floor_num) * earlyBonus;

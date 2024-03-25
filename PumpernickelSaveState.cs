@@ -548,6 +548,7 @@ namespace ProjectPumpernickle {
             var talkingToNeow = current_room.Equals("com.megacrit.cardcrawl.neow.NeowRoom");
             var newAct = current_room.Equals(NEW_ACT_ROOM);
             var bossChest = current_room.Equals("com.megacrit.cardcrawl.rooms.TreasureRoomBoss");
+            var bossRoom = current_room.Equals("com.megacrit.cardcrawl.rooms.MonsterRoomBoss");
             if (talkingToNeow || newAct) {
                 var fakeNode = new MapNode();
                 fakeNode.position = new Vector2Int(3, -1);
@@ -556,6 +557,9 @@ namespace ProjectPumpernickle {
             }
             if (bossChest) {
                 return new MapNode() { nodeType = NodeType.BossChest, position = new Vector2Int(-1, 16) };
+            }
+            if (bossRoom) {
+                return new MapNode() { nodeType = NodeType.Boss, position = new Vector2Int(-1, 16) };
             }
             if (act_num == 4) {
                 return Act4()[room_y];

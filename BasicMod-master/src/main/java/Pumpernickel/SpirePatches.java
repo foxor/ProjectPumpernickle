@@ -11,6 +11,7 @@ import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.CardSave;
 import com.megacrit.cardcrawl.cards.blue.Loop;
+import com.megacrit.cardcrawl.cards.green.Alchemize;
 import com.megacrit.cardcrawl.cards.green.Eviscerate;
 import com.megacrit.cardcrawl.cards.purple.Blasphemy;
 import com.megacrit.cardcrawl.cards.red.Anger;

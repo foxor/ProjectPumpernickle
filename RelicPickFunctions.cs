@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace ProjectPumpernickle {
     internal class RelicPickFunctions {
@@ -16,6 +17,12 @@ namespace ProjectPumpernickle {
             }
         }
         public static void Astrolabe(string parameters, RewardContext context) {
+            var removals = parameters.Trim().Split(",");
+            var descriptions = string.Join(", ", removals.Select(x => Save.state.cards[int.Parse(x.Trim())].Descriptor()));
+            context.description.Add("Transform " + descriptions);
+            context.HandleEvent(EventRewardElement.TRANSFORM_CARD, removals[0], "0");
+            context.HandleEvent(EventRewardElement.TRANSFORM_CARD, removals[1], "0");
+            context.HandleEvent(EventRewardElement.TRANSFORM_CARD, removals[2], "0");
         }
         public static void BottledLightning(string parameters, RewardContext context) {
             var target = parameters.Trim().Split(",").Select(x => int.Parse(x.Trim())).Single();
@@ -46,7 +53,9 @@ namespace ProjectPumpernickle {
             for (int i = 0; i < reasonableRemoveTarget.Length; i++) {
                 for (int j = i + 1; j < reasonableRemoveTarget.Length; j++) {
                     yield return new RewardOptionPart() {
-                        value = "Empty Cage: " + j + ", " + i,
+                        value = "Empty Cage: "
+                                + reasonableRemoveTarget[j] + ", "
+                                + reasonableRemoveTarget[i]
                     };
                 }
             }
@@ -57,7 +66,10 @@ namespace ProjectPumpernickle {
                 for (int j = i + 1; j < reasonableRemoveTarget.Length; j++) {
                     for (int k = j + 1; k < reasonableRemoveTarget.Length; k++) {
                         yield return new RewardOptionPart() {
-                            value = "Astrolabe: " + j + ", " + i + ", " + k,
+                            value = "Astrolabe: "
+                                + reasonableRemoveTarget[k] + ", "
+                                + reasonableRemoveTarget[j] + ", "
+                                + reasonableRemoveTarget[i],
                         };
                     }
                 }
