@@ -100,6 +100,7 @@ namespace ProjectPumpernickle {
         ArchetypeValue,
         ArchetypeSlotFull,
         DecreasingLethality,
+        Speculation,
         COUNT,
     }
     public class Evaluation {

@@ -9,13 +9,17 @@ namespace ProjectPumpernickle {
     //  1) We want to be able to get an infinite against the heart
     //  2) We want to be able to infinite now if possible
     internal class RewardInfinite : IGlobalRule {
-        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
+        public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PostCardEvaluation;
 
         public static readonly float END_OF_GAME_POINTS = 12f;
         public static readonly float NEMESIS_POINTS = 6f;
         public static readonly float NOW_POINTS = 12f;
         public static float CurrentInfiniteRoom() {
             return Save.state.infiniteMaxSize - Evaluators.PermanentDeckSize() - Save.state.missingCardCount;
+        }
+
+        public static float PercentOnlineNow() {
+            return Evaluation.Active.InternalScores[(byte)ScoreReason.InfiniteNow] / NOW_POINTS;
         }
 
         void IGlobalRule.Apply(Evaluation evaluation) {

@@ -49,6 +49,8 @@ namespace ProjectPumpernickle {
         public List<int> addedCardIndicies = new List<int>();
         public int goldAdded;
         public List<int> potionIndicies = new List<int>();
+        public List<string> potionsRemoved = new List<string>();
+        public List<int> potionRemovedIndicies = new List<int>();
         public List<string> description = new List<string>();
         public bool tookGreenKey;
         public bool tookBlueKey;
@@ -86,7 +88,9 @@ namespace ProjectPumpernickle {
                             description.Add("Take the +2 max hp");
                         }
                         else {
-                            description.Add("Skip the " + rewardGroup.rewardType);
+                            if (rewardGroup.rewardType != RewardType.DropPotion) {
+                                description.Add("Skip the " + rewardGroup.rewardType);
+                            }
                         }
                     }
                     if (!rewardGroup.skippable) {
@@ -153,6 +157,12 @@ namespace ProjectPumpernickle {
                     case RewardType.Potion: {
                         description.Add("Take the " + chosen);
                         potionIndicies.Add(Save.state.TakePotion(chosen));
+                        break;
+                    }
+                    case RewardType.DropPotion: {
+                        description.Add("Drop the " + chosen);
+                        potionsRemoved.Add(chosen);
+                        potionRemovedIndicies.Add(Save.state.DropPotion(chosen));
                         break;
                     }
                     case RewardType.Key: {
@@ -488,6 +498,9 @@ namespace ProjectPumpernickle {
                     Save.state.RemovePotion(potionIndex);
                 }
             }
+            for (int i = 0; i < potionRemovedIndicies.Count; i++) {
+                Save.state.potions[potionRemovedIndicies[i]] = potionsRemoved[i];
+            }
             if (tookGreenKey) {
                 Save.state.has_emerald_key = false;
             }
@@ -513,11 +526,15 @@ namespace ProjectPumpernickle {
                 bottled.bottled = false;
             }
         }
+        public bool DroppedPotionForNoReason() {
+            return Save.state.EmptyPotionSlots() > 0 && potionRemovedIndicies.Count > 0;
+        }
 
         public bool IsValid() {
             var valid = true;
             valid &= Save.state.gold >= 0;
             valid &= !potionIndicies.Any(x => x == -1);
+            valid &= !DroppedPotionForNoReason();
             valid &= !isInvalid;
             return valid;
         }

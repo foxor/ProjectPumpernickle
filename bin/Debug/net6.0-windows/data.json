@@ -1432,8 +1432,11 @@
          "cost":"1",
          "description":"Double (Triple) the enemy's Poison.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 2.5,
-         "upgradePowerMultiplier": 2,
+         "bias": 0.5,
+         "upgradePowerMultiplier": 1.5,
+         "tags": {
+            "Speculative": 4,
+         }
       },
       {
          "id":"Choke",
@@ -1458,7 +1461,7 @@
          "mod":"Slay the Spire",
          "bias": 1,
          "tags": {
-            "greed": 1
+            "Speculative": 0.8,
          },
          "upgradePowerMultiplier": 1.7,
          "setup": {

@@ -452,8 +452,14 @@
             var value = 0f;
             return value;
         }
+        public static readonly float CATALYST_VALUE_PER_COPIER = 1.5f;
+        public static readonly float CATALYST_VALUE_PER_POISON = 0.1f;
         public static float Catalyst(Card c, int index) {
             var value = 0f;
+            var copiers = Save.state.cards.Where(x => x.id.Equals("Burst") || x.id.Equals("Night Terror"));
+            var poisonTags = Save.state.cards.Select(x => x.tags.TryGetValue(Tags.Poison.ToString(), out var poison) ? poison : 0f);
+            value += CATALYST_VALUE_PER_COPIER * copiers.Count();
+            value += CATALYST_VALUE_PER_POISON * poisonTags.Sum();
             return value;
         }
         public static float Choke(Card c, int index) {
@@ -465,7 +471,6 @@
         public static readonly float CONCENTRATE_EXCESS_DRAW_VALUE = 0.5f;
         public static float Concentrate(Card c, int index) {
             var value = 0f;
-            value += CONCENTRATE_VALUE_OFFSET * Evaluators.SpeculationAppropriateness();
             var excessPlayableEnergy = Evaluators.ExcessHandCardEnergy();
             var excessEnergyUsefulnessRate = MathF.Max(0f, (excessPlayableEnergy / (excessPlayableEnergy + 2f)) - 0.5f);
             value += excessEnergyUsefulnessRate * CONCENTRATE_EXCESS_COST_VALUE;
@@ -592,6 +597,9 @@
         }
         public static float AfterImage(Card c, int index) {
             var value = 0f;
+            if (Save.state.buildingInfinite) {
+                Save.state.infiniteBlockPerCard += 1f;
+            }
             return value;
         }
         public static float Venomology(Card c, int index) {

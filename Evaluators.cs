@@ -117,8 +117,14 @@ namespace ProjectPumpernickle {
             return (drawPerEnergy * energySpentOnCardDraw) + 5;
         }
 
-        public static int ExtraPerFightEnergy() {
-            return 0;
+        public static float ExtraPerFightEnergy() {
+            var extraEnergyFound = 0f;
+            if (Save.state.relics.Contains("Mummified Hand")) {
+                var averageCost = Evaluators.AverageMinimumCost();
+                var powerCount = Save.state.cards.Where(x => x.cardType == CardType.Power).Count();
+                extraEnergyFound += averageCost * powerCount;
+            }
+            return extraEnergyFound;
         }
 
         public static float PerTurnEnergy() {
@@ -155,7 +161,7 @@ namespace ProjectPumpernickle {
         public static float RandomPotionHealthValue() {
             return 10f;
         }
-
+        public static readonly float ASSUMED_FAIRY_OVERKILL_PREVENTION = 20f;
         public static float GetPotionHealthValue(string potionId, float literalHealth) {
             var potionValue = RandomPotionHealthValue();
             switch (potionId) {
@@ -165,6 +171,9 @@ namespace ProjectPumpernickle {
                 }
                 case "Fruit Juice": {
                     return 5f;
+                }
+                case "FairyPotion": {
+                    return Evaluators.PercentHealthHeal(0.3f) + ASSUMED_FAIRY_OVERKILL_PREVENTION;
                 }
             }
             var healthFactor = Lerp.Inverse(10f, 30f, literalHealth);
@@ -462,7 +471,9 @@ namespace ProjectPumpernickle {
                 (Save.state.infiniteBlockPerCard > 2f ? .5f : 0f) +
                 (Save.state.infiniteBlockPerCard > 0f ? .2f : 0f);
             var energyToClear = CostOfNonPermanent() - ExtraPerFightEnergy();
-            var clearCostPenalty = .5f * (1f - (1f / (1f + (energyToClear / PerTurnEnergy() * 2f))));
+            // Assuming you spend half your energy on going off
+            var estimatedClearTurn = MathF.Max(1f, energyToClear / PerTurnEnergy() * 2f);
+            var clearCostPenalty = .5f * (1f - (1f / estimatedClearTurn));
             var speedPenalty = Save.state.earliestInfinite switch {
                 1 => 0f,
                 2 => 0.02f,
@@ -472,7 +483,7 @@ namespace ProjectPumpernickle {
             };
             var drawsAfterClear = Save.state.infiniteMaxSize - 5;
             var redrawPenalty = .2f * (1f - (1f / (1f + (drawsAfterClear / 8))));
-            var clogPenalty = .5f * (1f - (1f / (1f + ((Evaluators.PermanentDeckSize() - 8) / 4f))));
+            var clogPenalty = .3f * (1f - (1f / (1f + ((Evaluators.PermanentDeckSize() - 8) / 4f))));
             clogPenalty = MathF.Max(0f, MathF.Min(1f, clogPenalty));
             var practicality = 
                 (1f - speedPenalty) *
@@ -683,7 +694,7 @@ namespace ProjectPumpernickle {
                 value += bottleValue;
             }
             if (Save.state.potions?.Any(x => x.Equals("LiquidMemories")) == true && c.intCost != int.MaxValue && !c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
-                var extraCost = c.intCost - 1;
+                var extraCost = Math.Max(0, c.intCost - 1);
                 value += LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY * extraCost;
             }
             value += c.bias;
@@ -798,7 +809,16 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
-            if (!ShouldConsiderSkippingPotion()) {
+            if (ShouldConsiderSkippingPotion()) {
+                foreach (var potion in Save.state.Potions().Distinct()) {
+                    rewardOptions.Insert(0, new RewardOption() {
+                        skippable = true,
+                        values = new string[] { potion },
+                        rewardType = RewardType.DropPotion,
+                    });
+                }
+            }
+            else {
                 foreach (var option in rewardOptions) {
                     if (option.rewardType == RewardType.Potion && option.cost == 0) {
                         option.skippable = false;
@@ -933,6 +953,21 @@ namespace ProjectPumpernickle {
                 return 3f;
             }
         }
+        public static float AverageMinimumCost() {
+            if (Save.state.relics.Contains("Snecko Eye")) {
+                return 1.5f;
+            }
+            var totalCost = 0f;
+            foreach (var card in Save.state.cards) {
+                if (card.intCost != int.MaxValue) {
+                    totalCost += card.intCost;
+                }
+                else {
+                    totalCost += 0f;
+                }
+            }
+            return totalCost / Save.state.cards.Count;
+        }
         public static float AverageCostOfHand() {
             var averageHandSize = SustainableCardDrawPerTurn();
             return Save.state.cards.Select(AverageCost).Average() * averageHandSize;
@@ -951,14 +986,30 @@ namespace ProjectPumpernickle {
             var attempted = (int)(Save.state.max_health * pct + 0.9999);
             return attempted;
         }
+        public static float PercentInfiniteOnline() {
+            return RewardInfinite.PercentOnlineNow();
+        }
+        public static float PercentDeckDone() {
+            return 0f;
+        }
+        public static float PercentGameSolved() {
+            var highestPercentMeasurement = 0f;
+            var infiniteOnline = PercentInfiniteOnline();
+            highestPercentMeasurement = MathF.Max(highestPercentMeasurement, infiniteOnline);
+            var deckScoreHigh = PercentDeckDone();
+            highestPercentMeasurement = MathF.Max(highestPercentMeasurement, deckScoreHigh);
+            // etc...
+            return highestPercentMeasurement;
+        }
         public static float SpeculationAppropriateness() {
+            var maxAppropriateness = 1f - PercentGameSolved();
             if (Save.state.floor_num < 10) {
-                return Save.state.floor_num / 10f;
+                return Save.state.floor_num * maxAppropriateness / 10f;
             }
-            if (Save.state.floor_num < 35) {
-                return 1f;
+            if (Save.state.floor_num < 30) {
+                return maxAppropriateness;
             }
-            return Lerp.From(1f, 0f, (Save.state.floor_num - 35) / 20f);
+            return Lerp.From(maxAppropriateness, 0f, (Save.state.floor_num - 30) / 20f);
         }
         public static float StrengthScaling() {
             return 0f;

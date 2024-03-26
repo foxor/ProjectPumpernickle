@@ -121,6 +121,12 @@ namespace ProjectPumpernickle {
             GenerateMap();
         }
 
+        public struct GreenKeyLocation {
+            public int actNum;
+            public int x;
+            public int y;
+        }
+        public static GreenKeyLocation? lastReportedGreenKeyLocation = null;
         public static void GenerateMap() {
             var psi = new ProcessStartInfo("sts_map_oracle.exe", "--seed " + PumpernickelSaveState.parsed!.seed);
             psi.UseShellExecute = false;

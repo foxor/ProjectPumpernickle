@@ -13,6 +13,8 @@ namespace ProjectPumpernickle {
         VeryEarly,
         PrePathExploration,
         PreCardEvaluation,
+        PostCardEvaluation,
+        Late,
     }
     public interface IGlobalRule {
         public GlobalRuleEvaluationTiming Timing { get; }
@@ -64,7 +66,7 @@ namespace ProjectPumpernickle {
             var efficientGoldSpent = GoldToEfficientGold(goldPlan);
             return efficientGoldSpent * POINT_PER_EFFICIENT_GOLD;
         }
-        public static float DeepEvaluationScoreDelta() {
+        public static float DeepEvaluationScoreDelta(string cardId = null) {
             var cardDelta = new float[Save.state.cards.Count];
             var relicQuality = 0f;
             for (int i = 0; i < Save.state.cards.Count; i++) {
@@ -104,7 +106,7 @@ namespace ProjectPumpernickle {
             if (Save.state.huntingCards.Contains(cardAdded.id)) {
                 pointDelta += FIND_HUNTED_CARD_BONUS;
             }
-            var scoreDelta = DeepEvaluationScoreDelta();
+            var scoreDelta = DeepEvaluationScoreDelta(cardAdded.id);
             if (addedIndex != -1) {
                 Save.state.cards.RemoveAt(addedIndex);
                 pointDelta += scoreDelta;
@@ -174,13 +176,14 @@ namespace ProjectPumpernickle {
                 }
                 var densityIndex = (color == Color.Colorless ? 3 : 0) + rarityOffset;
                 var expectedFound = chanceToFind * hitDensity[densityIndex];
+                var value = ScoreValueOfCard(card);
                 if (Save.state.ChoosingNow(card.id) && expectedFound < 2f) {
                     var chanceToSee = expectedFound / 2f;
                     Evaluation.Active.SetScore(ScoreReason.LastChanceToPick, LAST_CHANCE_TO_PICK_VALUE * (1f - chanceToSee));
                 }
                 // This is slightly wrong because multiplies of cards generally aren't as good
                 // This is why we don't include hypothetical points for cards that are available now
-                yield return new CardScore(card.id, ScoreValueOfCard(card) * expectedFound);
+                yield return new CardScore(card.id, value * expectedFound);
             }
         }
         // Cards aren't good until you build a good deck
@@ -353,10 +356,10 @@ namespace ProjectPumpernickle {
             }
 
             if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path.hasMegaElite != true) {
-                evaluation.SetScore(ScoreReason.MissingKey, float.MinValue);
+                evaluation.SetScore(ScoreReason.MissingKey, -10000f);
             }
             if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && !path.ContainsGuaranteedChest()) {
-                evaluation.SetScore(ScoreReason.MissingKey, float.MinValue);
+                evaluation.SetScore(ScoreReason.MissingKey, -10000f);
             }
         }
         public static void ScoreUpgrades(Evaluation evaluation) {
@@ -376,6 +379,7 @@ namespace ProjectPumpernickle {
                 totalCardScore += cardValue;
             }
             evaluation.SetScore(ScoreReason.DeckQuality, totalCardScore);
+            EvaluateGlobalRules(evaluation, GlobalRuleEvaluationTiming.PostCardEvaluation);
             ScoreUpgrades(evaluation);
             var totalRelicScore = 0f;
             for (int i = 0; i < Save.state.relics.Count; i++) {
@@ -388,6 +392,7 @@ namespace ProjectPumpernickle {
             evaluation.SetScore(ScoreReason.RelicQuality, totalRelicScore);
             ScoreFutureCardValue(evaluation);
             ScoreFutureRelicValue(evaluation);
+            EvaluateGlobalRules(evaluation, GlobalRuleEvaluationTiming.Late);
         }
         public static void ScoreBasedOnStatistics(Evaluation evaluation) {
             var stats = evaluation.RewardStats ?? new RewardOutcomeStatistics();

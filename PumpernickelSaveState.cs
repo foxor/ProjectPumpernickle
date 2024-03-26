@@ -30,6 +30,7 @@ namespace ProjectPumpernickle {
         Unpurgeable,
         PickLimit,
         Poison,
+        Speculative,
     }
     public enum Color {
         Red,
@@ -226,6 +227,7 @@ namespace ProjectPumpernickle {
                     break;
                 }
             }
+            ParseDescription();
         }
         public static List<Card> DeepcopyList(List<Card> original) {
             if (original == null) {
@@ -506,6 +508,10 @@ namespace ProjectPumpernickle {
             ParseActMap(actLines[0], 1);
             ParseActMap(actLines[1], 2);
             ParseActMap(actLines[2], 3);
+            if (Program.lastReportedGreenKeyLocation != null) {
+                var location = Program.lastReportedGreenKeyLocation.Value;
+                map[location.actNum, location.x, location.y].nodeType = NodeType.MegaElite;
+            }
             var pathTexts = actLines.Select(actLines => {
                 var lines = actLines.Select(x => x.Substring(7)).ToArray();
                 return string.Join("\n", lines);
@@ -572,6 +578,15 @@ namespace ProjectPumpernickle {
             for (int i = 0; i < potions.Length; i++) {
                 if (potions[i].Equals("Potion Slot")) {
                     potions[i] = potion;
+                    return i;
+                }
+            }
+            return -1;
+        }
+        public int DropPotion(string potion) {
+            for (int i = 0; i < potions.Length; i++) {
+                if (potions[i].Equals(potion)) {
+                    potions[i] = "Potion Slot";
                     return i;
                 }
             }

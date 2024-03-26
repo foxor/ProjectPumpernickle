@@ -141,7 +141,6 @@ public class SpirePatches {
 	            	PumpernickelMessage message = new PumpernickelMessage();
                     message.AddLine("GreenKey");
                     message.AddLine(AbstractDungeon.actNum);
-                    message.AddLine(AbstractDungeon.floorNum);
                     message.AddLine(node.x);
                     message.AddLine(node.y);
                     message.Send();
@@ -214,6 +213,7 @@ public class SpirePatches {
             for(MapRoomNode node : row) {
                 if (node.hasEmeraldKey) {
                     message.AddLine("GreenKey");
+                    message.AddLine(AbstractDungeon.actNum);
                     message.AddLine(node.x + "");
                     message.AddLine(node.y + "");
                 }

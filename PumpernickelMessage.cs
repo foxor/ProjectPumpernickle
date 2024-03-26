@@ -17,6 +17,7 @@ namespace ProjectPumpernickle {
         Key,
         CardRemove,
         Event,
+        DropPotion,
     }
     public enum EventRewardElement {
         None,
@@ -77,14 +78,7 @@ namespace ProjectPumpernickle {
                     break;
                 }
                 case "GreenKey": {
-                    if (Save.state == null) {
-                        return;
-                    }
-                    var floor = int.Parse(lines[2]);
-                    var didFight = false;
-                    Program.ParseNewFile(floor, didFight);
-                    Save.state.act_num = int.Parse(lines[1]);
-                    ParseGreenKeyMessage(lines.Skip(3));
+                    ParseGreenKeyMessage(lines.Skip(1));
                     break;
                 }
                 case "Event": {
@@ -179,9 +173,19 @@ namespace ProjectPumpernickle {
         }
 
         protected static void ParseGreenKeyMessage(IEnumerable<string> floorCoordinate) {
-            int x = int.Parse(floorCoordinate.First());
-            int y = int.Parse(floorCoordinate.Skip(1).Single());
-            Save.state.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
+            int actNum = int.Parse(floorCoordinate.First());
+            int x = int.Parse(floorCoordinate.Skip(1).First());
+            int y = int.Parse(floorCoordinate.Skip(2).Single());
+            if (Save.state == null) {
+                Program.lastReportedGreenKeyLocation = new Program.GreenKeyLocation() {
+                    actNum = actNum,
+                    x = x,
+                    y = y
+                };
+            }
+            else {
+                Save.state.map[Save.state.act_num, x, y].nodeType = NodeType.MegaElite;
+            }
         }
         protected static void ParseEventMessage(IEnumerable<string> eventArguments) {
             var javaClassPath = eventArguments.First();

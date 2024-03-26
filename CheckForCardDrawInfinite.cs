@@ -122,6 +122,10 @@ namespace ProjectPumpernickle {
                         var damage = Evaluators.HighestZeroCostDamage();
                         bestDamagePerCard = MathF.Max(bestDamagePerCard, damage / (totalCards + 1));
                     }
+                    if (netCards > 0 && netEnergy > 0) {
+                        bestBlockPerCard = MathF.Max(bestBlockPerCard, 0.5f);
+                        bestDamagePerCard = MathF.Max(bestDamagePerCard, 0.5f);
+                    }
                     bestDamagePerCard = MathF.Max(bestDamagePerCard, bestInfinite.Select(x => x.damage).Average());
                     bestBlockPerCard = MathF.Max(bestBlockPerCard, bestInfinite.Select(x => x.block).Average());
                     Save.state.buildingInfinite = true;
@@ -133,7 +137,7 @@ namespace ProjectPumpernickle {
                     cardsToClear -= (int)Evaluators.PermanentDeckSizeOffset();
                     var nonpermanentsToClear = Evaluators.NonpermanentCards().OrderBy(x => x.intCost).Take(cardsToClear);
                     var clearCost = nonpermanentsToClear.Where(x => x.intCost != int.MaxValue).Select(x => x.intCost).Sum();
-                    var clearTurn = (int)MathF.Ceiling((clearCost - Evaluators.ExtraPerFightEnergy()) / Evaluators.PerTurnEnergy());
+                    var clearTurn = (int)MathF.Max(1, MathF.Ceiling((clearCost - Evaluators.ExtraPerFightEnergy()) / Evaluators.PerTurnEnergy()));
                     Save.state.earliestInfinite = clearTurn;
                 }
             }
