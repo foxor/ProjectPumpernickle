@@ -198,7 +198,7 @@ namespace ProjectPumpernickle {
             var lines = parameters.ToArray();
             var actLine = lines.First();
             if (Save.state == null) {
-                PumpernickelSaveState.parsed = new PumpernickelSaveState();
+                Program.ParseNewFile(0, false, acceptAny: true);
             }
             Save.state.act_num = int.Parse(actLine.Substring(actLine.LastIndexOf(" ") + 1));
             Save.state.current_room = PumpernickelSaveState.NEW_ACT_ROOM;

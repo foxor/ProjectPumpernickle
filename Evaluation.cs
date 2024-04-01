@@ -101,6 +101,8 @@ namespace ProjectPumpernickle {
         ArchetypeSlotFull,
         DecreasingLethality,
         Speculation,
+        UpgradeBestInSlot,
+        BestInSlotMultiplier,
         COUNT,
     }
     public class Evaluation {
@@ -222,12 +224,9 @@ namespace ProjectPumpernickle {
                     case NodeType.Fight:
                     case NodeType.Elite:
                     case NodeType.BossChest:
+                    case NodeType.Boss:
                     case NodeType.MegaElite: {
                         NeedsMoreInfo = true;
-                        break;
-                    }
-                    case NodeType.Boss: {
-                        NeedsMoreInfo = false;
                         break;
                     }
                     case NodeType.Chest: {

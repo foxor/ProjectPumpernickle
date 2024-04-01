@@ -9,6 +9,7 @@ namespace ProjectPumpernickle {
     internal class ArchetypeRule : IGlobalRule {
         public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
         public static readonly float PUNISHMENT_PER_OVERAGE = -10f;
+        public static readonly float PUNISHMENT_PER_OVERAGE_OUTSIDE_ARCHETYPE = -3f;
         public void Apply(Evaluation evaluation) {
             Save.state.archetypeIdentities = new Dictionary<string, float>();
             foreach (var card in Save.state.cards) {
@@ -40,6 +41,14 @@ namespace ProjectPumpernickle {
                     var slot = Database.instance.archetypeDict[membership.archetypeId].slots[membership.slotId];
                     var overage = count - slot.count;
                     totalOveragePunishment += overage * PUNISHMENT_PER_OVERAGE;
+                }
+                foreach (var coveredTag in pickedCard.tags.Keys) {
+                    foreach (var archetypeIdentity in Save.state.archetypeIdentities) {
+                        var fullSlots = Save.state.GetArchetypeSatisfiedTags(archetypeIdentity.Key);
+                        if (fullSlots.Any(x => x.Equals(coveredTag))) {
+                            totalOveragePunishment += archetypeIdentity.Value * PUNISHMENT_PER_OVERAGE;
+                        }
+                    }
                 }
             }
             Evaluation.Active.SetScore(ScoreReason.ArchetypeSlotFull, totalOveragePunishment);

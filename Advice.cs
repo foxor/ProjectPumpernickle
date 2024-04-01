@@ -12,6 +12,7 @@ namespace ProjectPumpernickle {
         public static bool eligibleForBlueKey;
         public static bool isShop;
         public static bool needsMoreInfo;
+        public static bool allKeysPossible = true;
         protected static long threadsOutstanding;
         protected static void MultiplexRewards(List<RewardOption> rewardOptions, bool eligibleForBlueKey, bool isShop, IEnumerable<string> previousAdvice, bool needsMoreInfo) {
             Advice.rewardOptions = rewardOptions;
@@ -80,6 +81,9 @@ namespace ProjectPumpernickle {
                     var eval = new Evaluation(context, threadId, optionIndex, previousAdvice);
                     eval.NeedsMoreInfo = Advice.needsMoreInfo | context.needsMoreInfo;
                     eval.Path = Path.BuildPath(nodeSequence, pathIndex);
+                    if (allKeysPossible && !eval.Path.CanGetKeys()) {
+                        return;
+                    }
                     Scoring.EvaluateGlobalRules(eval, GlobalRuleEvaluationTiming.VeryEarly);
                     Scoring.EvaluateGlobalRules(eval, GlobalRuleEvaluationTiming.PrePathExploration);
                     eval.Path.ExplorePath();

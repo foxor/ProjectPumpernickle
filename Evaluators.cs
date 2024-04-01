@@ -39,23 +39,36 @@ namespace ProjectPumpernickle {
         public static float ExpectedGoldFromRandomRelic() {
             return 1f / 6f * (1f / RareRelicsAvailable()) * 300f;
         }
-
-        public static bool CardRemovesSkills(Card card) {
-            return card.id switch {
-                "Second Wind" => true,
-                _ => false,
-            };
+        public static float TotalSkillRemovalCost() {
+            var corrution = Save.state.cards.Where(x => x.id.Equals("Corruption"));
+            if (corrution.Any()) {
+                return AverageCost(corrution.First());
+            }
+            var winders = Save.state.cards.Where(x => x.id.Equals("Second Wind") || x.id.Equals("Sever Soul"));
+            if (winders.Any()) {
+                var averageHandSize = AverageHandSize();
+                var targets = Save.state.cards.Where(x => x.cardType != CardType.Attack).Count();
+                var targetDensity = Save.state.cards.Count / targets;
+                var targetsPerHand = targetDensity * averageHandSize;
+                var skillCount = Save.state.cards.Where(x => x.cardType == CardType.Skill).Count();
+                var minWinderCost = winders.Select(AverageCost).Min();
+                return skillCount / targetsPerHand * minWinderCost;
+            }
+            return float.MaxValue;
+        }
+        public static bool HasSkillRemover() {
+            return TotalSkillRemovalCost() < float.MaxValue;
         }
         public static IEnumerable<Card> PermanentCards() {
-            var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
+            var hasSkillRemover = HasSkillRemover();
             return Save.state.cards.Where(x => {
                 if (x.cardType == CardType.Power) {
                     return false;
                 }
-                if (x.tags.ContainsKey(Tags.NonPermanent.ToString())) {
+                if (x.cardType == CardType.Skill && hasSkillRemover) {
                     return false;
                 }
-                if (x.cardType == CardType.Skill && hasSkillRemover && !CardRemovesSkills(x)) {
+                if (x.tags.ContainsKey(Tags.NonPermanent.ToString())) {
                     return false;
                 }
                 return true;
@@ -65,38 +78,13 @@ namespace ProjectPumpernickle {
             return Save.state.cards.Except(PermanentCards());
         }
         public static float PermanentDeckSizeOffset() {
-            var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
             return Save.state.cards.Select(x => {
-                if (x.setup.TryGetValue(ScoreReason.ExhaustOther.ToString(), out var value)) {
-                    return value;
-                }
+                // FIXME: support purity, recycle, true grit, burning pact, fiend fire, etc here
                 return 0f;
             }).Sum();
         }
         public static float PermanentDeckSize() {
             return PermanentCards().Count() - PermanentDeckSizeOffset();
-        }
-
-        public static float CostOfNonPermanent() {
-            var hasSkillRemover = Save.state.cards.Any(CardRemovesSkills);
-            return Save.state.cards.Select(x => {
-                if (x.cardType == CardType.Power) {
-                    return x.intCost;
-                }
-                if (x.id == "Purity") {
-                    return -3f;
-                }
-                if (x.tags.TryGetValue(Tags.NonPermanent.ToString(), out var value)) {
-                    if (x.tags.TryGetValue(Tags.ExhaustCost.ToString(), out var cost)) {
-                        return cost;
-                    }
-                    return x.intCost;
-                }
-                if (hasSkillRemover && CardRemovesSkills(x)) {
-                    return x.intCost * 2.5f;
-                }
-                return 0f;
-            }).Sum();
         }
 
         public static float OneTimeDrawEffects() {
@@ -119,11 +107,6 @@ namespace ProjectPumpernickle {
 
         public static float ExtraPerFightEnergy() {
             var extraEnergyFound = 0f;
-            if (Save.state.relics.Contains("Mummified Hand")) {
-                var averageCost = Evaluators.AverageMinimumCost();
-                var powerCount = Save.state.cards.Where(x => x.cardType == CardType.Power).Count();
-                extraEnergyFound += averageCost * powerCount;
-            }
             return extraEnergyFound;
         }
 
@@ -143,30 +126,27 @@ namespace ProjectPumpernickle {
             }
             return 5f;
         }
-
-        public static bool HasCalmEnter() {
-            return Save.state.cards.Any(x => x.id == "InnerPeace" || x.id == "FearNoEvil");
+        public static float AverageHandSize() {
+            return 10f - HandRoom();
         }
-
         public static int TurnOneEnergy() {
             return 3;
         }
-
         public static void CardRewardDamageStats(Path path, int nodeIndex, out float totalDamage, out float totalCost) {
             //path.expectedCardRewards[nodeIndex]
             totalCost = 0;
             totalDamage = 0;
         }
-
         public static float RandomPotionHealthValue() {
             return 10f;
         }
         public static readonly float ASSUMED_FAIRY_OVERKILL_PREVENTION = 20f;
+        public static readonly float LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY = 10f;
+        public static readonly float SWIFT_POT_DAMAGE_PREVENTION_LIKELIHOOD = 0.65f;
         public static float GetPotionHealthValue(string potionId, float literalHealth) {
-            var potionValue = RandomPotionHealthValue();
+            var potionValue = 0f;
             switch (potionId) {
                 case "Ancient Potion": {
-                    potionValue = 0f;
                     break;
                 }
                 case "Fruit Juice": {
@@ -174,6 +154,29 @@ namespace ProjectPumpernickle {
                 }
                 case "FairyPotion": {
                     return Evaluators.PercentHealthHeal(0.3f) + ASSUMED_FAIRY_OVERKILL_PREVENTION;
+                }
+                case "LiquidMemories": {
+                    var densityFactor = 10f / Save.state.cards.Count();
+                    foreach (var card in PermanentCards()) {
+                        if (card.intCost != int.MaxValue) {
+                            var extraCost = Math.Max(0, card.intCost - 1);
+                            potionValue += LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY * extraCost * densityFactor;
+                        }
+                    }
+                    break;
+                }
+                case "Swift Potion": {
+                    var averageEnemyDamage = FightSimulator.NormalEnemyDamageForFloor(Save.state.floor_num);
+                    potionValue = averageEnemyDamage * SWIFT_POT_DAMAGE_PREVENTION_LIKELIHOOD;
+                    break;
+                }
+                case "DuplicationPotion": {
+                    potionValue = Lerp.From(8f, 20f, PercentGameOver(Save.state.floor_num));
+                    break;
+                }
+                default: {
+                    potionValue = RandomPotionHealthValue();
+                    break;
                 }
             }
             var healthFactor = Lerp.Inverse(10f, 30f, literalHealth);
@@ -470,7 +473,7 @@ namespace ProjectPumpernickle {
                 (Save.state.infiniteDoesDamage ? .3f : 0f) +
                 (Save.state.infiniteBlockPerCard > 2f ? .5f : 0f) +
                 (Save.state.infiniteBlockPerCard > 0f ? .2f : 0f);
-            var energyToClear = CostOfNonPermanent() - ExtraPerFightEnergy();
+            var energyToClear = TotalCostOfNonPermanent();
             // Assuming you spend half your energy on going off
             var estimatedClearTurn = MathF.Max(1f, energyToClear / PerTurnEnergy() * 2f);
             var clearCostPenalty = .5f * (1f - (1f / estimatedClearTurn));
@@ -483,7 +486,8 @@ namespace ProjectPumpernickle {
             };
             var drawsAfterClear = Save.state.infiniteMaxSize - 5;
             var redrawPenalty = .2f * (1f - (1f / (1f + (drawsAfterClear / 8))));
-            var clogPenalty = .3f * (1f - (1f / (1f + ((Evaluators.PermanentDeckSize() - 8) / 4f))));
+            var permanentSize = Evaluators.PermanentDeckSize();
+            var clogPenalty = .3f * (1f - (1f / (1f + ((permanentSize - 8) / 4f))));
             clogPenalty = MathF.Max(0f, MathF.Min(1f, clogPenalty));
             var practicality = 
                 (1f - speedPenalty) *
@@ -520,7 +524,6 @@ namespace ProjectPumpernickle {
         public static bool Is(this PlayerCharacter a, PlayerCharacter b) {
             return (a == b) || (a == PlayerCharacter.Any || b == PlayerCharacter.Any);
         }
-
         public static Color ToColor(this PlayerCharacter character) {
             switch (Save.state.character) {
                 case PlayerCharacter.Ironclad: {
@@ -540,7 +543,6 @@ namespace ProjectPumpernickle {
                 }
             }
         }
-
         public static float NormalElites(PlayerCharacter character, int act) {
             switch (character) {
                 case PlayerCharacter.Ironclad: {
@@ -688,14 +690,9 @@ namespace ProjectPumpernickle {
         public static float AverageCardsPerFight() {
             return 15f;
         }
-        public static readonly float LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY = .3f;
         public static float ExtraCardValue(Card c, float value, int index) {
             if (c.bottled && c.tags.TryGetValue(Tags.BottleEquity.ToString(), out var bottleValue)) {
                 value += bottleValue;
-            }
-            if (Save.state.potions?.Any(x => x.Equals("LiquidMemories")) == true && c.intCost != int.MaxValue && !c.tags.ContainsKey(Tags.NonPermanent.ToString())) {
-                var extraCost = Math.Max(0, c.intCost - 1);
-                value += LIQUID_MEMORIES_VALUE_PER_EXTRA_ENERGY * extraCost;
             }
             value += c.bias;
             foreach (var combo in c.combo) {
@@ -784,8 +781,8 @@ namespace ProjectPumpernickle {
             }
             return false;
         }
-        public static bool ShouldConsiderSkippingPotion() {
-            return Save.state.EmptyPotionSlots() == 0;
+        public static bool ShouldConsiderSkippingPotion(List<RewardOption> rewardOptions) {
+            return Save.state.EmptyPotionSlots() == 0 && rewardOptions.Any(x => x.rewardType == RewardType.Potion);
         }
         public static bool ShouldConsiderSkippingKey() {
             return false;
@@ -809,7 +806,7 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
-            if (ShouldConsiderSkippingPotion()) {
+            if (ShouldConsiderSkippingPotion(rewardOptions)) {
                 foreach (var potion in Save.state.Potions().Distinct()) {
                     rewardOptions.Insert(0, new RewardOption() {
                         skippable = true,
@@ -943,34 +940,54 @@ namespace ProjectPumpernickle {
                 .Where(x => Save.state.cards[x].cardType == CardType.Attack && MaxCost(Save.state.cards[x]) >= 2);
         }
         public static float AverageCost(Card c) {
+            var baseCost = c.intCost * 1f;
             if (Save.state.relics.Contains("Snecko Eye")) {
-                return 1.5f;
+                baseCost = 1.5f;
             }
-            else if (c.intCost != int.MaxValue) {
-                return c.intCost;
-            }
-            else {
-                return 3f;
-            }
-        }
-        public static float AverageMinimumCost() {
-            if (Save.state.relics.Contains("Snecko Eye")) {
-                return 1.5f;
-            }
-            var totalCost = 0f;
-            foreach (var card in Save.state.cards) {
-                if (card.intCost != int.MaxValue) {
-                    totalCost += card.intCost;
+            else if (c.intCost == int.MaxValue) {
+                if (c.cost.Equals("X")) {
+                    return 1.3f;
                 }
                 else {
-                    totalCost += 0f;
+                    return 0f;
                 }
             }
-            return totalCost / Save.state.cards.Count;
+            if (Save.state.relics.Contains("Mummified Hand")) {
+                var powerCount = Save.state.cards.Where(x => x.cardType == CardType.Power).Count();
+                var targetCount = Save.state.cards.Where(x => x.intCost != 0 && x.intCost != int.MaxValue).Count();
+                var hitRate = powerCount * 1f / targetCount;
+                baseCost *= (1f - hitRate);
+            }
+            return baseCost;
         }
         public static float AverageCostOfHand() {
             var averageHandSize = SustainableCardDrawPerTurn();
             return Save.state.cards.Select(AverageCost).Average() * averageHandSize;
+        }
+        public static float TotalCostOfNonPermanent() {
+            var skillRemoveCost = TotalSkillRemovalCost();
+            var nonPermanent = NonpermanentCards();
+            var totalNonPermanentCost = 0f;
+            if (skillRemoveCost != float.MaxValue) {
+                nonPermanent = nonPermanent.Except(x => x.cardType == CardType.Skill);
+                totalNonPermanentCost = nonPermanent.Select(AverageCost).Sum() + skillRemoveCost;
+            }
+            else {
+                totalNonPermanentCost = nonPermanent.Select(AverageCost).Sum();
+            }
+            var averageNonPermanentCost = totalNonPermanentCost / nonPermanent.Count();
+            var costOffset = 0f;
+            foreach (var card in Save.state.cards) {
+                if (card.id == "Purity") {
+                    if (card.upgrades > 0) {
+                        costOffset += averageNonPermanentCost * 5f;
+                    }
+                    else {
+                        costOffset += averageNonPermanentCost * 3f;
+                    }
+                }
+            }
+            return totalNonPermanentCost - costOffset;
         }
         public static float DensityOfRarity(Color color, Rarity rarity) {
             // Does this matter?
@@ -1019,6 +1036,14 @@ namespace ProjectPumpernickle {
                 return 27f;
             }
             return 0f;
+        }
+        public static IEnumerable<Card> NewlyUpgradedCards() {
+            if (Evaluation.Active.Path.upgradeChosen != -1) {
+                yield return Save.state.cards[Path.plausibleUpgrades[Evaluation.Active.Path.upgradeChosen]];
+            }
+        }
+        public static int IndexOfCardWithDescriptor(string description) {
+            return Save.state.cards.FirstIndexOf(x => x.Descriptor().Equals(description));
         }
     }
 }

@@ -43,7 +43,6 @@ namespace ProjectPumpernickle {
         public static List<int> plausibleUpgrades;
 
         public int elites;
-        public bool hasMegaElite;
         public MapNode[] nodes = null;
         public float[] expectedGold = null;
         public int[] minPlanningGold = null;
@@ -175,6 +174,9 @@ namespace ProjectPumpernickle {
                     if (nextOptions[childIndex].totalChildOptions > residual) {
                         break;
                     }
+                    if (!nextOptions[childIndex].totalChildOptions.HasValue) {
+                        Console.WriteLine();
+                    }
                     residual -= nextOptions[childIndex].totalChildOptions.Value;
                 }
                 r = BuildNodeSequence(residual, nextOptions[childIndex]);
@@ -232,7 +234,6 @@ namespace ProjectPumpernickle {
         public static Path Copy(Path path) {
             Path r = new Path();
             r.elites = path.elites;
-            r.hasMegaElite = path.hasMegaElite;
             r.expectedHealthLoss = path.expectedHealthLoss;
             r.shortTermShopPlan = path.shortTermShopPlan;
             r.remainingFloors = path.remainingFloors;
@@ -519,7 +520,6 @@ namespace ProjectPumpernickle {
                 if (nodeTypes[i] == NodeType.Elite || nodeTypes[i] == NodeType.MegaElite) {
                     elites++;
                 }
-                hasMegaElite |= nodeTypes[i] == NodeType.MegaElite;
                 minGold += MinPlanningGoldFrom(i);
                 minPlanningGold[i] = minGold;
             }
@@ -1108,6 +1108,10 @@ namespace ProjectPumpernickle {
         }
         public void ChooseShortTermShopPlan() {
             var firstShopIndex = nodeTypes.FirstIndexOf(x => x.Equals(NodeType.Shop));
+            if (firstShopIndex < 0) {
+                shortTermShopPlan = PathShopPlan.FixFight;
+                return;
+            }
             var minGold = minPlanningGold[firstShopIndex];
             var removeValue = CardRemovePoints(minGold);
             var fixValue = FixShopPoint(minGold);
@@ -1229,6 +1233,18 @@ namespace ProjectPumpernickle {
                 totalChance *= (1f - chanceOfDeath[i]);
             }
             chanceToSurviveAct = totalChance;
+        }
+        public bool CanGetKeys() {
+            if (Save.state.act_num == 3 && !Save.state.has_emerald_key && !nodes.Any(x => x.nodeType == NodeType.MegaElite)) {
+                return false;
+            }
+            if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && !ContainsGuaranteedChest()) {
+                return false;
+            }
+            if (Save.state.act_num == 3 && !Save.state.has_ruby_key && !fireChoices.Any(x => x == FireChoice.Key)) {
+                return false;
+            }
+            return true;
         }
     }
     public struct Vector2Int {

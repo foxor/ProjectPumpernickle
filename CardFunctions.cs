@@ -585,6 +585,9 @@
         }
         public static float WellLaidPlans(Card c, int index) {
             var value = 0f;
+            if (Save.state.relics.Contains("Runic Pyramid")) {
+                return -10f;
+            }
             return value;
         }
         public static float AThousandCuts(Card c, int index) {

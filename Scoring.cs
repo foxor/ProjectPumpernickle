@@ -125,7 +125,7 @@ namespace ProjectPumpernickle {
                 this.score = score;
             }
         }
-        public static readonly float LAST_CHANCE_TO_PICK_VALUE = 0.25f;
+        public static readonly float LAST_CHANCE_TO_PICK_VALUE = 0.1f;
         public static IEnumerable<CardScore> CardScoreProvider(float[] cardRarityAppearances, float[] cardShopAppearances = null, Color colorLimit = Color.Eligible, Rarity rarityLimit = Rarity.Randomable) {
             var path = Evaluation.Active.Path;
             if (cardShopAppearances == null) {
@@ -188,7 +188,7 @@ namespace ProjectPumpernickle {
         }
         // Cards aren't good until you build a good deck
         // Relics are good immediately
-        public static readonly float FUTURE_CARD_CURRENT_POINT_MIN = 0.25f;
+        public static readonly float FUTURE_CARD_CURRENT_POINT_MIN = 0.05f;
         public static readonly float FUTURE_RELIC_CURRENT_POINT_MIN = 0.5f;
         protected static void ScoreFutureCardValue(Evaluation evaluation) {
             var path = evaluation.Path;
@@ -236,7 +236,7 @@ namespace ProjectPumpernickle {
             var stats = new ChooseCardsStatisticsGroup(cardRarityAppearances, cardShopAppearances);
             var outcome = stats.Evaluate();
             var cardRewardExpectedTotalValue = outcome.rewardOutcomeMean;
-            var currentValueMultiplier = Lerp.From(FUTURE_CARD_CURRENT_POINT_MIN, 1f, Save.state.floor_num / 55f);
+            var currentValueMultiplier = Lerp.From(FUTURE_CARD_CURRENT_POINT_MIN, 1f, 1f - (Save.state.floor_num / 55f));
             evaluation.SetScore(ScoreReason.CardReward, cardRewardExpectedTotalValue * currentValueMultiplier);
         }
         protected static float ScoreValueOfRelic(Relic relicAdded) {
@@ -351,19 +351,12 @@ namespace ProjectPumpernickle {
 
             path.AddEventScore(evaluation);
 
-            if (Save.state.act_num < 3 && (Save.state.has_emerald_key || path.hasMegaElite)) {
+            if (Save.state.act_num < 3 && (Save.state.has_emerald_key || path.nodes.Any(x => x.nodeType == NodeType.MegaElite))) {
                 evaluation.SetScore(ScoreReason.EarlyMegaElite, .2f);
-            }
-
-            if (Save.state.act_num == 3 && !Save.state.has_emerald_key && path.hasMegaElite != true) {
-                evaluation.SetScore(ScoreReason.MissingKey, -10000f);
-            }
-            if (Save.state.act_num == 3 && !Save.state.has_sapphire_key && !path.ContainsGuaranteedChest()) {
-                evaluation.SetScore(ScoreReason.MissingKey, -10000f);
             }
         }
         public static void ScoreUpgrades(Evaluation evaluation) {
-            evaluation.SetScore(ScoreReason.Upgrades, 40f * Evaluators.UpgradeValueProportion(evaluation));
+            evaluation.SetScore(ScoreReason.Upgrades, 30f * Evaluators.UpgradeValueProportion(evaluation));
         }
         public static void ScoreBasedOnEvaluation(Evaluation evaluation) {
             // Order is important here

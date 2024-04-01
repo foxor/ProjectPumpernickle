@@ -85,7 +85,18 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnRewards(null, existingAdvice);
         }
         public static void Falling(IEnumerable<string> arguments) {
-            Advice.AdviseOnReward(RewardOption.BuildEvent());
+            var reward = RewardOption.BuildEvent(
+                arguments.Select(cardDescriptor =>
+                    new RewardOptionPart() {
+                        advice = "Lose the " + cardDescriptor,
+                        value = EventRewardElement.REMOVE_CARD.ToString() +
+                            ": " +
+                            Evaluators.IndexOfCardWithDescriptor(cardDescriptor),
+                    }
+                ).ToArray()
+            );
+            reward.skippable = false;
+            Advice.AdviseOnReward(reward);
         }
         public static void ForgottenAltar(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent(

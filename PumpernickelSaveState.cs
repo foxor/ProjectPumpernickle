@@ -31,6 +31,7 @@ namespace ProjectPumpernickle {
         PickLimit,
         Poison,
         Speculative,
+        Weak,
     }
     public enum Color {
         Red,
@@ -105,12 +106,16 @@ namespace ProjectPumpernickle {
             var damageRegex = new Regex(@"Deal (\d+) (\((\d+)\) )?damage");
             var damageMatch = damageRegex.Match(description);
             if (damageMatch.Success) {
-                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[upgrades == 0 ? 1 : 3].Value);
+                var damageUpgadeRegexGroup = damageMatch.Groups[2].Length > 0 ? 3 : 1;
+                var groupIndex = upgrades == 0 ? 1 : damageUpgadeRegexGroup;
+                tags[Tags.Damage.ToString()] = float.Parse(damageMatch.Groups[groupIndex].Value);
             }
             var blockRegex = new Regex(@"Gain (\d+) (\((\d+)\) )?Block");
             var blockMatch = blockRegex.Match(description);
             if (blockMatch.Success) {
-                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[upgrades == 0 ? 1 : 3].Value);
+                var blockUpgadeRegexGroup = blockMatch.Groups[2].Length > 0 ? 3 : 1;
+                var groupIndex = upgrades == 0 ? 1 : blockUpgadeRegexGroup;
+                tags[Tags.Block.ToString()] = float.Parse(blockMatch.Groups[groupIndex].Value);
             }
             if (description.Contains("Weak") && !tags.ContainsKey(Tags.Block.ToString())) {
                 tags[Tags.Block.ToString()] = 1f;
@@ -131,6 +136,11 @@ namespace ProjectPumpernickle {
                 var drawRegexGroup = drawMatch.Groups[2].Length > 0 ? 3 : 1;
                 var groupIndex = upgrades == 0 ? 1 : drawRegexGroup;
                 tags[Tags.CardDraw.ToString()] = float.Parse(drawMatch.Groups[drawRegexGroup].Value);
+            }
+            var selfExhaustRegex = new Regex(@"\n(Exhaust|Ethereal)\.");
+            var selfExhaustMatch = selfExhaustRegex.Match(description);
+            if (selfExhaustMatch.Success) {
+                tags[Tags.NonPermanent.ToString()] = 1f;
             }
         }
 
@@ -337,7 +347,7 @@ namespace ProjectPumpernickle {
         public string current_room;
 
         public PlayerCharacter character;
-        public MapNode[,,] map = new MapNode[4, MAX_MAP_X, MAX_MAP_Y];
+        public MapNode[,,] map = new MapNode[5, MAX_MAP_X, MAX_MAP_Y];
         public float infiniteBlockPerCard;
         public int infiniteMaxSize;
         public bool infiniteDoesDamage;
@@ -498,6 +508,58 @@ namespace ProjectPumpernickle {
                 ParseConnections(act, 14 - row, line);
             }
         }
+        protected void CreateActFourMap() {
+            map[4, 3, 3] = new MapNode() {
+                nodeType = NodeType.Boss,
+                position = new Vector2Int(3, 3),
+            };
+            map[4, 3, 2] = new MapNode() {
+                nodeType = NodeType.Elite,
+                position = new Vector2Int(3, 2),
+                children = new List<MapNode>() {
+                    map[4, 3, 3]
+                }
+            };
+            map[4, 3, 1] = new MapNode() {
+                nodeType = NodeType.Shop,
+                position = new Vector2Int(3, 1),
+                children = new List<MapNode>() {
+                    map[4, 3, 2]
+                }
+            };
+            map[4, 3, 0] = new MapNode() {
+                nodeType = NodeType.Fire,
+                position = new Vector2Int(3, 0),
+                children = new List<MapNode>() {
+                    map[4, 3, 1]
+                }
+            };
+        }
+        protected string FakeActFourPathText() {
+            return string.Join("\n", Enumerable.Range(0, 29).Select(r => {
+                return new string(Enumerable.Range(0, 19).Select(c => {
+                    if (c != 10) {
+                        return ' ';
+                    }
+                    if (r == 4) {
+                        return 'H';
+                    }
+                    if (r < 4) {
+                        return ' ';
+                    }
+                    if (r == 10) {
+                        return 'E';
+                    }
+                    if (r == 20) {
+                        return 'S';
+                    }
+                    if (r == 25) {
+                        return 'F';
+                    }
+                    return '|';
+                }).ToArray());
+            }));
+        }
         public void ParsePath(string path) {
             var pathLines = path.Split(new char[] {'\n'});
             var actLines = new string[][] {
@@ -508,6 +570,7 @@ namespace ProjectPumpernickle {
             ParseActMap(actLines[0], 1);
             ParseActMap(actLines[1], 2);
             ParseActMap(actLines[2], 3);
+            CreateActFourMap();
             if (Program.lastReportedGreenKeyLocation != null) {
                 var location = Program.lastReportedGreenKeyLocation.Value;
                 map[location.actNum, location.x, location.y].nodeType = NodeType.MegaElite;
@@ -515,7 +578,7 @@ namespace ProjectPumpernickle {
             var pathTexts = actLines.Select(actLines => {
                 var lines = actLines.Select(x => x.Substring(7)).ToArray();
                 return string.Join("\n", lines);
-            }).ToArray();
+            }).Append(FakeActFourPathText()).ToArray();
             PumpernickelAdviceWindow.instance.Invoke(PumpernickelAdviceWindow.SetPathTexts, new object[] { pathTexts });
         }
 
@@ -524,30 +587,6 @@ namespace ProjectPumpernickle {
                 card.MergeWithDatabaseCard(Database.instance.cardsDict[card.id]);
                 card.ParseDescription();
             }
-        }
-        public MapNode[] Act4() {
-            var heart = new MapNode() {
-                nodeType = NodeType.Boss,
-                position = new Vector2Int(3, 3),
-            };
-            var elite = new MapNode() {
-                nodeType = NodeType.Elite,
-                position = new Vector2Int(3, 2),
-                children = new List<MapNode>() { heart },
-            };
-            var shop = new MapNode() {
-                nodeType = NodeType.Shop,
-                position = new Vector2Int(3, 1),
-                children = new List<MapNode>() { elite },
-            };
-            var fire = new MapNode() {
-                nodeType = NodeType.Fire,
-                position = new Vector2Int(3, 0),
-                children = new List<MapNode>() { shop },
-            };
-            return new MapNode[] {
-                fire, shop, elite, heart
-            };
         }
         public static readonly string NEW_ACT_ROOM = "new act";
         public MapNode GetCurrentNode() {
@@ -559,6 +598,7 @@ namespace ProjectPumpernickle {
                 var fakeNode = new MapNode();
                 fakeNode.position = new Vector2Int(3, -1);
                 fakeNode.children = Enumerable.Range(0, map.GetLength(1)).Select(x => map[act_num, x, 0]).Where(x => x != null).ToList();
+                Save.state.room_y = -1;
                 return fakeNode;
             }
             if (bossChest) {
@@ -566,9 +606,6 @@ namespace ProjectPumpernickle {
             }
             if (bossRoom) {
                 return new MapNode() { nodeType = NodeType.Boss, position = new Vector2Int(-1, 16) };
-            }
-            if (act_num == 4) {
-                return Act4()[room_y];
             }
             var CurrentNode = map[act_num, room_x, room_y];
             return CurrentNode;
@@ -679,6 +716,20 @@ namespace ProjectPumpernickle {
                 return archetypeSlots[existingId].entries;
             }
             return 0;
+        }
+        public IEnumerable<string> GetArchetypeSatisfiedTags(string archetypeId) {
+            if (archetypeSlots == null) {
+                yield break;
+            }
+            var slots = Database.instance.archetypeDict[archetypeId].slots;
+            foreach (var archetypeSlot in archetypeSlots) {
+                if (archetypeSlot.archetypeId == archetypeId) {
+                    var slotFulfilment = slots[archetypeSlot.slotId].count;
+                    if (archetypeSlot.entries >= slotFulfilment) {
+                        yield return archetypeSlot.slotId;
+                    }
+                }
+            }
         }
     }
 }

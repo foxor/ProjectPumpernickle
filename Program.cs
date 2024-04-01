@@ -24,11 +24,14 @@ namespace ProjectPumpernickle {
             var pipeListener = new Thread(new ThreadStart(TcpListener.Run));
             pipeListener.Start();
         }
-        public static void ParseNewFile(int floorNum, bool expectFightOver) {
+        public static void ParseNewFile(int floorNum, bool expectFightOver, bool acceptAny = false) {
             var path = @"C:\Program Files (x86)\Steam\steamapps\common\SlayTheSpire\saves";
             var lastWritten = Directory.GetFiles(path).Where(x => x.EndsWith(".autosave") || x.EndsWith(".autosaveBETA")).OrderBy(x => File.GetLastWriteTime(x)).Last();
             var writtenTime = File.GetLastWriteTime(lastWritten);
             ParseFile(lastWritten);
+            if (acceptAny) {
+                return;
+            }
             var loadedFloorNum = PumpernickelSaveState.parsed.floor_num;
             var didFightThisFloor = PumpernickelSaveState.parsed.metric_damage_taken.Any(x => x.floor == floorNum);
             if (loadedFloorNum != floorNum || (expectFightOver && !didFightThisFloor)) {

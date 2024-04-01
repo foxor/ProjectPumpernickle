@@ -735,7 +735,7 @@
          "bias": -0.8,
          "upgradePowerMultiplier": 1.1,
          "setup": {
-            "ExhaustOther": 2.2
+            "ExhaustOther": 1.6
          },
       },
       {
@@ -1042,6 +1042,9 @@
          "mod":"Slay the Spire",
          "upgradePowerMultiplier": 1.5,
          "bias": 0,
+         "tags": {
+            "Weak": 2,
+         }
       },
       {
          "id":"Strike_G",
@@ -1394,6 +1397,7 @@
          "upgradePowerMultiplier": 1.5,
          "tags": {
             "Poison": 8,
+            "BossDamage": 1,
          }
       },
       {
@@ -1796,7 +1800,14 @@
          "description":" (Innate.)\nWhenever you play a card, gain 1 Block.",
          "mod":"Slay the Spire",
          "bias": 0.8,
-         "upgradePowerMultiplier": 2,
+         "upgradePowerMultiplier": 1.15,
+         "tags": {
+            "PickLimit": 4,
+         },
+         "goodAgainst": {
+            "Time Eater": 1.5,
+            "The Heart": 1.5,
+         }
       },
       {
          "id":"Venomology",
@@ -4061,6 +4072,9 @@
          "description":"Enemy loses 9 (15) Strength this turn.\nExhaust.",
          "mod":"Slay the Spire",
          "bias": 2.2,
+         "goodAgainst": {
+            "The Heart": 5,
+         }
       },
       {
          "id":"Deep Breath",
@@ -10456,7 +10470,7 @@
          "medianWorstCaseHealthLoss": 23,
       },
       {
-         "id": "The Maw",
+         "id": "Maw",
          "characters": [
             "Maw"
          ],
@@ -10823,30 +10837,39 @@
          "id": "discard",
          "value": 5.0,
          "slots": {
-            "damage": {
+            "Damage": {
                "count": 1.0,
                "cards": [
                   "Underhanded Strike",
                   "Eviscerate",
                   "Slice",
                   "Masterful Stab",
+                  "Grand Finale"
                ]
             },
-            "draw": {
+            "BossDamage": {
+               "count": 1.0,
+               "cards": [
+                  "Eviscerate",
+                  "Grand Finale"
+               ]
+            },
+            "Draw": {
                "count": 2.5,
                "cards": [
                   "Acrobatics",
                   "Prepared",
                ]
             },
-            "sustain": {
+            "Sustain": {
                "count": 1.0,
                "cards": [
                   "Reflex",
                   "Tactician",
+                  "Concentrate",
                ]
             },
-            "gamble": {
+            "Gamble": {
                "count": 1.0,
                "cards": [
                   "Calculated Gamble",

@@ -159,13 +159,17 @@ namespace ProjectPumpernickle {
         }
         public static readonly float BEGINNING_OF_GAME_DAMAGE = 12f;
         public static readonly float BEGINNING_OF_GAME_BLOCK = 5f;
+        public static readonly float BEGINNING_OF_GAME_ENEMY_DAMAGE = 8f;
         public static readonly float BEGINNING_OF_GAME_DAMAGE_LOG = MathF.Log(BEGINNING_OF_GAME_DAMAGE);
         public static readonly float BEGINNING_OF_GAME_BLOCK_LOG = MathF.Log(BEGINNING_OF_GAME_BLOCK);
+        public static readonly float BEGINNING_OF_GAME_ENEMY_DAMAGE_LOG = MathF.Log(BEGINNING_OF_GAME_ENEMY_DAMAGE);
         public static readonly float END_OF_GAME_DAMAGE_LOG = MathF.Log(100);
         public static readonly float END_OF_GAME_BLOCK_LOG = MathF.Log(60);
+        public static readonly float END_OF_GAME_ENEMY_DAMAGE_LOG = MathF.Log(50);
         public static readonly float FLOORS_IN_GAME = 55;
         public static readonly float DAMAGE_LOG_PER_FLOOR = (END_OF_GAME_DAMAGE_LOG - BEGINNING_OF_GAME_DAMAGE_LOG) / FLOORS_IN_GAME;
         public static readonly float BLOCK_LOG_PER_FLOOR = (END_OF_GAME_BLOCK_LOG - BEGINNING_OF_GAME_BLOCK_LOG) / FLOORS_IN_GAME;
+        public static readonly float ENEMY_DAMAGE_LOG_PER_FLOOR = (END_OF_GAME_ENEMY_DAMAGE_LOG - BEGINNING_OF_GAME_ENEMY_DAMAGE_LOG) / FLOORS_IN_GAME;
         public static float ProjectDamageForFutureFloor(float damagePerTurn, float floorsFromNow) {
             var damageMultiplier = MathF.Exp(DAMAGE_LOG_PER_FLOOR * floorsFromNow);
             return damagePerTurn * damageMultiplier;
@@ -174,11 +178,18 @@ namespace ProjectPumpernickle {
             var damageMultiplier = MathF.Exp(BLOCK_LOG_PER_FLOOR * floorsFromNow);
             return damagePerTurn * damageMultiplier;
         }
+        public static float ProjectEnemyDamageForFutureFloor(float damagePerTurn, float floorsFromNow) {
+            var damageMultiplier = MathF.Exp(ENEMY_DAMAGE_LOG_PER_FLOOR * floorsFromNow);
+            return damagePerTurn * damageMultiplier;
+        }
         public static float NormalDamageForFloor(int floor) {
             return ProjectDamageForFutureFloor(BEGINNING_OF_GAME_DAMAGE, floor);
         }
         public static float NormalBlockForFloor(int floor) {
-            return ProjectDamageForFutureFloor(BEGINNING_OF_GAME_BLOCK, floor);
+            return ProjectBlockForFutureFloor(BEGINNING_OF_GAME_BLOCK, floor);
+        }
+        public static float NormalEnemyDamageForFloor(int floor) {
+            return ProjectEnemyDamageForFutureFloor(BEGINNING_OF_GAME_ENEMY_DAMAGE, floor);
         }
         public static float ExpectedFightLength(Encounter encounter, float initialDamage, float damageScaling) {
             var totalHealth = AverageEnemyHealth(encounter);

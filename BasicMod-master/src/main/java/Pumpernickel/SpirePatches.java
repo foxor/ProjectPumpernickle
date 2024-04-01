@@ -22,6 +22,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.dungeons.Exordium;
 import com.megacrit.cardcrawl.dungeons.TheBeyond;
 import com.megacrit.cardcrawl.dungeons.TheCity;
+import com.megacrit.cardcrawl.events.beyond.Falling;
 import com.megacrit.cardcrawl.events.beyond.MindBloom;
 import com.megacrit.cardcrawl.events.city.TheLibrary;
 import com.megacrit.cardcrawl.events.exordium.ScrapOoze;
@@ -167,6 +168,29 @@ public class SpirePatches {
 	                Field cleanup = Designer.class.getDeclaredField("cleanUpRemovesCards");
 	                cleanup.setAccessible(true);
 	                message.AddLine(((boolean)cleanup.get(d)) ? "True\n" : "False");
+	            }
+	            if (Falling.class.isAssignableFrom(event.event.getClass())) {
+	                Falling falling = (Falling)event.event;
+	    	        Field attackCardField = Falling.class.getDeclaredField("attackCard");
+	    	        attackCardField.setAccessible(true);
+	    	        AbstractCard attackCard = (AbstractCard)attackCardField.get(falling);
+	    	        if (attackCard != null) {
+	    	        	message.AddLine(attackCard.cardID + (attackCard.upgraded ? "+" : ""));
+	    	        }
+	    	
+	    	        Field skillCardField = Falling.class.getDeclaredField("skillCard");
+	    	        skillCardField.setAccessible(true);
+	    	        AbstractCard skillCard = (AbstractCard)skillCardField.get(falling);
+	    	        if (skillCard != null) {
+	    	        	message.AddLine(skillCard.cardID + (skillCard.upgraded ? "+" : ""));
+	    	        }
+	    	
+	    	        Field powerCardField = Falling.class.getDeclaredField("powerCard");
+	    	        powerCardField.setAccessible(true);
+	    	        AbstractCard powerCard = (AbstractCard)powerCardField.get(falling);
+	    	        if (powerCard != null) {
+	    	        	message.AddLine(powerCard.cardID + (powerCard.upgraded ? "+" : ""));
+	    	        }
 	            }
 	            message.Send();
 	        }

@@ -99,7 +99,7 @@ namespace ProjectPumpernickle {
         public static float ENC4Shapes(int floorNum) {
             return 1f;
         }
-        public static float ENCTheMaw(int floorNum) {
+        public static float ENCMaw(int floorNum) {
             return 1f;
         }
         public static float ENCSphereand2Shapes(int floorNum) {

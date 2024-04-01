@@ -15,7 +15,7 @@ namespace ProjectPumpernickle {
             var sustainCards = Evaluators.SustainableCardDrawPerTurn();
             var totalCards = Save.state.cards.Count();
 
-            var setupCost = Evaluators.CostOfNonPermanent();
+            var setupCost = Evaluators.TotalCostOfNonPermanent();
             var setupEnergy = Evaluators.ExtraPerFightEnergy();
             var sustainEnergy = Evaluators.PerTurnEnergy();
 
