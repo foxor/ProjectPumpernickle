@@ -165,13 +165,17 @@ namespace ProjectPumpernickle {
 
         public void SetFiltererdEvaluations(Evaluation[] evaluations) {
             FilteredEvaluations = evaluations;
-            SetChosenEvaluation(evaluations.First());
+            SetChosenEvaluation(evaluations.FirstOrDefault());
         }
 
         public void SetChosenEvaluation(Evaluation chosenEvaluation) {
             var adviceText = new StringBuilder();
             if (TotalChunks > 1 && ChunksComplete < TotalChunks) {
                 adviceText.AppendLine(String.Format("Still thinking, {0:P2} complete", (ChunksComplete * 1f / TotalChunks)));
+            }
+            if (chosenEvaluation == null) {
+                instance.AdviceBox.Text = adviceText.ToString();
+                return;
             }
             adviceText.Append(chosenEvaluation.ToString());
             ChosenEvaluation = chosenEvaluation;

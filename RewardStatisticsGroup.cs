@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Drawing;
 using System.Linq;
 using System.Security.Cryptography.Xml;
@@ -16,23 +17,35 @@ namespace ProjectPumpernickle {
         public float rewardOutcomeMean;
         public float rewardOutcomeStd;
         public float chosenValue;
-        public void Build<T>(IEnumerable<T> options, Func<T, float> scoreFn, Func<T, bool> chosen) {
+        public void Build<T>(IEnumerable<T> options, Func<T, float> scoreFn, Func<T, float> countFn, Func<T, bool> chosen) {
             var optionArray = options.ToArray();
             var scores = optionArray.Select(scoreFn).ToArray();
-            Build(scores);
+            var counts = optionArray.Select(countFn).ToArray();
+            Build(scores, counts);
             var chosenIndicies = Enumerable.Range(0, optionArray.Length).Where(x => chosen(optionArray[x]));
             if (chosenIndicies.Any()) {
                 chosenValue = chosenIndicies.Select(x => scores[x]).Average();
             }
         }
-        public void Build(float[] scores) {
-            rewardOutcomeMean = scores.Average();
+        public void Build(float[] scores, float[] counts = null) {
+            if (counts == null) {
+                counts = Enumerable.Repeat(1f, scores.Length).ToArray();
+            }
+            if (!counts.Any(x => x > 0)) {
+                return;
+            }
+            var popSize = counts.Sum();
+            rewardOutcomeMean = Enumerable.Range(0, scores.Length).Select(x => scores[x] * counts[x] / popSize).Sum();
             chosenValue = rewardOutcomeMean;
+            var averageCount = counts.Where(x => x > 0).Average();
             var variance = 0.0;
             for (int i = 0; i < scores.Length; i++) {
-                variance += Math.Pow(scores[i] - rewardOutcomeMean, 2f);
+                if (counts[i] <= 0f) {
+                    continue;
+                }
+                variance += Math.Pow(scores[i] - rewardOutcomeMean, 2f) * counts[i] / popSize;
             }
-            rewardOutcomeStd = (float)Math.Sqrt(variance / scores.Length);
+            rewardOutcomeStd = (float)Math.Sqrt(variance);
         }
         public float ChanceToWin(Evaluation evaluation) {
             // Assume that the average run gets points linearly per floor,
@@ -56,6 +69,12 @@ namespace ProjectPumpernickle {
             var deviationsAboveHundred = (projectedScore - 100f) / projectedDeviation;
             return PumpernickelMath.Sigmoid(deviationsAboveHundred);
         }
+        public static RewardOutcomeStatistics operator *(RewardOutcomeStatistics r, float f) {
+            r.chosenValue *= f;
+            r.rewardOutcomeMean *= f;
+            r.rewardOutcomeStd *= MathF.Sqrt(f);
+            return r;
+        }
     }
     public class AddCardStatisticsGroup : IRewardStatisticsGroup {
         public Color color;
@@ -77,6 +96,7 @@ namespace ProjectPumpernickle {
             r.Build(
                 Database.instance.cards.Where(x => x.cardColor.Is(color) && x.cardRarity.Is(rarity)),
                 evaluateCard,
+                x => 1f, // This should probably support rarity
                 x => x.id.Equals(cardId)
             );
             return r;
@@ -97,7 +117,7 @@ namespace ProjectPumpernickle {
             // This is assuming a kinda bad outcome.  This is the average card, not the average card you would choose
             cardId = Evaluators.AverageRandomCard(color, rarity);
         }
-        public static float ReshapeMeanBySelecting(RewardOutcomeStatistics scoreStats, float numCards) {
+        public static float ReshapeMeanBySelecting(RewardOutcomeStatistics scoreStats, float numPicks) {
             // The score stats are the number of points added by adding a certain card multiplied by
             // the number of that card we expect to see.  Therefore, the number of total points we 
             // expect to gain is both the sum of that distribution and the mean of these stats
@@ -105,13 +125,14 @@ namespace ProjectPumpernickle {
             // cards randomly, and can't pick more than one per reward.
             // https://www.wolframalpha.com/input?i=plot+e%5E%28-x%5E2%29+vs+e%5E%28-%28x-1%29%5E2%29+%2F+5.5
             // This assumes 3 cards!!!
-            return ((scoreStats.rewardOutcomeMean + scoreStats.rewardOutcomeStd) / 5.5f) * numCards;
+            return ((scoreStats.rewardOutcomeMean + scoreStats.rewardOutcomeStd) / 5.5f) * numPicks;
         }
         public RewardOutcomeStatistics Evaluate() {
             var r = new RewardOutcomeStatistics();
             var cardScores = Scoring.CardScoreProvider(cardRarityAppearances, cardShopAppearances, color).ToArray();
-            r.Build(cardScores, x => x.score, x => x.cardId.Equals(cardId));
-            r.rewardOutcomeMean = ReshapeMeanBySelecting(r, cardScores.Length);
+            var totalRewards = cardScores.Select(x => x.expectedSeen).Sum() / 3f;
+            r.Build(cardScores, x => x.score, x => x.expectedSeen, x => x.cardId.Equals(cardId));
+            r.rewardOutcomeMean = ReshapeMeanBySelecting(r, totalRewards);
             return r;
         }
     }
@@ -130,6 +151,7 @@ namespace ProjectPumpernickle {
             r.Build(
                 Database.instance.relics.Where(x => possibleRelics.Contains(x.id)),
                 evaluateCard,
+                x => 1f,
                 x => x.id.Equals(CHOSEN)
             );
             return r;
@@ -145,6 +167,7 @@ namespace ProjectPumpernickle {
             r.Build(
                 Database.instance.relics.Where(x => x.rarity == Rarity.Boss),
                 evaluateRelic,
+                x => 1f,
                 x => x.id.Equals(ASSUMED_SWAP)
             );
             return r;
@@ -153,9 +176,8 @@ namespace ProjectPumpernickle {
     public class AddRelicsStatisticsGroup : IRewardStatisticsGroup {
         protected float[] foundRelicsByRarity;
         protected float[] shopRelicsByRarity;
-        protected float chance;
         public string relicId { get; protected set; }
-        public AddRelicsStatisticsGroup(float[] foundRelicsByRarity = null, float[] shopRelicsByRarity = null, float chance = 1f) {
+        public AddRelicsStatisticsGroup(float[] foundRelicsByRarity = null, float[] shopRelicsByRarity = null) {
             if (foundRelicsByRarity == null) {
                 foundRelicsByRarity = Scoring.RelicRarityDistribution(1f, shop: false);
             }
@@ -165,19 +187,24 @@ namespace ProjectPumpernickle {
             }
             this.shopRelicsByRarity = shopRelicsByRarity;
             relicId = Evaluators.AverageRandomRelic(foundRelicsByRarity, shopRelicsByRarity);
-            this.chance = chance;
         }
         public RewardOutcomeStatistics Evaluate() {
-            var r = new RewardOutcomeStatistics();
             var foundScores = Scoring.RelicScoreProvider(foundRelicsByRarity).ToArray();
             var foundStats = new RewardOutcomeStatistics();
             var boughtScores = Scoring.RelicScoreProvider(shopRelicsByRarity).ToArray();
             var boughtStats = new RewardOutcomeStatistics();
-            foundStats.Build(foundScores, x => x.score, x => x.relicId.Equals(relicId));
-            boughtStats.Build(boughtScores, x => x.score, x => false);
-            foundStats.rewardOutcomeMean *= foundScores.Count();
-            boughtStats.rewardOutcomeMean = ChooseCardsStatisticsGroup.ReshapeMeanBySelecting(boughtStats, boughtScores.Count());
-            r.rewardOutcomeMean = (foundStats.rewardOutcomeMean + boughtStats.rewardOutcomeMean) * chance;
+            var totalFound = foundRelicsByRarity.Sum();
+            var totalBought = shopRelicsByRarity.Sum();
+            foundStats.Build(foundScores, x => x.score, x => x.expectedFound, x => x.relicId.Equals(relicId));
+            boughtStats.Build(boughtScores, x => x.score, x => x.expectedFound, x => x.relicId.Equals(relicId));
+            foundStats *= totalFound;
+            boughtStats.chosenValue *= totalBought;
+            boughtStats.rewardOutcomeMean = ChooseCardsStatisticsGroup.ReshapeMeanBySelecting(boughtStats, totalBought);
+            boughtStats.rewardOutcomeStd *= MathF.Sqrt(totalBought);
+            var r = new RewardOutcomeStatistics();
+            r.rewardOutcomeMean = foundStats.rewardOutcomeMean + boughtStats.rewardOutcomeMean;
+            r.rewardOutcomeStd = MathF.Sqrt(MathF.Pow(foundStats.rewardOutcomeMean, 2f) + MathF.Pow(boughtStats.rewardOutcomeMean, 2f));
+            r.chosenValue = foundStats.chosenValue + boughtStats.chosenValue;
             return r;
         }
     }
@@ -235,6 +262,7 @@ namespace ProjectPumpernickle {
             r.Build(
                 relevantCardIndicies,
                 evaluateUpgrade,
+                x => 1f,
                 x => assumedUpgrades.Contains(x)
             );
             r.rewardOutcomeMean *= numUpgrades;

@@ -10,6 +10,9 @@ namespace ProjectPumpernickle {
         public GlobalRuleEvaluationTiming Timing => GlobalRuleEvaluationTiming.PreCardEvaluation;
         public static readonly float PUNISHMENT_PER_OVERAGE = -10f;
         public static readonly float PUNISHMENT_PER_OVERAGE_OUTSIDE_ARCHETYPE = -3f;
+        public static bool ShouldBuildRedBlue() {
+            return Save.state.character == PlayerCharacter.Watcher;
+        }
         public void Apply(Evaluation evaluation) {
             Save.state.archetypeIdentities = new Dictionary<string, float>();
             foreach (var card in Save.state.cards) {
@@ -31,11 +34,28 @@ namespace ProjectPumpernickle {
                 }
                 var averageFulfillment = totalFulfillment / maxFulfillment;
                 totalArchetypeAlignmentValue += averageFulfillment * archetype.value;
+                if (ShouldBuildRedBlue() && archetype.id == "redBlue") {
+                    maxMembership = 1f;
+                }
                 Save.state.archetypeIdentities[archetype.id] = maxMembership;
             }
             Evaluation.Active.SetScore(ScoreReason.ArchetypeValue, totalArchetypeAlignmentValue);
             var totalOveragePunishment = 0f;
             foreach (var pickedCard in Save.state.CardsJustChosen()) {
+                var needed = false;
+                foreach (var membership in pickedCard.archetypes) {
+                    var count = Save.state.GetArchetypeSlotMembership(membership);
+                    var slot = Database.instance.archetypeDict[membership.archetypeId].slots[membership.slotId];
+                    var overage = count - slot.count;
+                    if (overage <= 0) {
+                        needed = true;
+                        break;
+                    }
+                }
+                if (needed) {
+                    continue;
+                }
+
                 foreach (var membership in pickedCard.archetypes) {
                     var count = Save.state.GetArchetypeSlotMembership(membership);
                     var slot = Database.instance.archetypeDict[membership.archetypeId].slots[membership.slotId];
@@ -44,7 +64,7 @@ namespace ProjectPumpernickle {
                 }
                 foreach (var coveredTag in pickedCard.tags.Keys) {
                     foreach (var archetypeIdentity in Save.state.archetypeIdentities) {
-                        var fullSlots = Save.state.GetArchetypeSatisfiedTags(archetypeIdentity.Key);
+                        var fullSlots = Save.state.GetArchetypeOverfilledTags(archetypeIdentity.Key);
                         if (fullSlots.Any(x => x.Equals(coveredTag))) {
                             totalOveragePunishment += archetypeIdentity.Value * PUNISHMENT_PER_OVERAGE;
                         }

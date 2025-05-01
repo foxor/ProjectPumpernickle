@@ -151,6 +151,7 @@ namespace ProjectPumpernickle {
     public class Archetype {
         public string id;
         public float value;
+        public bool requiresHandFit;
         public Dictionary<string, ArchetypeSlot> slots;
         public void OnLoad() {
             foreach (var slot in slots) {

@@ -2061,7 +2061,7 @@
          "cost":"1 (0)",
          "description":"Channel 1 Lightning.",
          "mod":"Slay the Spire",
-         "bias": -0.9,
+         "bias": -0.6,
          "upgradePowerMultiplier": 1.7,
       },
       {
@@ -2097,7 +2097,7 @@
          "cost":"0",
          "description":"Deal 3 (4) damage.\nApply 1 (2) Vulnerable.",
          "mod":"Slay the Spire",
-         "bias": -0.1,
+         "bias": -0.0,
          "upgradePowerMultiplier": 2,
       },
       {
@@ -2207,6 +2207,9 @@
          "mod":"Slay the Spire",
          "bias": -0.2,
          "upgradePowerMultiplier": 1.3,
+         "goodAgainst": {
+            "3 Sentries": 3,
+         }
       },
       {
          "id":"Redo",
@@ -2267,6 +2270,9 @@
          "mod":"Slay the Spire",
          "bias": -0.1,
          "upgradePowerMultiplier": 1.3,
+         "goodAgainst": {
+            "3 Sentries": 4,
+         }
       },
       {
          "id":"Turbo",
@@ -2337,7 +2343,7 @@
          "cost":"1",
          "description":"Deal 8 (11) damage.\nApply 2 (3) Lock-On.",
          "mod":"Slay the Spire",
-         "bias": -0.1,
+         "bias": -0.2,
          "upgradePowerMultiplier": 1.5,
       },
       {
@@ -4049,7 +4055,7 @@
          "cost":"0",
          "description":"Heal 4 (6) HP.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 2.0,
+         "bias": 1.2,
       },
       {
          "id":"Blind",
@@ -4060,7 +4066,7 @@
          "cost":"0",
          "description":"Apply 2 Weak (to ALL enemies).",
          "mod":"Slay the Spire",
-         "bias": 1.2,
+         "bias": 1.6,
       },
       {
          "id":"Dark Shackles",
@@ -4085,7 +4091,7 @@
          "cost":"0",
          "description":"Shuffle your discard pile into your draw pile.\nDraw 1 (2) card (cards).",
          "mod":"Slay the Spire",
-         "bias": 2.8,
+         "bias": 2.6,
          "upgradePowerMultiplier": 2,
          "tags": {
          },
@@ -4099,7 +4105,7 @@
          "cost":"1",
          "description":"Choose 1 of 3 random cards to add into your hand. It costs 0 this turn.\n~~- Exhaust. -~~ ",
          "mod":"Slay the Spire",
-         "bias": 0.7,
+         "bias": 0.9,
       },
       {
          "id":"Dramatic Entrance",
@@ -4110,7 +4116,7 @@
          "cost":"0",
          "description":"Innate.\nDeal 8 (12) damage to ALL enemies.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 1.5,
+         "bias": 1.3,
       },
       {
          "id":"Enlightenment",
@@ -4132,7 +4138,7 @@
          "cost":"0",
          "description":"Gain 2 (4) Block.\nDraw 1 card.",
          "mod":"Slay the Spire",
-         "bias": -0.1,
+         "bias": 1.9,
       },
       {
          "id":"Flash of Steel",
@@ -4143,7 +4149,7 @@
          "cost":"0",
          "description":"Deal 3 (6) damage.\nDraw 1 card.",
          "mod":"Slay the Spire",
-         "bias": -0.1,
+         "bias": 1.8,
       },
       {
          "id":"Forethought",
@@ -4187,7 +4193,7 @@
          "cost":"0",
          "description":"Add 1 (2) random Colorless card (cards) into your hand.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 0.7,
+         "bias": -0.2,
       },
       {
          "id":"Madness",
@@ -4198,7 +4204,7 @@
          "cost":"1 (0)",
          "description":"Reduce the cost of a random card in your hand to 0 this combat.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": 0.1,
+         "bias": 0.4,
       },
       {
          "id":"Mind Blast",
@@ -4242,7 +4248,7 @@
          "cost":"0",
          "description":"Exhaust up to 3 (5) cards in your hand.\nExhaust.",
          "mod":"Slay the Spire",
-         "bias": -0.1,
+         "bias": 0.3,
          "setup": {
             "ExhaustOther": 5,
          }
@@ -4256,7 +4262,7 @@
          "cost":"0",
          "description":"Deal 7 (10) damage.",
          "mod":"Slay the Spire",
-         "bias": -0.5,
+         "bias": 0.1,
       },
       {
          "id":"Trip",
@@ -9427,14 +9433,14 @@
          "bias": -0.3,
       },
       {
-         "name":"Bonfire Spirits",
+         "name":"Bonfire",
          "acts":[
             1,
             2,
             3
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:Bonfire Spirits",
+         "id":"slaythespire:Bonfir",
          "description":"[Offer] Receive a reward based on the offer.\n[Donate (downfall only, requires 150 souls)] Lose 150 Souls. Gain 10 Max HP.",
          "colouredDesc":"\u001b[2;37m[Offer\u001b[2;37m] Receive a reward based on the offer.\n\u001b[2;37m[Donate \u001b[0;2m(downfall only, requires 150 souls)\u001b[2;37m] \u001b[2;31mLose 150 Souls. \u001b[2;32mGain 10 Max HP.",
          "character":"",
@@ -9861,14 +9867,14 @@
          "bias": 0.5,
       },
       {
-         "name":"The Woman in Blue",
+         "name":"Woman In Blue",
          "acts":[
             1,
             2,
             3
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:The Woman in Blue",
+         "id":"slaythespire:Woman In Blue",
          "description":"[Buy 1 Potion] 20 Gold.\n[Buy 2 Potions] 30 Gold.\n[Buy 3 Potions] 40 Gold.\n[Leave] Take damage equal to 5% of your max HP.",
          "colouredDesc":"\u001b[2;37m[Buy 1 Potion\u001b[2;37m] \u001b[2;33m20 Gold.\n\u001b[2;37m[Buy 2 Potions\u001b[2;37m] \u001b[2;33m30 Gold.\n\u001b[2;37m[Buy 3 Potions\u001b[2;37m] \u001b[2;33m40 Gold.\n\u001b[2;37m[Leave\u001b[2;37m] \u001b[2;34mTake damage equal to 5% of your max HP.",
          "character":"",
@@ -9967,12 +9973,12 @@
          "bias": -1,
       },
       {
-         "name":"World of Goop",
+         "name":"GoopPuddle",
          "acts":[
             1
          ],
          "mod":"Slay the Spire",
-         "id":"slaythespire:World of Goop",
+         "id":"slaythespire:GoopPuddle",
          "description":"[Gather Gold] Gain 75 Gold. Lose 11 HP.\n[Leave It] Lose 20-50 (35-75) Gold.",
          "colouredDesc":"\u001b[2;37m[Gather Gold\u001b[2;37m] \u001b[2;32mGain 75 Gold. \u001b[2;31mLose 11 HP.\n\u001b[2;37m[Leave It\u001b[2;37m] \u001b[2;31mLose 20-50 \u001b[2;34m(35-75) \u001b[2;31mGold.",
          "character":"",
@@ -10412,7 +10418,7 @@
          "medianWorstCaseHealthLoss": 20,
       },
       {
-         "id": "AvocadoRat",
+         "id": "Shelled Parasite and Fungi",
          "characters": [
             "Shelled Parasite",
             "FungiBeast"
@@ -10836,6 +10842,7 @@
       {
          "id": "discard",
          "value": 5.0,
+         "requiresHandFit": false,
          "slots": {
             "Damage": {
                "count": 1.0,
@@ -10876,13 +10883,84 @@
                ]
             }
          }
-      }
+      },
+      {
+         "id": "redBlue",
+         "value": 8.0,
+         "requiresHandFit": true,
+         "slots": {
+            "Damage": {
+               "count": 1.0,
+               "cards": [
+                  "Eruption",
+                  "FearNoEvil"
+               ]
+            },
+            "CalmEnter": {
+               "count": 1.0,
+               "cards": [
+                  "InnerPeace",
+                  "FearNoEvil"
+               ]
+            },
+            "Draw": {
+               "count": 1,
+               "cards": [
+                  "Adaptation",
+               ]
+            },
+            "Block": {
+               "count": 1.0,
+               "cards": [
+                  "MentalFortress",
+                  "Halt",
+               ]
+            },
+         }
+      },
+      {
+         "id": "exhaust",
+         "value": 3.0,
+         "requiresHandFit": false,
+         "slots": {
+            "Draw": {
+               "count": 1,
+               "cards": [
+                  "Dark Embrace",
+                  "Burning Pact",
+               ]
+            },
+            "Block": {
+               "count": 2.5,
+               "cards": [
+                  "Feel No Pain",
+                  "Second Wind",
+               ]
+            },
+            "Corruption": {
+               "count": 1,
+               "cards": [
+                  "Corruption",
+               ]
+            },
+         }
+      },
    ],
    "synergies": [
       {
          "id": "Discard",
          "valueMax": 5.0,
          "divisorOffset": 2.5,
+      },
+      {
+         "id": "ExhaustOther",
+         "valueMax": 6.0,
+         "divisorOffset": 7.0,
+      },
+      {
+         "id": "ExhaustSelf",
+         "valueMax": 1.0,
+         "divisorOffset": 3.0,
       }
    ]
 }

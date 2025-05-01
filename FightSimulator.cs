@@ -33,10 +33,15 @@ namespace ProjectPumpernickle {
             var significance = MathF.Pow(RESIDENCY_RATE, floorsAgo);
             return significance;
         }
-        public static float EstimateIncomingDamage(Encounter encounter, float turns, float damagePerTurn) {
+        public static float EstimateIncomingDamage(Encounter encounter, float turns, float damagePerTurn, bool forCurrentCharacter) {
             var totalDamage = 0f;
             var enemyHealths = encounter.characters.Select(x => Database.instance.creatureDict[x].averageHealth).ToArray();
             var enemyDamageArrays = encounter.characters.Select(x => Database.instance.creatureDict[x].damage).ToArray();
+            if (forCurrentCharacter && encounter.id.Equals("Gremlin Nob") && Evaluators.ArtifactCharges() > 0) {
+                enemyDamageArrays = new float[][] {
+                    new float[] { 0, 8, 16, 16 },
+                };
+            }
             var alive = enemyHealths.Select(x => true).ToArray();
             var residualPlayerDamage = 0f;
             for (int i = 0; i < MathF.Ceiling(turns); i++) {
@@ -71,7 +76,7 @@ namespace ProjectPumpernickle {
             foreach (var damageTaken in Save.state.metric_damage_taken) {
                 var encounter = Database.instance.encounterDict[damageTaken.enemies];
                 var totalHealth = AverageEnemyHealth(encounter);
-                var incomingDamage = EstimateIncomingDamage(encounter, damageTaken.turns, totalHealth / damageTaken.turns);
+                var incomingDamage = EstimateIncomingDamage(encounter, damageTaken.turns, totalHealth / damageTaken.turns, forCurrentCharacter: true);
                 var estimatedHealing = Evaluators.EstimatedHealingPerFight();
                 var realDamage = damageTaken.damage;
                 var estimatedRealBlock = incomingDamage - realDamage + estimatedHealing;
@@ -137,23 +142,21 @@ namespace ProjectPumpernickle {
                 // FIXME: scaling was probably lower for fights that happened a while ago
                 var middleTurnScaling = 1f + (((damageTaken.turns - 1f) / 2f) * estimatedScaling);
                 var initialDamageEstimate = averageDamagePerTurn / middleTurnScaling;
+                if (initialDamageEstimate < BEGINNING_OF_GAME_DAMAGE) {
+                    // If it's act one, this is a somewhat reasonable estimate
+                    // If you stalled for a magnetism hand of greed or something, this is a nice BS preventor
+                    initialDamageEstimate = BEGINNING_OF_GAME_DAMAGE;
+                }
                 var projectedPresentInitialDamage = ProjectDamageForFutureFloor(initialDamageEstimate, floorsAgo);
                 totalSignificance += significance;
                 totalDamagePerTurn += projectedPresentInitialDamage * significance;
             }
             totalDamagePerTurn += Save.state.addedDamagePerTurn;
-            if (totalDamagePerTurn < BEGINNING_OF_GAME_DAMAGE) {
-                // If it's act one, this is a somewhat reasonable estimate
-                // If you stalled for a magnetism hand of greed or something, this is a nice BS preventor
-                return BEGINNING_OF_GAME_DAMAGE;
+            if (totalSignificance != 0f) {
+                totalDamagePerTurn /= totalSignificance;
             }
-            totalDamagePerTurn /= totalSignificance;
-
-            var turnDensity = Evaluators.AverageCardsPlayedPerTurn() / Save.state.cards.Count;
-            foreach (var card in Save.state.CardsJustChosen()) {
-                card.tags.TryGetValue(Tags.Damage.ToString(), out var damage);
-                // assume 100% drawn played rate for newly picked cards
-                totalDamagePerTurn += damage * turnDensity;
+            else {
+                totalDamagePerTurn = BEGINNING_OF_GAME_DAMAGE;
             }
             return totalDamagePerTurn;
         }
@@ -191,13 +194,20 @@ namespace ProjectPumpernickle {
         public static float NormalEnemyDamageForFloor(int floor) {
             return ProjectEnemyDamageForFutureFloor(BEGINNING_OF_GAME_ENEMY_DAMAGE, floor);
         }
+        public static readonly float BURST_DAMAGE_MULTIPLIER = 1.5f;
         public static float ExpectedFightLength(Encounter encounter, float initialDamage, float damageScaling) {
             var totalHealth = AverageEnemyHealth(encounter);
             var currentDamage = initialDamage - damageScaling;
             var turns = 0f;
             for (turns = 0; totalHealth > 0f; turns++) {
                 currentDamage += damageScaling;
-                totalHealth -= currentDamage;
+                var burstDamage = currentDamage * BURST_DAMAGE_MULTIPLIER;
+                if (encounter.id.Equals("Gremlin Nob") || burstDamage > totalHealth) {
+                    totalHealth -= burstDamage;
+                }
+                else {
+                    totalHealth -= currentDamage;
+                }
             }
             turns -= -totalHealth / currentDamage;
             return turns;
@@ -230,9 +240,9 @@ namespace ProjectPumpernickle {
                 estimatedFightLength = Math.Min(estimatedFightLength, 6f);
             }
             var medianFightLength = MedianFightLength(encounter);
-            var incomingDamage = EstimateIncomingDamage(encounter, estimatedFightLength, initialDamage);
+            var incomingDamage = EstimateIncomingDamage(encounter, estimatedFightLength, initialDamage, forCurrentCharacter: true);
             var medianDamage = NormalDamageForFloor(floor);
-            var medianIncomingDamage = EstimateIncomingDamage(encounter, medianFightLength, medianDamage);
+            var medianIncomingDamage = EstimateIncomingDamage(encounter, medianFightLength, medianDamage, forCurrentCharacter: false);
             incomingDamage -= Save.state.addedBlockPerTurn * estimatedFightLength;
             if (MathF.Abs(incomingDamage) < 0.2f) {
                 return 0f;

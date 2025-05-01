@@ -66,8 +66,17 @@ namespace ProjectPumpernickle {
                 }
             ));
         }
-        public static void BonfireSpirits(IEnumerable<string> arguments) {
-            Advice.AdviseOnReward(RewardOption.BuildEvent());
+        public static void Bonfire(IEnumerable<string> arguments) {
+            var validRemoveOptions = Evaluators.ReasonableRemoveTargets();
+            var removeOptions = validRemoveOptions.Select(x => new RewardOptionPart() {
+                advice = "Give them the " + Save.state.cards[x].name,
+                eventCost = "NONE",
+                value = "BONFIRE_CARD: " + x
+            });
+            var rewardOption = RewardOption.Build(removeOptions);
+            rewardOption.skippable = false;
+            rewardOption.rewardType = RewardType.Event;
+            Advice.AdviseOnReward(rewardOption);
         }
         public static void DeadAdventurer(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
@@ -122,10 +131,25 @@ namespace ProjectPumpernickle {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void GoldenIdolEvent(IEnumerable<string> arguments) {
-            var existingAdvice = new List<string>() {
-                "Take the golden idol, give up max hp"
-            };
-            Advice.AdviseOnRewards(null, existingAdvice);
+            var option = RewardOption.BuildEvent(
+                new RewardOptionPart() {
+                    advice = "Take the golden idol, give up max hp",
+                    value = EventRewardElement.GOLDEN_IDOL.ToString(),
+                    maxHpCost = Evaluators.PercentHealthDamage(.10f),
+                },
+                new RewardOptionPart() {
+                    advice = "Take the golden idol, take the damage",
+                    value = EventRewardElement.GOLDEN_IDOL.ToString(),
+                    hpCost = Evaluators.PercentHealthDamage(.35f),
+                },
+                new RewardOptionPart() {
+                    advice = "Take the golden idol, take the curse",
+                    value = EventRewardElement.GOLDEN_IDOL.ToString(),
+                    eventCost = "INJURY",
+                }
+            );
+            option.skippable = true;
+            Advice.AdviseOnReward(option);
         }
         public static void GoldenShrine(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
@@ -296,7 +320,7 @@ namespace ProjectPumpernickle {
         public static void TheMoaiHead(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
-        public static void TheWomaninBlue(IEnumerable<string> arguments) {
+        public static void WomanInBlue(IEnumerable<string> arguments) {
             Advice.AdviseOnReward(RewardOption.BuildEvent());
         }
         public static void TombRedMask(IEnumerable<string> arguments) {
@@ -333,8 +357,20 @@ namespace ProjectPumpernickle {
             };
             Advice.AdviseOnRewards(null, existingAdvice);
         }
-        public static void WorldofGoop(IEnumerable<string> arguments) {
-            Advice.AdviseOnReward(RewardOption.BuildEvent());
+        public static void GoopPuddle(IEnumerable<string> arguments) {
+            Advice.AdviseOnReward(RewardOption.BuildEvent(
+                new RewardOptionPart() {
+                    advice = "Gather the gold",
+                    hpCost = 11,
+                    eventCost = "-75",
+                    value = EventRewardElement.None.ToString(),
+                },
+                new RewardOptionPart() {
+                    advice = "Leave it",
+                    eventCost = arguments.Single(),
+                    value = EventRewardElement.None.ToString(),
+                }
+            ));
         }
         public static void MindBloom(IEnumerable<string> arguments) {
             var existingAdvice = new List<string>() {

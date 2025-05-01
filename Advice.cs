@@ -3,12 +3,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Text;
+using System.Linq;
 
 namespace ProjectPumpernickle {
     public class Advice {
         public static Dictionary<long, Evaluation> perThreadEvaluations;
         public static List<RewardOption> rewardOptions;
         public static IEnumerable<string> previousAdvice;
+        public static List<int> validRewards;
         public static bool eligibleForBlueKey;
         public static bool isShop;
         public static bool needsMoreInfo;
@@ -21,8 +23,10 @@ namespace ProjectPumpernickle {
             Advice.previousAdvice = previousAdvice;
             Advice.needsMoreInfo = needsMoreInfo;
             var totalRewardOptions = rewardOptions.Select(x => x.values.Length + 1).Aggregate(1, (a, x) => a * x);
+            validRewards = Enumerable.Range(0, totalRewardOptions).Where(IsAffordable).ToList();
+            var validRewardOptions = validRewards.Count;
             var pathingOptions = Path.CountNodeSequences(rewardOptions);
-            var totalEvals = totalRewardOptions * pathingOptions;
+            var totalEvals = validRewardOptions * pathingOptions;
             perThreadEvaluations = new Dictionary<long, Evaluation>();
             PumpernickelAdviceWindow.instance.AdviceBox.Text = String.Format("Creating {0} threads", totalEvals);
             Application.DoEvents();
@@ -32,7 +36,7 @@ namespace ProjectPumpernickle {
             for (long i = 0; i < workChunks; i++) {
                 QueueWorkChunk(i, workChunks, totalEvals, pathingOptions);
                 AwaitWorkChunk(i == 0);
-                MergeChunks(i, workChunks, totalRewardOptions);
+                MergeChunks(i, workChunks, validRewardOptions);
                 Application.DoEvents();
                 if (TcpListener.WaitingCount != 0) {
                     break;
@@ -40,7 +44,19 @@ namespace ProjectPumpernickle {
             }
             Profiling.StopWork();
         }
-
+        protected static bool IsAffordable(int residual) {
+            int totalCost = 0;
+            for (int j = 0; j < rewardOptions.Count; j++) {
+                var optionCount = rewardOptions[j].values.Length + 1;
+                var index = residual % optionCount;
+                var group = rewardOptions[j];
+                if (index < group.values.Length) {
+                    totalCost += group.cost;
+                }
+                residual /= optionCount;
+            }
+            return totalCost < Save.state.gold;
+        }
 
         protected static void QueueWorkChunk(long workChunk, long totalChunks, long totalEvals, long pathingOptions) {
             var stride = totalChunks;
@@ -66,8 +82,8 @@ namespace ProjectPumpernickle {
                     return;
                 }
                 PumpernickelSaveState.instance = new PumpernickelSaveState(PumpernickelSaveState.parsed);
+                long residual = validRewards[(int)optionIndex];
                 List<int> rewardIndicies = new List<int>();
-                long residual = optionIndex;
                 for (int j = 0; j < rewardOptions.Count; j++) {
                     var optionCount = rewardOptions[j].values.Length + 1;
                     rewardIndicies.Add((int)(residual % optionCount));
@@ -114,13 +130,11 @@ namespace ProjectPumpernickle {
             Profiling.StartZone("MergeChunks");
             IEnumerable<Evaluation> validEvaluations = perThreadEvaluations.Values.OrderBy(x => x.Id);
             if (!validEvaluations.Any()) {
+                PumpernickelAdviceWindow.instance.SetEvaluations(new Evaluation[0], chunksComplete + 1, totalChunks);
                 return;
             }
             validEvaluations = PruneSubOptimalPaths(validEvaluations);
             SetEvaluationOffRamps(validEvaluations);
-            foreach (var eval in validEvaluations) {
-                Scoring.ScoreBasedOnOffRamp(eval);
-            }
             foreach (var eval in validEvaluations) {
                 eval.MergeScoreWithOffRamp();
             }
@@ -136,9 +150,6 @@ namespace ProjectPumpernickle {
                 return new Evaluation[0];
             }
             SetEvaluationOffRamps(validEvaluations);
-            foreach (var eval in validEvaluations) {
-                Scoring.ScoreBasedOnOffRamp(eval);
-            }
             foreach (var eval in validEvaluations) {
                 eval.MergeScoreWithOffRamp();
             }
@@ -193,7 +204,8 @@ namespace ProjectPumpernickle {
         protected static float PruningScore(Evaluation evaluation) {
             // This gets set each time a chunk of evaluations finishes, so new evaluations won't have one yet
             // Therefore, remove it so that it's fair
-            return evaluation.InternalScore - evaluation.InternalScores[(int)ScoreReason.ActSurvival];
+            return evaluation.InternalScore - evaluation.InternalScores[(int)ScoreReason.ActSurvival]
+                + evaluation.Path.chanceToSurviveAct * 10f;
         }
         protected static IEnumerable<Evaluation> PruneSubOptimalPaths(IEnumerable<Evaluation> evaluations) {
             foreach (var offRampGroup in evaluations.GroupBy(x => new OfframpGroup(x))) {

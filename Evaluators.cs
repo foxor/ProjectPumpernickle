@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Windows.Forms.Design;
 
 namespace ProjectPumpernickle {
@@ -92,6 +93,9 @@ namespace ProjectPumpernickle {
         }
         public static float SustainableCardDrawPerTurn() {
             var drawEfficiency = PermanentCards().Select(x => x.tags.GetValueOrDefault(Tags.CardDraw.ToString()) / (x.intCost + 1f)).Where(x => x > 0);
+            if (!drawEfficiency.Any()) {
+                return 5;
+            }
             var canShuffleEveryDraw = PermanentDeckSize() < 11f;
             var averageDrawEfficiency = 0f;
             if (canShuffleEveryDraw) {
@@ -111,7 +115,50 @@ namespace ProjectPumpernickle {
         }
 
         public static float PerTurnEnergy() {
-            return 3f;
+            var value = 3f;
+            if (Save.state.relics.Contains("Busted Crown")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Coffee Dripper")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Cursed Key")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Ectoplasm")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Fusion Hammer")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("HoveringKite")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Mark of Pain")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Nuclear Battery")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Philosopher's Stone")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Runic Dome")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("SlaversCollar")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Sozu")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("Velvet Choker")) {
+                value++;
+            }
+            if (Save.state.relics.Contains("VioletLotus")) {
+                value++;
+            }
+            return value;
         }
         public static float ExcessHandCardEnergy() {
             return AverageCostOfHand() - PerTurnEnergy();
@@ -147,7 +194,7 @@ namespace ProjectPumpernickle {
             var potionValue = 0f;
             switch (potionId) {
                 case "Ancient Potion": {
-                    break;
+                    return 6f;
                 }
                 case "Fruit Juice": {
                     return 5f;
@@ -183,7 +230,7 @@ namespace ProjectPumpernickle {
             var healthEfficiencyMultiplier = Lerp.From(1f/3f, 1f, healthFactor);
             return potionValue * healthEfficiencyMultiplier;
         }
-
+        public static float LIZARD_TAIL_OVERKILL_ASSUMPTION = 10f;
         public static float GetCurrentEffectiveHealth() {
             var literalHealth = Save.state.current_health;
             var effectiveHealth = literalHealth * 1f;
@@ -194,6 +241,11 @@ namespace ProjectPumpernickle {
                     }
                     effectiveHealth += GetPotionHealthValue(potion, literalHealth);
                 }
+            }
+            var tailIndex = Save.state.relics.IndexOf("Lizard Tail");
+            if (tailIndex >= 0 && Save.state.relic_counters[tailIndex] != -2) {
+                effectiveHealth += PercentHealthHeal(0.5f);
+                effectiveHealth += LIZARD_TAIL_OVERKILL_ASSUMPTION;
             }
             return effectiveHealth;
         }
@@ -325,6 +377,9 @@ namespace ProjectPumpernickle {
             // AbstractDungeon static initializer is the source of the 5
             var cardBlizzRandomizer = useCurrentRandomizer ? Save.state.card_random_seed_randomizer : 5;
             var cardsOfRarity = new float[] {
+                0f,
+                0f,
+                0f,
                 0f,
                 0f,
                 0f,
@@ -622,9 +677,20 @@ namespace ProjectPumpernickle {
             return Database.instance.events.Where(x => x.eligible).Select(x => x.name);
         }
         public static readonly string[] AverageCardOptions = new string[] {
-            "Metallicize",
+            "Iron Wave",
             "Dagger Throw",
+            "Sweeping Beam",
+            "SashWhip",
+            "Metallicize",
+            "Dash",
+            "BootSequence",
+            "Wallop",
+            "Swift Strike",
+            "Exhume",
             "Bullet Time",
+            "Reboot",
+            "DeusExMachina",
+            "Violence",
         };
         public static string AverageRandomCard(Color color, Rarity rarity) {
             return AverageCardOptions.Select(x => Database.instance.cardsDict[x]).Where(x => {
@@ -665,7 +731,7 @@ namespace ProjectPumpernickle {
                 yield return Lerp.From(normalCardUpgradeValueDelta, excellentCardUpgradeValueDelta, t);
             }
         }
-        public static float UpgradeValueProportion(Evaluation evaluation) {
+        public static float UpgradeValue(Evaluation evaluation) {
             var projectedCardAdds = EstimateFutureAddedCards();
             var futureAddUpgradeDeltas = ExpectedFutureUpgradePowerDeltas(projectedCardAdds);
             var presentValue = Save.state.cards
@@ -682,10 +748,11 @@ namespace ProjectPumpernickle {
             var anticipatedValue = pendingUpgradesByValue.Take((int)futureUpgrades).Sum();
             anticipatedValue += (futureUpgrades - (int)futureUpgrades) * pendingUpgradesByValue.Skip((int)futureUpgrades).First();
             var totalValue = presentValue + anticipatedValue;
-            return totalValue / (totalValue + 7.5f);
+            return totalValue;
         }
-        public static float AverageCardsPlayedPerTurn() {
-            return 3.5f;
+        public static float ChanceToPlayNewCard() {
+            var deckPortionPerTurn = SustainableCardDrawPerTurn() / Save.state.cards.Count;
+            return deckPortionPerTurn;
         }
         public static float AverageCardsPerFight() {
             return 15f;
@@ -1044,6 +1111,11 @@ namespace ProjectPumpernickle {
         }
         public static int IndexOfCardWithDescriptor(string description) {
             return Save.state.cards.FirstIndexOf(x => x.Descriptor().Equals(description));
+        }
+        public static float ArtifactCharges() {
+            var charges = 0f;
+            charges += Save.state.potions.Where(x => x.Equals("Ancient Potion")).Count();
+            return charges;
         }
     }
 }

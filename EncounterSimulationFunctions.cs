@@ -84,7 +84,7 @@ namespace ProjectPumpernickle {
         public static float ENC3Cultists(int floorNum) {
             return 1f;
         }
-        public static float ENCAvocadoRat(int floorNum) {
+        public static float ENCShelledParasiteandFungi(int floorNum) {
             return 1f;
         }
         public static float ENC3Darklings(int floorNum) {

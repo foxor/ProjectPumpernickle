@@ -38,9 +38,10 @@ namespace ProjectPumpernickle {
             }
         }
         public static float GoldToEfficientGold(GoldShopPlan goldPlan) {
+            var shopIndex = Evaluation.Active.Path.nodeTypes.FirstIndexOf(x => x.Equals(NodeType.Shop));
             switch (goldPlan.Plan) {
                 case PathShopPlan.FixFight: {
-                    return Evaluation.Active.Path.FixShopPoint((int)goldPlan.Gold);
+                    return Evaluation.Active.Path.FixShopPoint((int)goldPlan.Gold, shopIndex);
                 }
                 case PathShopPlan.MaxRemove: {
                     return Evaluation.Active.Path.CardRemovePoints((int)goldPlan.Gold);
@@ -120,9 +121,11 @@ namespace ProjectPumpernickle {
         public struct CardScore {
             public string cardId;
             public float score;
-            public CardScore(string cardId, float score) {
+            public float expectedSeen;
+            public CardScore(string cardId, float score, float expectedSeen) {
                 this.cardId = cardId;
                 this.score = score;
+                this.expectedSeen = expectedSeen;
             }
         }
         public static readonly float LAST_CHANCE_TO_PICK_VALUE = 0.1f;
@@ -167,15 +170,10 @@ namespace ProjectPumpernickle {
                     Rarity.Rare => 2,
                 };
                 var chanceToFind = 0f;
-                if (color == Color.Colorless) {
-                    chanceToFind += cardShopAppearances[3 + rarityOffset];
-                }
-                else {
-                    chanceToFind += cardShopAppearances[0 + rarityOffset];
-                    chanceToFind += cardRarityAppearances[rarityOffset];
-                }
-                var densityIndex = (color == Color.Colorless ? 3 : 0) + rarityOffset;
-                var expectedFound = chanceToFind * hitDensity[densityIndex];
+                var slotIndex = (color == Color.Colorless ? 3 : 0) + rarityOffset;
+                chanceToFind += cardShopAppearances[slotIndex];
+                chanceToFind += cardRarityAppearances[slotIndex];
+                var expectedFound = chanceToFind * hitDensity[slotIndex];
                 var value = ScoreValueOfCard(card);
                 if (Save.state.ChoosingNow(card.id) && expectedFound < 2f) {
                     var chanceToSee = expectedFound / 2f;
@@ -183,7 +181,7 @@ namespace ProjectPumpernickle {
                 }
                 // This is slightly wrong because multiplies of cards generally aren't as good
                 // This is why we don't include hypothetical points for cards that are available now
-                yield return new CardScore(card.id, value * expectedFound);
+                yield return new CardScore(card.id, value, expectedFound);
             }
         }
         // Cards aren't good until you build a good deck
@@ -266,9 +264,11 @@ namespace ProjectPumpernickle {
         public struct RelicScore {
             public string relicId;
             public float score;
-            public RelicScore(string cardId, float score) {
+            public float expectedFound;
+            public RelicScore(string cardId, float score, float expectedFound) {
                 this.relicId = cardId;
                 this.score = score;
+                this.expectedFound = expectedFound;
             }
         }
         public static IEnumerable<RelicScore> RelicScoreProvider(float[] relicsByRarity, Rarity rarityLimit = Rarity.Randomable) {
@@ -304,7 +304,7 @@ namespace ProjectPumpernickle {
                 };
                 var chanceToFind = relicsByRarity[rarityIndex];
                 var expectedFound = chanceToFind * hitDensity[rarityIndex];
-                yield return new RelicScore(relic.id, ScoreValueOfRelic(relic) * expectedFound);
+                yield return new RelicScore(relic.id, ScoreValueOfRelic(relic), expectedFound);
             }
         }
         public static float[] RelicRarityDistribution(float numRelics, bool shop) {
@@ -356,7 +356,7 @@ namespace ProjectPumpernickle {
             }
         }
         public static void ScoreUpgrades(Evaluation evaluation) {
-            evaluation.SetScore(ScoreReason.Upgrades, 30f * Evaluators.UpgradeValueProportion(evaluation));
+            evaluation.SetScore(ScoreReason.Upgrades, Evaluators.UpgradeValue(evaluation));
         }
         public static void ScoreBasedOnEvaluation(Evaluation evaluation) {
             // Order is important here
@@ -392,10 +392,10 @@ namespace ProjectPumpernickle {
             var winChance = stats.ChanceToWin(evaluation);
             evaluation.SetScore(ScoreReason.MeanCorrection, -(stats.chosenValue - stats.rewardOutcomeMean));
             evaluation.SetScore(ScoreReason.WinChance, winChance * 1f);
-            evaluation.SetScore(ScoreReason.Variance, -stats.rewardOutcomeStd / 5f);
+            // TODO: appetite for risk depends on win chance
+            evaluation.SetScore(ScoreReason.Variance, -stats.rewardOutcomeStd * 1.2f);
         }
-        public static readonly float LN101 = 4.61512051684126f;
-        public static void ScoreBasedOnOffRamp(Evaluation evaluation) {
+        public static void ScoreBasedOnOffRamp(Evaluation evaluation, float OfframpChance) {
             var offRamp = evaluation.OffRamp?.Path;
             if (offRamp == null) {
                 offRamp = evaluation.Path;
@@ -406,8 +406,10 @@ namespace ProjectPumpernickle {
             // If you have a low chance to survive, we want to incentivise marginal survival chance highly
             // https://www.wolframalpha.com/input?i=10+-+110x%5E2+from+0+to+1
             // rewards [10, -100]
-            var deathChance = 1f - offRamp.chanceToSurviveAct;
-            var survivalScore = 10f - 110f * MathF.Pow(deathChance, 2f);
+            var offRampDeathChance = 1f - offRamp.chanceToSurviveAct;
+            var stayDeathChance = 1f - evaluation.Path.chanceToSurviveAct;
+            var compoundDeathChance = stayDeathChance * (1f - OfframpChance) + offRampDeathChance * OfframpChance;
+            var survivalScore = 10f - 110f * MathF.Pow(compoundDeathChance, 2f);
             evaluation.SetScore(ScoreReason.ActSurvival, survivalScore);
         }
     }

@@ -730,8 +730,23 @@ namespace ProjectPumpernickle {
             var value = r.bias;
             return value;
         }
+        public static float ChokerViolationChance() {
+            var setupCards = Evaluators.OneTimeDrawEffects();
+            var sustainCards = Evaluators.SustainableCardDrawPerTurn();
+            var setupEnergy = Evaluators.ExtraPerFightEnergy();
+            var sustainEnergy = Evaluators.PerTurnEnergy();
+            var averageCost = Save.state.cards.Select(Evaluators.AverageCost).Average();
+            var averageCardsPerTurn = sustainEnergy / averageCost;
+            var burstCards = setupEnergy / (averageCost * 0.7f) + setupCards * .2f;
+            var maxDesiredCards = averageCardsPerTurn + burstCards;
+            var chanceLerp = Lerp.InverseUncapped(averageCardsPerTurn, maxDesiredCards, 6f);
+            var sigmoidX = (chanceLerp - 0.5f) * 8f;
+            return PumpernickelMath.Sigmoid(sigmoidX);
+        }
+        public static readonly float CHOKER_PUNISHMENT = -15f;
         public static float VelvetChoker(Relic r) {
             var value = r.bias;
+            value += CHOKER_PUNISHMENT * ChokerViolationChance();
             return value;
         }
         public static float VioletLotus(Relic r) {

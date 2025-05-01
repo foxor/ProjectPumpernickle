@@ -19,6 +19,7 @@ namespace ProjectPumpernickle {
         Randomable,
         Boss,
         Shop,
+        Curse,
     }
     public enum Tags {
         NonPermanent,
@@ -130,7 +131,7 @@ namespace ProjectPumpernickle {
             else {
                 intCost = int.MaxValue;
             }
-            var drawRegex = new Regex(@"Draw (\d+) (\((\d+)\) )?card");
+            var drawRegex = new Regex(@"raw (\d+) (\((\d+)\) )?card");
             var drawMatch = drawRegex.Match(description);
             if (drawMatch.Success) {
                 var drawRegexGroup = drawMatch.Groups[2].Length > 0 ? 3 : 1;
@@ -353,7 +354,6 @@ namespace ProjectPumpernickle {
         public bool infiniteDoesDamage;
         public int earliestInfinite;
         public bool buildingInfinite;
-        public bool expectingToRedBlue;
         public int missingCardCount;
         public List<string> huntingCards = new List<string>();
         public float chanceOfOutcome;
@@ -398,7 +398,6 @@ namespace ProjectPumpernickle {
             infiniteDoesDamage = original.infiniteDoesDamage;
             earliestInfinite = original.earliestInfinite;
             buildingInfinite = original.buildingInfinite;
-            expectingToRedBlue = original.expectingToRedBlue;
             missingCardCount = original.missingCardCount;
             chanceOfOutcome = original.chanceOfOutcome;
             addedDamagePerTurn = original.addedDamagePerTurn;
@@ -573,7 +572,10 @@ namespace ProjectPumpernickle {
             CreateActFourMap();
             if (Program.lastReportedGreenKeyLocation != null) {
                 var location = Program.lastReportedGreenKeyLocation.Value;
-                map[location.actNum, location.x, location.y].nodeType = NodeType.MegaElite;
+                var node = map[location.actNum, location.x, location.y];
+                if (node != null) {
+                    node.nodeType = NodeType.MegaElite;
+                }
             }
             var pathTexts = actLines.Select(actLines => {
                 var lines = actLines.Select(x => x.Substring(7)).ToArray();
@@ -590,7 +592,7 @@ namespace ProjectPumpernickle {
         }
         public static readonly string NEW_ACT_ROOM = "new act";
         public MapNode GetCurrentNode() {
-            var talkingToNeow = current_room.Equals("com.megacrit.cardcrawl.neow.NeowRoom");
+            var talkingToNeow = current_room.Equals("com.megacrit.cardcrawl.neow.NeowRoom") || floor_num == 0;
             var newAct = current_room.Equals(NEW_ACT_ROOM);
             var bossChest = current_room.Equals("com.megacrit.cardcrawl.rooms.TreasureRoomBoss");
             var bossRoom = current_room.Equals("com.megacrit.cardcrawl.rooms.MonsterRoomBoss");
@@ -717,7 +719,7 @@ namespace ProjectPumpernickle {
             }
             return 0;
         }
-        public IEnumerable<string> GetArchetypeSatisfiedTags(string archetypeId) {
+        public IEnumerable<string> GetArchetypeExactlySatisfiedTags(string archetypeId) {
             if (archetypeSlots == null) {
                 yield break;
             }
@@ -725,7 +727,21 @@ namespace ProjectPumpernickle {
             foreach (var archetypeSlot in archetypeSlots) {
                 if (archetypeSlot.archetypeId == archetypeId) {
                     var slotFulfilment = slots[archetypeSlot.slotId].count;
-                    if (archetypeSlot.entries >= slotFulfilment) {
+                    if (archetypeSlot.entries == slotFulfilment) {
+                        yield return archetypeSlot.slotId;
+                    }
+                }
+            }
+        }
+        public IEnumerable<string> GetArchetypeOverfilledTags(string archetypeId) {
+            if (archetypeSlots == null) {
+                yield break;
+            }
+            var slots = Database.instance.archetypeDict[archetypeId].slots;
+            foreach (var archetypeSlot in archetypeSlots) {
+                if (archetypeSlot.archetypeId == archetypeId) {
+                    var slotFulfilment = slots[archetypeSlot.slotId].count;
+                    if (archetypeSlot.entries > slotFulfilment) {
                         yield return archetypeSlot.slotId;
                     }
                 }

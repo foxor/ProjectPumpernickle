@@ -21,7 +21,7 @@ namespace ProjectPumpernickle {
         public static float BigFish(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float BonfireSpirits(Event e, int floorsFromNow) {
+        public static float Bonfire(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float DeadAdventurer(Event e, int floorsFromNow) {
@@ -111,7 +111,7 @@ namespace ProjectPumpernickle {
         public static float TheMoaiHead(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float TheWomaninBlue(Event e, int floorsFromNow) {
+        public static float WomanInBlue(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float TombRedMask(Event e, int floorsFromNow) {
@@ -132,7 +132,7 @@ namespace ProjectPumpernickle {
         public static float WindingHalls(Event e, int floorsFromNow) {
             return 0f;
         }
-        public static float WorldofGoop(Event e, int floorsFromNow) {
+        public static float GoopPuddle(Event e, int floorsFromNow) {
             return 0f;
         }
         public static float MindBloom(Event e, int floorsFromNow) {

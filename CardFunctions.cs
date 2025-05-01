@@ -721,8 +721,12 @@
             var value = 0f;
             return value;
         }
+        public static readonly float HOLOGRAM_SNECKO_BONUS = 2.5f;
         public static float Hologram(Card c, int index) {
             var value = 0f;
+            if (Save.state.relics.Any(x => x.Equals("Snecko Eye"))) {
+                value += HOLOGRAM_SNECKO_BONUS;
+            }
             return value;
         }
         public static float Leap(Card c, int index) {
@@ -901,8 +905,12 @@
             var value = 0f;
             return value;
         }
+        public static readonly float AFO_SNECKO_BONUS = 6f;
         public static float AllForOne(Card c, int index) {
             var value = 0f;
+            if (Save.state.relics.Any(x => x.Equals("Snecko Eye"))) {
+                value += AFO_SNECKO_BONUS;
+            }
             return value;
         }
         public static float Amplify(Card c, int index) {
@@ -945,8 +953,12 @@
             var value = 0f;
             return value;
         }
+        public static readonly float METEOR_STRIKE_SNECKO_BONUS = 4f;
         public static float MeteorStrike(Card c, int index) {
             var value = 0f;
+            if (Save.state.relics.Any(x => x.Equals("Snecko Eye"))) {
+                value += METEOR_STRIKE_SNECKO_BONUS;
+            }
             return value;
         }
         public static float MultiCast(Card c, int index) {
@@ -1031,12 +1043,6 @@
         }
         public static float Halt(Card c, int index) {
             var value = 0f;
-            if (Save.state.expectingToRedBlue) {
-                value += 2f;
-            }
-            else {
-                value -= 5f;
-            }
             return value;
         }
         public static float JustLucky(Card c, int index) {
@@ -1244,7 +1250,6 @@
             }
             if (Save.state.cards.Any(x => x.id.Equals("Meditate")) && firstEstablishment) {
                 Save.state.buildingInfinite = true;
-                Save.state.expectingToRedBlue = false;
                 Save.state.infiniteMaxSize = 11;
                 var cardDraw = Evaluators.GetCardDrawCards();
                 var drawCount = cardDraw.Count();

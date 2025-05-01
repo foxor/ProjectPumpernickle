@@ -35,7 +35,7 @@ namespace ProjectPumpernickle {
         BackToBasics,
         Beggar,
         BigFish,
-        BonfireSpirits,
+        Bonfire,
         DeadAdventurer,
         DrugDealer,
         Duplicator,
@@ -65,14 +65,14 @@ namespace ProjectPumpernickle {
         TheLibrary,
         TheMausoleum,
         TheMoaiHead,
-        TheWomaninBlue,
+        WomanInBlue,
         TombRedMask,
         Transmogrifier,
         UpgradeShrine,
         Vampires,
         GremlinWheelGame,
         WindingHalls,
-        WorldofGoop,
+        GoopPuddle,
         MindBloom,
         Nest,
         FaceTrader,
@@ -103,6 +103,7 @@ namespace ProjectPumpernickle {
         Speculation,
         UpgradeBestInSlot,
         BestInSlotMultiplier,
+        Cowardice,
         COUNT,
     }
     public class Evaluation {
@@ -139,8 +140,7 @@ namespace ProjectPumpernickle {
             }
 
             Save.state.earliestInfinite = 0;
-            Save.state.expectingToRedBlue = Save.state.character == PlayerCharacter.Watcher;
-            Save.state.buildingInfinite = Save.state.expectingToRedBlue;
+            Save.state.buildingInfinite = false;
             Save.state.huntingCards.Clear();
         }
         public void MergeScoreWithOffRamp() {
@@ -155,6 +155,7 @@ namespace ProjectPumpernickle {
             var dT = riskT - offRampRiskT;
             var sigmoidX = -5f + dT * 10f;
             RiskRelevance = PumpernickelMath.Sigmoid(sigmoidX);
+            Scoring.ScoreBasedOnOffRamp(this, RiskRelevance);
             for (int i = 0; i < (byte)ScoreReason.COUNT; i++) {
                 Scores[i] = Lerp.From(InternalScores[i], OffRamp.InternalScores[i], RiskRelevance);
             }

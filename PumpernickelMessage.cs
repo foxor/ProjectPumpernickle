@@ -47,6 +47,41 @@ namespace ProjectPumpernickle {
         CURSED_TOME,
         HEAL,
         MAX_HP,
+        BONFIRE_CARD,
+        GOLDEN_IDOL,
+    }
+    public static class EventRewardElementExtensions {
+        public static string Describe(this EventRewardElement element) {
+            return "Take the " + element switch {
+                EventRewardElement.RANDOM_COLORLESS_2 => "rare colorless choice",
+                EventRewardElement.THREE_CARDS => "card reward",
+                EventRewardElement.ONE_RANDOM_RARE_CARD => "random rare card",
+                EventRewardElement.REMOVE_CARD => "card remove",
+                EventRewardElement.UPGRADE_CARD => "upgrade",
+                EventRewardElement.RANDOM_COLORLESS => "random colorless choice",
+                EventRewardElement.TRANSFORM_CARD => "transform",
+                EventRewardElement.THREE_SMALL_POTIONS => "potions",
+                EventRewardElement.RANDOM_COMMON_RELIC => "common relic",
+                EventRewardElement.TEN_PERCENT_HP_BONUS => "+" + Evaluators.PercentHealthHeal(.1f) + " max hp",
+                EventRewardElement.HUNDRED_GOLD => "100 gold",
+                EventRewardElement.THREE_ENEMY_KILL => "lament",
+                EventRewardElement.REMOVE_TWO => "card removes",
+                EventRewardElement.TRANSFORM_TWO_CARDS => "transforms",
+                EventRewardElement.ONE_RARE_RELIC => "rare relic",
+                EventRewardElement.THREE_RARE_CARDS => "rare card choice",
+                EventRewardElement.TWO_FIFTY_GOLD => "250 gold",
+                EventRewardElement.TWENTY_PERCENT_HP_BONUS => "+" + Evaluators.PercentHealthHeal(.2f) + " max hp",
+                EventRewardElement.BOSS_RELIC => "swap",
+                EventRewardElement.RANDOM_UPGRADE => "random upgrade",
+                EventRewardElement.REMOVE_AND_UPGRADE => "remove and upgrade",
+                EventRewardElement.TWO_RANDOM_UPGRADES => "two upgrades",
+                EventRewardElement.RELIC_CHANCE => "chance of relic",
+                EventRewardElement.CURSED_TOME => "cursed tome",
+                EventRewardElement.HEAL => "health",
+                EventRewardElement.MAX_HP => "max hp",
+                _ => ""
+            };
+        }
     }
     public class PumpernickelMessage {
         protected static StringBuilder stringBuilder = new StringBuilder();
@@ -120,7 +155,7 @@ namespace ProjectPumpernickle {
                     var floor = int.Parse(lines[1]);
                     var didFight = false;
                     Program.ParseNewFile(floor, didFight);
-                    PumpernickelAdviceWindow.instance.AdviceBox.Text = "Your expected health loss: " + FightSimulator.SimulateFight(Database.instance.encounterDict[lines[2]]);
+                    //PumpernickelAdviceWindow.instance.AdviceBox.Text = "Your expected health loss: " + FightSimulator.SimulateFight(Database.instance.encounterDict[lines[2]]);
                     break;
                 }
                 default: {
@@ -237,7 +272,7 @@ namespace ProjectPumpernickle {
             }
             PumpernickelAdviceWindow.instance.UpdateAct();
             if (greenKeyHeaderIndex >= 0) {
-                ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..(greenKeyHeaderIndex + 3)]);
+                ParseGreenKeyMessage(lines[(greenKeyHeaderIndex + 1)..(greenKeyHeaderIndex + 4)]);
             }
             Advice.AdviseOnRewards(new List<RewardOption>());
         }
@@ -290,23 +325,29 @@ namespace ProjectPumpernickle {
                     }
                 }
             }
+            // We should sort the shop options, since that's where perf problems live
             Advice.AdviseOnRewards(rewardOptions);
         }
         protected static void ParseNeowMessage(IEnumerable<string> neowOptionLines) {
             List<string> neowCost = new List<string>();
             List<string> neowRewards = new List<string>();
+            List<string> neowAdvice = new List<string>();
             foreach (var line in neowOptionLines) {
                 var cost = line.Substring(0, line.IndexOf(":"));
                 var reward = line.Substring(line.LastIndexOf(" ") + 1);
-                if (reward.Equals(EventRewardElement.REMOVE_CARD.ToString())) {
+                var element = Enum.Parse<EventRewardElement>(reward);
+                if (element == EventRewardElement.REMOVE_CARD || element == EventRewardElement.TRANSFORM_CARD) {
+                    var action = (element == EventRewardElement.REMOVE_CARD ? "Remove" : "Transform");
                     foreach (var possibleRemove in Evaluators.ReasonableRemoveTargets()) {
                         neowCost.Add(cost);
                         neowRewards.Add(reward + ": " + possibleRemove);
+                        neowAdvice.Add(action + " " + Save.state.cards[possibleRemove].Descriptor());
                     }
                 }
                 else {
                     neowCost.Add(cost);
                     neowRewards.Add(reward);
+                    neowAdvice.Add(element.Describe());
                 }
             }
             List<RewardOption> rewardOptions = new List<RewardOption>() {
@@ -314,6 +355,7 @@ namespace ProjectPumpernickle {
                     eventCost = neowCost.ToArray(),
                     values = neowRewards.ToArray(),
                     rewardType = RewardType.Event,
+                    advice = neowAdvice.ToArray(),
                     skippable = false,
                 },
             };

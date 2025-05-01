@@ -42,7 +42,6 @@ namespace ProjectPumpernickle {
         public static bool hasWingBoots;
         public static List<int> plausibleUpgrades;
 
-        public int elites;
         public MapNode[] nodes = null;
         public float[] expectedGold = null;
         public int[] minPlanningGold = null;
@@ -76,6 +75,9 @@ namespace ProjectPumpernickle {
             if (relicId.Equals("WingedGreaves")) {
                 hasWingBoots = true;
             }
+            if (relicId.Equals("Fusion Hammer")) {
+                fireChoices.Remove(FireChoice.Upgrade);
+            }
         }
         protected static void ClearNodeStats() {
             foreach (var node in Save.state.map) {
@@ -92,8 +94,11 @@ namespace ProjectPumpernickle {
                     FireChoice.Upgrade,
                     FireChoice.Key,
                 };
-            hasWingBoots = Save.state.relics.Contains("WingedGreaves");
+            hasWingBoots = false;
             plausibleUpgrades = Evaluators.ReasonableUpgradeTargets().ToList();
+            foreach (var relic in Save.state.relics) {
+                CheckPathRelic(relic, ref hasWingBoots, ref availableFireOptions);
+            }
             foreach (var relic in rewardOptions.Where(x => x.rewardType == RewardType.Relic).Select(x => x.values).Merge()) {
                 CheckPathRelic(relic, ref hasWingBoots, ref availableFireOptions);
             }
@@ -233,7 +238,6 @@ namespace ProjectPumpernickle {
 
         public static Path Copy(Path path) {
             Path r = new Path();
-            r.elites = path.elites;
             r.expectedHealthLoss = path.expectedHealthLoss;
             r.shortTermShopPlan = path.shortTermShopPlan;
             r.remainingFloors = path.remainingFloors;
@@ -1030,7 +1034,7 @@ namespace ProjectPumpernickle {
             var efficiency = PumpernickelMath.Sigmoid((minGold - 200f) / 70f);
             return efficiency * minGold;
         }
-        public float UpcomingEliteThreat() {
+        public float UpcomingEliteThreat(int afterNode) {
             // FIXME: replace threats with "gut impression" of threats
             return Threats.Where(threat => {
                 var encounter = Database.instance.encounterDict[threat.Key];
@@ -1043,19 +1047,22 @@ namespace ProjectPumpernickle {
                 return true;
             }).Select(threat => {
                 var encounter = Database.instance.encounterDict[threat.Key];
-                var indexOfFirstElite = nodeTypes.FirstIndexOf(x => x.Equals(NodeType.Elite) || x.Equals(NodeType.MegaElite));
+                var indexOfFirstElite = nodeTypes.Skip(afterNode).FirstIndexOf(x => x.Equals(NodeType.Elite) || x.Equals(NodeType.MegaElite));
+                if (indexOfFirstElite == -1) {
+                    return 0f;
+                }
                 var soonnessFactor = 1f / ((indexOfFirstElite * 0.3f) + 1);
                 var floorFactor = Evaluators.PercentGameOver(Save.state.floor_num);
                 return soonnessFactor * threat.Value * floorFactor;
             }).Sum();
         }
-        public static readonly float MAX_FIX_SHOP_EFFICIENCY = 0.8f;
-        public static readonly float MIN_FIX_SHOP_EFFICIENCY = 0.6f;
-        public float FixShopPoint(int minGold) {
-            var upcomingEliteThreat = UpcomingEliteThreat();
+        public static readonly float MAX_FIX_SHOP_EFFICIENCY = 0.4f;
+        public static readonly float MIN_FIX_SHOP_EFFICIENCY = 0.2f;
+        public float FixShopPoint(int minGold, int shopIndex) {
+            var upcomingEliteThreat = UpcomingEliteThreat(shopIndex);
             var spendableGold = MathF.Min(120f, minGold);
             var goldFactor = Lerp.Inverse(50f, 120f, minGold);
-            var efficiency = Lerp.From(MIN_FIX_SHOP_EFFICIENCY, MAX_FIX_SHOP_EFFICIENCY, goldFactor);
+            var efficiency = Lerp.From(MIN_FIX_SHOP_EFFICIENCY, MAX_FIX_SHOP_EFFICIENCY, goldFactor) * upcomingEliteThreat;
             return spendableGold * efficiency;
         }
         public IEnumerable<float> ShopRelicValues() {
@@ -1114,7 +1121,7 @@ namespace ProjectPumpernickle {
             }
             var minGold = minPlanningGold[firstShopIndex];
             var removeValue = CardRemovePoints(minGold);
-            var fixValue = FixShopPoint(minGold);
+            var fixValue = FixShopPoint(minGold, firstShopIndex);
             var normalValue = NormalShopPoint(minGold);
             var huntValue = HuntForShopRelicPoint(minGold);
             var highest = new float[] {removeValue, fixValue, normalValue, huntValue}.Max();

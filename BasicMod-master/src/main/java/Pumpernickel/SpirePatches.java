@@ -25,6 +25,7 @@ import com.megacrit.cardcrawl.dungeons.TheCity;
 import com.megacrit.cardcrawl.events.beyond.Falling;
 import com.megacrit.cardcrawl.events.beyond.MindBloom;
 import com.megacrit.cardcrawl.events.city.TheLibrary;
+import com.megacrit.cardcrawl.events.exordium.GoopPuddle;
 import com.megacrit.cardcrawl.events.exordium.ScrapOoze;
 import com.megacrit.cardcrawl.events.exordium.ShiningLight;
 import com.megacrit.cardcrawl.events.shrines.Designer;
@@ -191,6 +192,13 @@ public class SpirePatches {
 	    	        if (powerCard != null) {
 	    	        	message.AddLine(powerCard.cardID + (powerCard.upgraded ? "+" : ""));
 	    	        }
+	            }
+	            if (GoopPuddle.class.isAssignableFrom(event.event.getClass())) {
+	            	GoopPuddle goop = (GoopPuddle)event.event;
+	    	        Field lossField = GoopPuddle.class.getDeclaredField("goldLoss");
+	    	        lossField.setAccessible(true);
+	    	        int loss = (int)lossField.get(goop);
+	    	        message.AddLine(loss);
 	            }
 	            message.Send();
 	        }
